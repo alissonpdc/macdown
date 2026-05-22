@@ -58,6 +58,7 @@ struct ContentView: View {
     }
 }
 
+@MainActor
 func presentOpenPanel(store: DocumentStore = DocumentStore.shared) {
     let panel = NSOpenPanel()
     let mdType = UTType(filenameExtension: "md") ?? .plainText
