@@ -33,8 +33,7 @@ struct MarkdownView: NSViewRepresentable {
     }
 
     private func loadRendererPage(in webView: WKWebView) {
-        guard let url = Bundle.module.url(forResource: "renderer", withExtension: "html",
-                                          subdirectory: "Resources") else {
+        guard let url = Bundle.main.url(forResource: "renderer", withExtension: "html") else {
             assertionFailure("renderer.html not found in bundle")
             return
         }

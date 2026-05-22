@@ -12,8 +12,8 @@ build:
 	mkdir -p $(CONTENTS)/Resources
 	cp $(BUILD_DIR)/MacDown $(CONTENTS)/MacOS/MacDown
 	cp Info.plist $(CONTENTS)/Info.plist
-	cp -r $(BUILD_DIR)/MacDown_MacDown.bundle/Contents/Resources/ $(CONTENTS)/Resources/ 2>/dev/null || \
-	  cp -r Sources/MacDown/Resources/ $(CONTENTS)/Resources/
+	cp -r $(BUILD_DIR)/MacDown_MacDown.bundle/Contents/Resources/. $(CONTENTS)/Resources/ 2>/dev/null || \
+	  cp -r Sources/MacDown/Resources/. $(CONTENTS)/Resources/
 	codesign --deep --force --sign - $(APP)
 	@echo "Built: $(APP)"
 
