@@ -92,7 +92,7 @@ O seletor de tema persiste a preferência do usuário entre sessões.
 ## Renderização do Markdown
 
 - Estilo **GitHub Flavored Markdown (GFM)**
-- Suporte a: headings, negrito, itálico, listas, tabelas, task lists, blocos de código com syntax highlight, links, imagens
+- Suporte a: headings, negrito, itálico, listas, tabelas, task lists, blocos de código com syntax highlight, links
 - Motor: `marked.js` para parsing + `highlight.js` para syntax highlight em blocos de código
 - Renderizado via WebView embarcada no app
 - A troca de tema aplica-se instantaneamente sem recarregar o arquivo
@@ -123,4 +123,4 @@ O seletor de tema persiste a preferência do usuário entre sessões.
 - Busca dentro do documento
 - Modo side-by-side (editor + preview)
 - Sincronização ou cloud storage
-- Suporte a imagens externas (URLs remotas)
+- Renderização de imagens (locais ou remotas)
