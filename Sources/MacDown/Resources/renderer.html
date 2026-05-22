@@ -18,12 +18,14 @@
 <script src="marked.min.js"></script>
 <script src="highlight.min.js"></script>
 <script>
-  marked.setOptions({
-    highlight: function(code, lang) {
-      const language = hljs.getLanguage(lang) ? lang : 'plaintext';
-      return hljs.highlight(code, { language: language }).value;
+  marked.use({
+    renderer: {
+      code: function(code, language) {
+        var validLang = hljs.getLanguage(language) ? language : 'plaintext';
+        var highlighted = hljs.highlight(code, { language: validLang }).value;
+        return '<pre><code class="hljs language-' + validLang + '">' + highlighted + '</code></pre>';
+      }
     },
-    langPrefix: 'hljs language-',
     gfm: true,
     breaks: false
   });
@@ -31,9 +33,6 @@
   function render(markdown, theme) {
     document.getElementById('theme-css').href = 'themes/github-' + theme + '.css';
     document.getElementById('content').innerHTML = marked.parse(markdown);
-    document.querySelectorAll('pre code:not(.hljs)').forEach(function(block) {
-      hljs.highlightElement(block);
-    });
   }
 </script>
 </head>
