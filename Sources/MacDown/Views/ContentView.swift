@@ -59,7 +59,8 @@ struct ContentView: View {
 }
 
 @MainActor
-func presentOpenPanel(store: DocumentStore = DocumentStore.shared) {
+func presentOpenPanel(store: DocumentStore? = nil) {
+    let resolvedStore = store ?? DocumentStore.shared
     let panel = NSOpenPanel()
     let mdType = UTType(filenameExtension: "md") ?? .plainText
     let markdownType = UTType(filenameExtension: "markdown") ?? .plainText
@@ -67,5 +68,5 @@ func presentOpenPanel(store: DocumentStore = DocumentStore.shared) {
     panel.allowsMultipleSelection = false
     panel.canChooseDirectories = false
     guard panel.runModal() == .OK, let url = panel.url else { return }
-    try? store.open(url)
+    try? resolvedStore.open(url)
 }
