@@ -7,11 +7,11 @@ struct SidebarView: View {
         List(store.documents.indices, id: \.self) { index in
             SidebarRow(title: store.documents[index].title,
                        isActive: index == store.activeIndex)
-                .onTapGesture(count: 2) {
-                    store.openInNewTabFromSidebar(at: index)
-                }
                 .onTapGesture(count: 1) {
                     store.activeIndex = index
+                }
+                .onTapGesture(count: 2) {
+                    store.openInNewTabFromSidebar(at: index)
                 }
         }
         .listStyle(.sidebar)

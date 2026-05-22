@@ -57,6 +57,8 @@ struct MarkdownView: NSViewRepresentable {
             let jsonData = (try? JSONSerialization.data(withJSONObject: content)) ?? Data()
             let jsonString = String(data: jsonData, encoding: .utf8) ?? "\"\""
             webView.evaluateJavaScript("render(\(jsonString), '\(theme)')", completionHandler: nil)
+            pendingContent = nil
+            pendingTheme = nil
         }
     }
 }
