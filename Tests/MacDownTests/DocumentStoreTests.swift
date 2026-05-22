@@ -99,4 +99,13 @@ final class DocumentStoreTests: XCTestCase {
         try store.open(url)
         XCTAssertEqual(store.activeDocument?.content, "# Active")
     }
+
+    func test_openInNewTabFromSidebar_duplicatesDocAtIndex() throws {
+        let url = try makeTempFile(content: "# Dup")
+        try store.open(url)
+        store.openInNewTabFromSidebar(at: 0)
+        XCTAssertEqual(store.documents.count, 2)
+        XCTAssertEqual(store.activeIndex, 1)
+        XCTAssertEqual(store.documents[1].content, "# Dup")
+    }
 }

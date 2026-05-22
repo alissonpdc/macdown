@@ -28,6 +28,12 @@ final class DocumentStore: ObservableObject {
         activeIndex = documents.count - 1
     }
 
+    func openInNewTabFromSidebar(at index: Int) {
+        let doc = documents[index]
+        documents.append(OpenDocument(url: doc.url, content: doc.content))
+        activeIndex = documents.count - 1
+    }
+
     func replaceActive(with url: URL) throws {
         let content = try String(contentsOf: url, encoding: .utf8)
         let doc = OpenDocument(url: url, content: content)
