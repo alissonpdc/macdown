@@ -1,0 +1,110 @@
+{
+  "": {
+    "swift-dependencies": "/Users/alissonpdc/Documents/GitHub/macdown/.build/arm64-apple-macosx/debug/MacDown.build/primary.swiftdeps"
+  },
+  "/Users/alissonpdc/Documents/GitHub/macdown/Sources/MacDown/AppDelegate.swift": {
+    "dependencies": "/Users/alissonpdc/Documents/GitHub/macdown/.build/arm64-apple-macosx/debug/MacDown.build/AppDelegate.d",
+    "object": "/Users/alissonpdc/Documents/GitHub/macdown/.build/arm64-apple-macosx/debug/MacDown.build/AppDelegate.swift.o",
+    "swiftmodule": "/Users/alissonpdc/Documents/GitHub/macdown/.build/arm64-apple-macosx/debug/MacDown.build/AppDelegate~partial.swiftmodule",
+    "swift-dependencies": "/Users/alissonpdc/Documents/GitHub/macdown/.build/arm64-apple-macosx/debug/MacDown.build/AppDelegate.swiftdeps",
+    "diagnostics": "/Users/alissonpdc/Documents/GitHub/macdown/.build/arm64-apple-macosx/debug/MacDown.build/AppDelegate.dia"
+  },
+  "/Users/alissonpdc/Documents/GitHub/macdown/Sources/MacDown/MacDownApp.swift": {
+    "dependencies": "/Users/alissonpdc/Documents/GitHub/macdown/.build/arm64-apple-macosx/debug/MacDown.build/MacDownApp.d",
+    "object": "/Users/alissonpdc/Documents/GitHub/macdown/.build/arm64-apple-macosx/debug/MacDown.build/MacDownApp.swift.o",
+    "swiftmodule": "/Users/alissonpdc/Documents/GitHub/macdown/.build/arm64-apple-macosx/debug/MacDown.build/MacDownApp~partial.swiftmodule",
+    "swift-dependencies": "/Users/alissonpdc/Documents/GitHub/macdown/.build/arm64-apple-macosx/debug/MacDown.build/MacDownApp.swiftdeps",
+    "diagnostics": "/Users/alissonpdc/Documents/GitHub/macdown/.build/arm64-apple-macosx/debug/MacDown.build/MacDownApp.dia"
+  },
+  "/Users/alissonpdc/Documents/GitHub/macdown/Sources/MacDown/Models/DocumentStore.swift": {
+    "dependencies": "/Users/alissonpdc/Documents/GitHub/macdown/.build/arm64-apple-macosx/debug/MacDown.build/DocumentStore.d",
+    "object": "/Users/alissonpdc/Documents/GitHub/macdown/.build/arm64-apple-macosx/debug/MacDown.build/DocumentStore.swift.o",
+    "swiftmodule": "/Users/alissonpdc/Documents/GitHub/macdown/.build/arm64-apple-macosx/debug/MacDown.build/DocumentStore~partial.swiftmodule",
+    "swift-dependencies": "/Users/alissonpdc/Documents/GitHub/macdown/.build/arm64-apple-macosx/debug/MacDown.build/DocumentStore.swiftdeps",
+    "diagnostics": "/Users/alissonpdc/Documents/GitHub/macdown/.build/arm64-apple-macosx/debug/MacDown.build/DocumentStore.dia"
+  },
+  "/Users/alissonpdc/Documents/GitHub/macdown/Sources/MacDown/Models/FolderManager.swift": {
+    "dependencies": "/Users/alissonpdc/Documents/GitHub/macdown/.build/arm64-apple-macosx/debug/MacDown.build/FolderManager.d",
+    "object": "/Users/alissonpdc/Documents/GitHub/macdown/.build/arm64-apple-macosx/debug/MacDown.build/FolderManager.swift.o",
+    "swiftmodule": "/Users/alissonpdc/Documents/GitHub/macdown/.build/arm64-apple-macosx/debug/MacDown.build/FolderManager~partial.swiftmodule",
+    "swift-dependencies": "/Users/alissonpdc/Documents/GitHub/macdown/.build/arm64-apple-macosx/debug/MacDown.build/FolderManager.swiftdeps",
+    "diagnostics": "/Users/alissonpdc/Documents/GitHub/macdown/.build/arm64-apple-macosx/debug/MacDown.build/FolderManager.dia"
+  },
+  "/Users/alissonpdc/Documents/GitHub/macdown/Sources/MacDown/Models/FolderTreeNode.swift": {
+    "dependencies": "/Users/alissonpdc/Documents/GitHub/macdown/.build/arm64-apple-macosx/debug/MacDown.build/FolderTreeNode.d",
+    "object": "/Users/alissonpdc/Documents/GitHub/macdown/.build/arm64-apple-macosx/debug/MacDown.build/FolderTreeNode.swift.o",
+    "swiftmodule": "/Users/alissonpdc/Documents/GitHub/macdown/.build/arm64-apple-macosx/debug/MacDown.build/FolderTreeNode~partial.swiftmodule",
+    "swift-dependencies": "/Users/alissonpdc/Documents/GitHub/macdown/.build/arm64-apple-macosx/debug/MacDown.build/FolderTreeNode.swiftdeps",
+    "diagnostics": "/Users/alissonpdc/Documents/GitHub/macdown/.build/arm64-apple-macosx/debug/MacDown.build/FolderTreeNode.dia"
+  },
+  "/Users/alissonpdc/Documents/GitHub/macdown/Sources/MacDown/Models/OpenDocument.swift": {
+    "dependencies": "/Users/alissonpdc/Documents/GitHub/macdown/.build/arm64-apple-macosx/debug/MacDown.build/OpenDocument.d",
+    "object": "/Users/alissonpdc/Documents/GitHub/macdown/.build/arm64-apple-macosx/debug/MacDown.build/OpenDocument.swift.o",
+    "swiftmodule": "/Users/alissonpdc/Documents/GitHub/macdown/.build/arm64-apple-macosx/debug/MacDown.build/OpenDocument~partial.swiftmodule",
+    "swift-dependencies": "/Users/alissonpdc/Documents/GitHub/macdown/.build/arm64-apple-macosx/debug/MacDown.build/OpenDocument.swiftdeps",
+    "diagnostics": "/Users/alissonpdc/Documents/GitHub/macdown/.build/arm64-apple-macosx/debug/MacDown.build/OpenDocument.dia"
+  },
+  "/Users/alissonpdc/Documents/GitHub/macdown/Sources/MacDown/Models/RecentsManager.swift": {
+    "dependencies": "/Users/alissonpdc/Documents/GitHub/macdown/.build/arm64-apple-macosx/debug/MacDown.build/RecentsManager.d",
+    "object": "/Users/alissonpdc/Documents/GitHub/macdown/.build/arm64-apple-macosx/debug/MacDown.build/RecentsManager.swift.o",
+    "swiftmodule": "/Users/alissonpdc/Documents/GitHub/macdown/.build/arm64-apple-macosx/debug/MacDown.build/RecentsManager~partial.swiftmodule",
+    "swift-dependencies": "/Users/alissonpdc/Documents/GitHub/macdown/.build/arm64-apple-macosx/debug/MacDown.build/RecentsManager.swiftdeps",
+    "diagnostics": "/Users/alissonpdc/Documents/GitHub/macdown/.build/arm64-apple-macosx/debug/MacDown.build/RecentsManager.dia"
+  },
+  "/Users/alissonpdc/Documents/GitHub/macdown/Sources/MacDown/Theme/ThemeState.swift": {
+    "dependencies": "/Users/alissonpdc/Documents/GitHub/macdown/.build/arm64-apple-macosx/debug/MacDown.build/ThemeState.d",
+    "object": "/Users/alissonpdc/Documents/GitHub/macdown/.build/arm64-apple-macosx/debug/MacDown.build/ThemeState.swift.o",
+    "swiftmodule": "/Users/alissonpdc/Documents/GitHub/macdown/.build/arm64-apple-macosx/debug/MacDown.build/ThemeState~partial.swiftmodule",
+    "swift-dependencies": "/Users/alissonpdc/Documents/GitHub/macdown/.build/arm64-apple-macosx/debug/MacDown.build/ThemeState.swiftdeps",
+    "diagnostics": "/Users/alissonpdc/Documents/GitHub/macdown/.build/arm64-apple-macosx/debug/MacDown.build/ThemeState.dia"
+  },
+  "/Users/alissonpdc/Documents/GitHub/macdown/Sources/MacDown/Views/ContentView.swift": {
+    "dependencies": "/Users/alissonpdc/Documents/GitHub/macdown/.build/arm64-apple-macosx/debug/MacDown.build/ContentView.d",
+    "object": "/Users/alissonpdc/Documents/GitHub/macdown/.build/arm64-apple-macosx/debug/MacDown.build/ContentView.swift.o",
+    "swiftmodule": "/Users/alissonpdc/Documents/GitHub/macdown/.build/arm64-apple-macosx/debug/MacDown.build/ContentView~partial.swiftmodule",
+    "swift-dependencies": "/Users/alissonpdc/Documents/GitHub/macdown/.build/arm64-apple-macosx/debug/MacDown.build/ContentView.swiftdeps",
+    "diagnostics": "/Users/alissonpdc/Documents/GitHub/macdown/.build/arm64-apple-macosx/debug/MacDown.build/ContentView.dia"
+  },
+  "/Users/alissonpdc/Documents/GitHub/macdown/Sources/MacDown/Views/FolderTreeItemView.swift": {
+    "dependencies": "/Users/alissonpdc/Documents/GitHub/macdown/.build/arm64-apple-macosx/debug/MacDown.build/FolderTreeItemView.d",
+    "object": "/Users/alissonpdc/Documents/GitHub/macdown/.build/arm64-apple-macosx/debug/MacDown.build/FolderTreeItemView.swift.o",
+    "swiftmodule": "/Users/alissonpdc/Documents/GitHub/macdown/.build/arm64-apple-macosx/debug/MacDown.build/FolderTreeItemView~partial.swiftmodule",
+    "swift-dependencies": "/Users/alissonpdc/Documents/GitHub/macdown/.build/arm64-apple-macosx/debug/MacDown.build/FolderTreeItemView.swiftdeps",
+    "diagnostics": "/Users/alissonpdc/Documents/GitHub/macdown/.build/arm64-apple-macosx/debug/MacDown.build/FolderTreeItemView.dia"
+  },
+  "/Users/alissonpdc/Documents/GitHub/macdown/Sources/MacDown/Views/FoldersSection.swift": {
+    "dependencies": "/Users/alissonpdc/Documents/GitHub/macdown/.build/arm64-apple-macosx/debug/MacDown.build/FoldersSection.d",
+    "object": "/Users/alissonpdc/Documents/GitHub/macdown/.build/arm64-apple-macosx/debug/MacDown.build/FoldersSection.swift.o",
+    "swiftmodule": "/Users/alissonpdc/Documents/GitHub/macdown/.build/arm64-apple-macosx/debug/MacDown.build/FoldersSection~partial.swiftmodule",
+    "swift-dependencies": "/Users/alissonpdc/Documents/GitHub/macdown/.build/arm64-apple-macosx/debug/MacDown.build/FoldersSection.swiftdeps",
+    "diagnostics": "/Users/alissonpdc/Documents/GitHub/macdown/.build/arm64-apple-macosx/debug/MacDown.build/FoldersSection.dia"
+  },
+  "/Users/alissonpdc/Documents/GitHub/macdown/Sources/MacDown/Views/MarkdownView.swift": {
+    "dependencies": "/Users/alissonpdc/Documents/GitHub/macdown/.build/arm64-apple-macosx/debug/MacDown.build/MarkdownView.d",
+    "object": "/Users/alissonpdc/Documents/GitHub/macdown/.build/arm64-apple-macosx/debug/MacDown.build/MarkdownView.swift.o",
+    "swiftmodule": "/Users/alissonpdc/Documents/GitHub/macdown/.build/arm64-apple-macosx/debug/MacDown.build/MarkdownView~partial.swiftmodule",
+    "swift-dependencies": "/Users/alissonpdc/Documents/GitHub/macdown/.build/arm64-apple-macosx/debug/MacDown.build/MarkdownView.swiftdeps",
+    "diagnostics": "/Users/alissonpdc/Documents/GitHub/macdown/.build/arm64-apple-macosx/debug/MacDown.build/MarkdownView.dia"
+  },
+  "/Users/alissonpdc/Documents/GitHub/macdown/Sources/MacDown/Views/RecentsSection.swift": {
+    "dependencies": "/Users/alissonpdc/Documents/GitHub/macdown/.build/arm64-apple-macosx/debug/MacDown.build/RecentsSection.d",
+    "object": "/Users/alissonpdc/Documents/GitHub/macdown/.build/arm64-apple-macosx/debug/MacDown.build/RecentsSection.swift.o",
+    "swiftmodule": "/Users/alissonpdc/Documents/GitHub/macdown/.build/arm64-apple-macosx/debug/MacDown.build/RecentsSection~partial.swiftmodule",
+    "swift-dependencies": "/Users/alissonpdc/Documents/GitHub/macdown/.build/arm64-apple-macosx/debug/MacDown.build/RecentsSection.swiftdeps",
+    "diagnostics": "/Users/alissonpdc/Documents/GitHub/macdown/.build/arm64-apple-macosx/debug/MacDown.build/RecentsSection.dia"
+  },
+  "/Users/alissonpdc/Documents/GitHub/macdown/Sources/MacDown/Views/SidebarView.swift": {
+    "dependencies": "/Users/alissonpdc/Documents/GitHub/macdown/.build/arm64-apple-macosx/debug/MacDown.build/SidebarView.d",
+    "object": "/Users/alissonpdc/Documents/GitHub/macdown/.build/arm64-apple-macosx/debug/MacDown.build/SidebarView.swift.o",
+    "swiftmodule": "/Users/alissonpdc/Documents/GitHub/macdown/.build/arm64-apple-macosx/debug/MacDown.build/SidebarView~partial.swiftmodule",
+    "swift-dependencies": "/Users/alissonpdc/Documents/GitHub/macdown/.build/arm64-apple-macosx/debug/MacDown.build/SidebarView.swiftdeps",
+    "diagnostics": "/Users/alissonpdc/Documents/GitHub/macdown/.build/arm64-apple-macosx/debug/MacDown.build/SidebarView.dia"
+  },
+  "/Users/alissonpdc/Documents/GitHub/macdown/.build/arm64-apple-macosx/debug/MacDown.build/DerivedSources/resource_bundle_accessor.swift": {
+    "dependencies": "/Users/alissonpdc/Documents/GitHub/macdown/.build/arm64-apple-macosx/debug/MacDown.build/resource_bundle_accessor.d",
+    "object": "/Users/alissonpdc/Documents/GitHub/macdown/.build/arm64-apple-macosx/debug/MacDown.build/resource_bundle_accessor.swift.o",
+    "swiftmodule": "/Users/alissonpdc/Documents/GitHub/macdown/.build/arm64-apple-macosx/debug/MacDown.build/resource_bundle_accessor~partial.swiftmodule",
+    "swift-dependencies": "/Users/alissonpdc/Documents/GitHub/macdown/.build/arm64-apple-macosx/debug/MacDown.build/resource_bundle_accessor.swiftdeps",
+    "diagnostics": "/Users/alissonpdc/Documents/GitHub/macdown/.build/arm64-apple-macosx/debug/MacDown.build/resource_bundle_accessor.dia"
+  }
+}
