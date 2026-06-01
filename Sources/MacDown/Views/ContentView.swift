@@ -5,9 +5,13 @@ struct ContentView: View {
     @EnvironmentObject var store: DocumentStore
     @EnvironmentObject var theme: ThemeState
 
+    @StateObject private var folderManager = FolderManager()
+
     var body: some View {
         NavigationSplitView {
             SidebarView()
+                .environmentObject(store.recentsManager)
+                .environmentObject(folderManager)
         } detail: {
             if store.documents.isEmpty {
                 emptyState
@@ -36,6 +40,11 @@ struct ContentView: View {
                 }
                 .pickerStyle(.segmented)
                 .frame(width: 200)
+            }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("ImportFolderToWorkspace"))) { notification in
+            if let url = notification.userInfo?["folderURL"] as? URL {
+                try? folderManager.importFolder(url)
             }
         }
     }
