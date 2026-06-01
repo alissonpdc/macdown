@@ -34,7 +34,7 @@ struct FolderTreeNodeTests {
             parentFolderPath: "/tmp/docs"
         )
 
-        var folderNode = FolderTreeNode(
+        let folderNode = FolderTreeNode(
             name: "docs",
             url: folderURL,
             isFolder: true,

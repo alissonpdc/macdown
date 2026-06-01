@@ -6,6 +6,7 @@ import Foundation
 struct FolderManagerTests {
 
     @Test("Import folder and prevent duplicates")
+    @MainActor
     func testImportFolderNoDuplicates() async throws {
         let manager = FolderManager()
         let tempURL = URL(fileURLWithPath: "/tmp/test_folder_\(UUID().uuidString)")
@@ -21,6 +22,7 @@ struct FolderManagerTests {
     }
 
     @Test("Remove folder")
+    @MainActor
     func testRemoveFolder() async throws {
         let manager = FolderManager()
         let tempURL = URL(fileURLWithPath: "/tmp/test_folder_\(UUID().uuidString)")
@@ -36,6 +38,7 @@ struct FolderManagerTests {
     }
 
     @Test("Clear all folders")
+    @MainActor
     func testClear() async throws {
         let manager = FolderManager()
         let tempURL = URL(fileURLWithPath: "/tmp/test_folder_\(UUID().uuidString)")
@@ -51,6 +54,7 @@ struct FolderManagerTests {
     }
 
     @Test("Toggle folder expansion")
+    @MainActor
     func testToggleFolderExpansion() async throws {
         let manager = FolderManager()
         let tempURL = URL(fileURLWithPath: "/tmp/test_folder_\(UUID().uuidString)")
