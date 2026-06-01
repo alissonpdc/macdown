@@ -2,33 +2,25 @@ import SwiftUI
 
 struct SidebarView: View {
     @EnvironmentObject var store: DocumentStore
+    @EnvironmentObject var recentsManager: RecentsManager
+    @EnvironmentObject var folderManager: FolderManager
+
+    @State private var dividerPosition: CGFloat = 0.4
 
     var body: some View {
-        List(store.documents.indices, id: \.self) { index in
-            SidebarRow(title: store.documents[index].title,
-                       isActive: index == store.activeIndex)
-                .onTapGesture(count: 1) {
-                    store.activeIndex = index
-                }
-                .onTapGesture(count: 2) {
-                    store.openInNewTabFromSidebar(at: index)
-                }
+        VStack(spacing: 0) {
+            // Recentes Section
+            RecentsSection()
+                .frame(maxHeight: .infinity, alignment: .top)
+
+            // Draggable Divider
+            Divider()
+                .padding(.vertical, 4)
+
+            // Folders Section
+            FoldersSection()
+                .frame(maxHeight: .infinity, alignment: .top)
         }
-        .listStyle(.sidebar)
         .frame(minWidth: 180)
-    }
-}
-
-private struct SidebarRow: View {
-    let title: String
-    let isActive: Bool
-
-    var body: some View {
-        Text(title)
-            .lineLimit(1)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(.vertical, 2)
-            .foregroundColor(isActive ? .accentColor : .primary)
-            .fontWeight(isActive ? .semibold : .regular)
     }
 }
