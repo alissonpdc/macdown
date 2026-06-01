@@ -6,6 +6,7 @@ import Foundation
 struct RecentsManagerTests {
 
     @Test("Add recent file")
+    @MainActor
     func testAddRecent() {
         let manager = RecentsManager()
         let url = URL(fileURLWithPath: "/tmp/test.md")
@@ -18,6 +19,7 @@ struct RecentsManagerTests {
     }
 
     @Test("Recents are in order")
+    @MainActor
     func testRecentsOrder() {
         let manager = RecentsManager()
         let url1 = URL(fileURLWithPath: "/tmp/test1.md")
@@ -32,6 +34,7 @@ struct RecentsManagerTests {
     }
 
     @Test("Clear recents")
+    @MainActor
     func testClear() {
         let manager = RecentsManager()
         let url = URL(fileURLWithPath: "/tmp/test.md")
