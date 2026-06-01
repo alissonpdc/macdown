@@ -1,3 +1,4 @@
+@testable import MacDown
 import Testing
 import Foundation
 

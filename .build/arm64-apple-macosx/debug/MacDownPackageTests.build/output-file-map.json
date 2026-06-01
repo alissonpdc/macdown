@@ -1,0 +1,12 @@
+{
+  "": {
+    "swift-dependencies": "/Users/alissonpdc/Documents/GitHub/macdown/.build/arm64-apple-macosx/debug/MacDownPackageTests.build/primary.swiftdeps"
+  },
+  "/Users/alissonpdc/Documents/GitHub/macdown/.build/arm64-apple-macosx/debug/MacDownPackageTests.derived/runner.swift": {
+    "dependencies": "/Users/alissonpdc/Documents/GitHub/macdown/.build/arm64-apple-macosx/debug/MacDownPackageTests.build/runner.d",
+    "object": "/Users/alissonpdc/Documents/GitHub/macdown/.build/arm64-apple-macosx/debug/MacDownPackageTests.build/runner.swift.o",
+    "swiftmodule": "/Users/alissonpdc/Documents/GitHub/macdown/.build/arm64-apple-macosx/debug/MacDownPackageTests.build/runner~partial.swiftmodule",
+    "swift-dependencies": "/Users/alissonpdc/Documents/GitHub/macdown/.build/arm64-apple-macosx/debug/MacDownPackageTests.build/runner.swiftdeps",
+    "diagnostics": "/Users/alissonpdc/Documents/GitHub/macdown/.build/arm64-apple-macosx/debug/MacDownPackageTests.build/runner.dia"
+  }
+}

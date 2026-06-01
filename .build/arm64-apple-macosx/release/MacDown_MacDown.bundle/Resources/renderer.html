@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link id="theme-css" rel="stylesheet" href="themes/github-light.css">
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    padding: 24px 40px;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    font-size: 16px;
+    line-height: 1.6;
+  }
+  #content { max-width: 860px; margin: 0 auto; }
+</style>
+<script src="marked.min.js"></script>
+<script src="highlight.min.js"></script>
+<script>
+  marked.use({
+    renderer: {
+      code: function(code, language) {
+        var validLang = hljs.getLanguage(language) ? language : 'plaintext';
+        var highlighted = hljs.highlight(code, { language: validLang }).value;
+        return '<pre><code class="hljs language-' + validLang + '">' + highlighted + '</code></pre>';
+      }
+    },
+    gfm: true,
+    breaks: false
+  });
+
+  function render(markdown, theme) {
+    document.getElementById('theme-css').href = 'themes/github-' + theme + '.css';
+    document.getElementById('content').innerHTML = marked.parse(markdown);
+  }
+</script>
+</head>
+<body>
+  <div id="content"></div>
+</body>
+</html>

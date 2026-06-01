@@ -1,0 +1,1051 @@
+{
+  "builtTestProducts" : [
+    {
+      "binaryPath" : "/Users/alissonpdc/Documents/GitHub/macdown/.build/arm64-apple-macosx/debug/MacDownPackageTests.xctest/Contents/MacOS/MacDownPackageTests",
+      "packagePath" : "/Users/alissonpdc/Documents/GitHub/macdown",
+      "productName" : "MacDownPackageTests"
+    }
+  ],
+  "copyCommands" : {
+    "/Users/alissonpdc/Documents/GitHub/macdown/.build/arm64-apple-macosx/debug/MacDown_MacDown.bundle/Resources" : {
+      "inputs" : [
+        {
+          "kind" : "directory",
+          "name" : "/Users/alissonpdc/Documents/GitHub/macdown/Sources/MacDown/Resources"
+        }
+      ],
+      "outputs" : [
+        {
+          "kind" : "directory",
+          "name" : "/Users/alissonpdc/Documents/GitHub/macdown/.build/arm64-apple-macosx/debug/MacDown_MacDown.bundle/Resources"
+        }
+      ]
+    }
+  },
+  "explicitTargetDependencyImportCheckingMode" : {
+    "none" : {
+
+    }
+  },
+  "generatedSourceTargetSet" : [
+
+  ],
+  "pluginDescriptions" : [
+
+  ],
+  "swiftCommands" : {
+    "C.MacDown-arm64-apple-macosx-debug.module" : {
+      "executable" : "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc",
+      "fileList" : "/Users/alissonpdc/Documents/GitHub/macdown/.build/arm64-apple-macosx/debug/MacDown.build/sources",
+      "importPath" : "/Users/alissonpdc/Documents/GitHub/macdown/.build/arm64-apple-macosx/debug/Modules",
+      "inputs" : [
+        {
+          "kind" : "file",
+          "name" : "/Users/alissonpdc/Documents/GitHub/macdown/Sources/MacDown/AppDelegate.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/alissonpdc/Documents/GitHub/macdown/Sources/MacDown/MacDownApp.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/alissonpdc/Documents/GitHub/macdown/Sources/MacDown/Models/DocumentStore.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/alissonpdc/Documents/GitHub/macdown/Sources/MacDown/Models/FolderManager.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/alissonpdc/Documents/GitHub/macdown/Sources/MacDown/Models/FolderTreeNode.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/alissonpdc/Documents/GitHub/macdown/Sources/MacDown/Models/OpenDocument.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/alissonpdc/Documents/GitHub/macdown/Sources/MacDown/Models/RecentsManager.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/alissonpdc/Documents/GitHub/macdown/Sources/MacDown/Theme/ThemeState.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/alissonpdc/Documents/GitHub/macdown/Sources/MacDown/Views/ContentView.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/alissonpdc/Documents/GitHub/macdown/Sources/MacDown/Views/FolderTreeItemView.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/alissonpdc/Documents/GitHub/macdown/Sources/MacDown/Views/FoldersSection.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/alissonpdc/Documents/GitHub/macdown/Sources/MacDown/Views/MarkdownView.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/alissonpdc/Documents/GitHub/macdown/Sources/MacDown/Views/RecentsSection.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/alissonpdc/Documents/GitHub/macdown/Sources/MacDown/Views/SidebarView.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/alissonpdc/Documents/GitHub/macdown/.build/arm64-apple-macosx/debug/MacDown.build/DerivedSources/resource_bundle_accessor.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/alissonpdc/Documents/GitHub/macdown/.build/arm64-apple-macosx/debug/swift-version--58304C5D6DBC2206.txt"
+        },
+        {
+          "kind" : "virtual",
+          "name" : "<MacDown-arm64-apple-macosx-debug.module-resources>"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/alissonpdc/Documents/GitHub/macdown/.build/arm64-apple-macosx/debug/MacDown.build/sources"
+        }
+      ],
+      "isLibrary" : false,
+      "moduleName" : "MacDown",
+      "moduleOutputPath" : "/Users/alissonpdc/Documents/GitHub/macdown/.build/arm64-apple-macosx/debug/Modules/MacDown.swiftmodule",
+      "objects" : [
+        "/Users/alissonpdc/Documents/GitHub/macdown/.build/arm64-apple-macosx/debug/MacDown.build/AppDelegate.swift.o",
+        "/Users/alissonpdc/Documents/GitHub/macdown/.build/arm64-apple-macosx/debug/MacDown.build/MacDownApp.swift.o",
+        "/Users/alissonpdc/Documents/GitHub/macdown/.build/arm64-apple-macosx/debug/MacDown.build/DocumentStore.swift.o",
+        "/Users/alissonpdc/Documents/GitHub/macdown/.build/arm64-apple-macosx/debug/MacDown.build/FolderManager.swift.o",
+        "/Users/alissonpdc/Documents/GitHub/macdown/.build/arm64-apple-macosx/debug/MacDown.build/FolderTreeNode.swift.o",
+        "/Users/alissonpdc/Documents/GitHub/macdown/.build/arm64-apple-macosx/debug/MacDown.build/OpenDocument.swift.o",
+        "/Users/alissonpdc/Documents/GitHub/macdown/.build/arm64-apple-macosx/debug/MacDown.build/RecentsManager.swift.o",
+        "/Users/alissonpdc/Documents/GitHub/macdown/.build/arm64-apple-macosx/debug/MacDown.build/ThemeState.swift.o",
+        "/Users/alissonpdc/Documents/GitHub/macdown/.build/arm64-apple-macosx/debug/MacDown.build/ContentView.swift.o",
+        "/Users/alissonpdc/Documents/GitHub/macdown/.build/arm64-apple-macosx/debug/MacDown.build/FolderTreeItemView.swift.o",
+        "/Users/alissonpdc/Documents/GitHub/macdown/.build/arm64-apple-macosx/debug/MacDown.build/FoldersSection.swift.o",
+        "/Users/alissonpdc/Documents/GitHub/macdown/.build/arm64-apple-macosx/debug/MacDown.build/MarkdownView.swift.o",
+        "/Users/alissonpdc/Documents/GitHub/macdown/.build/arm64-apple-macosx/debug/MacDown.build/RecentsSection.swift.o",
+        "/Users/alissonpdc/Documents/GitHub/macdown/.build/arm64-apple-macosx/debug/MacDown.build/SidebarView.swift.o",
+        "/Users/alissonpdc/Documents/GitHub/macdown/.build/arm64-apple-macosx/debug/MacDown.build/resource_bundle_accessor.swift.o"
+      ],
+      "otherArguments" : [
+        "-target",
+        "arm64-apple-macosx13.0",
+        "-incremental",
+        "-enable-batch-mode",
+        "-serialize-diagnostics",
+        "-index-store-path",
+        "/Users/alissonpdc/Documents/GitHub/macdown/.build/arm64-apple-macosx/debug/index/store",
+        "-Onone",
+        "-enable-testing",
+        "-j10",
+        "-DSWIFT_PACKAGE",
+        "-DDEBUG",
+        "-DSWIFT_MODULE_RESOURCE_BUNDLE_AVAILABLE",
+        "-module-cache-path",
+        "/Users/alissonpdc/Documents/GitHub/macdown/.build/arm64-apple-macosx/debug/ModuleCache",
+        "-parseable-output",
+        "-Xfrontend",
+        "-entry-point-function-name",
+        "-Xfrontend",
+        "MacDown_main",
+        "-color-diagnostics",
+        "-swift-version",
+        "5",
+        "-plugin-path",
+        "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/host/plugins/testing",
+        "-sdk",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.5.sdk",
+        "-F",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks",
+        "-I",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib",
+        "-L",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib",
+        "-g",
+        "-Xcc",
+        "-isysroot",
+        "-Xcc",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.5.sdk",
+        "-Xcc",
+        "-F",
+        "-Xcc",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks",
+        "-Xcc",
+        "-fPIC",
+        "-Xcc",
+        "-g",
+        "-package-name",
+        "macdown"
+      ],
+      "outputFileMapPath" : "/Users/alissonpdc/Documents/GitHub/macdown/.build/arm64-apple-macosx/debug/MacDown.build/output-file-map.json",
+      "outputs" : [
+        {
+          "kind" : "file",
+          "name" : "/Users/alissonpdc/Documents/GitHub/macdown/.build/arm64-apple-macosx/debug/MacDown.build/AppDelegate.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/alissonpdc/Documents/GitHub/macdown/.build/arm64-apple-macosx/debug/MacDown.build/MacDownApp.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/alissonpdc/Documents/GitHub/macdown/.build/arm64-apple-macosx/debug/MacDown.build/DocumentStore.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/alissonpdc/Documents/GitHub/macdown/.build/arm64-apple-macosx/debug/MacDown.build/FolderManager.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/alissonpdc/Documents/GitHub/macdown/.build/arm64-apple-macosx/debug/MacDown.build/FolderTreeNode.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/alissonpdc/Documents/GitHub/macdown/.build/arm64-apple-macosx/debug/MacDown.build/OpenDocument.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/alissonpdc/Documents/GitHub/macdown/.build/arm64-apple-macosx/debug/MacDown.build/RecentsManager.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/alissonpdc/Documents/GitHub/macdown/.build/arm64-apple-macosx/debug/MacDown.build/ThemeState.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/alissonpdc/Documents/GitHub/macdown/.build/arm64-apple-macosx/debug/MacDown.build/ContentView.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/alissonpdc/Documents/GitHub/macdown/.build/arm64-apple-macosx/debug/MacDown.build/FolderTreeItemView.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/alissonpdc/Documents/GitHub/macdown/.build/arm64-apple-macosx/debug/MacDown.build/FoldersSection.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/alissonpdc/Documents/GitHub/macdown/.build/arm64-apple-macosx/debug/MacDown.build/MarkdownView.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/alissonpdc/Documents/GitHub/macdown/.build/arm64-apple-macosx/debug/MacDown.build/RecentsSection.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/alissonpdc/Documents/GitHub/macdown/.build/arm64-apple-macosx/debug/MacDown.build/SidebarView.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/alissonpdc/Documents/GitHub/macdown/.build/arm64-apple-macosx/debug/MacDown.build/resource_bundle_accessor.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/alissonpdc/Documents/GitHub/macdown/.build/arm64-apple-macosx/debug/Modules/MacDown.swiftmodule"
+        }
+      ],
+      "prepareForIndexing" : false,
+      "sources" : [
+        "/Users/alissonpdc/Documents/GitHub/macdown/Sources/MacDown/AppDelegate.swift",
+        "/Users/alissonpdc/Documents/GitHub/macdown/Sources/MacDown/MacDownApp.swift",
+        "/Users/alissonpdc/Documents/GitHub/macdown/Sources/MacDown/Models/DocumentStore.swift",
+        "/Users/alissonpdc/Documents/GitHub/macdown/Sources/MacDown/Models/FolderManager.swift",
+        "/Users/alissonpdc/Documents/GitHub/macdown/Sources/MacDown/Models/FolderTreeNode.swift",
+        "/Users/alissonpdc/Documents/GitHub/macdown/Sources/MacDown/Models/OpenDocument.swift",
+        "/Users/alissonpdc/Documents/GitHub/macdown/Sources/MacDown/Models/RecentsManager.swift",
+        "/Users/alissonpdc/Documents/GitHub/macdown/Sources/MacDown/Theme/ThemeState.swift",
+        "/Users/alissonpdc/Documents/GitHub/macdown/Sources/MacDown/Views/ContentView.swift",
+        "/Users/alissonpdc/Documents/GitHub/macdown/Sources/MacDown/Views/FolderTreeItemView.swift",
+        "/Users/alissonpdc/Documents/GitHub/macdown/Sources/MacDown/Views/FoldersSection.swift",
+        "/Users/alissonpdc/Documents/GitHub/macdown/Sources/MacDown/Views/MarkdownView.swift",
+        "/Users/alissonpdc/Documents/GitHub/macdown/Sources/MacDown/Views/RecentsSection.swift",
+        "/Users/alissonpdc/Documents/GitHub/macdown/Sources/MacDown/Views/SidebarView.swift",
+        "/Users/alissonpdc/Documents/GitHub/macdown/.build/arm64-apple-macosx/debug/MacDown.build/DerivedSources/resource_bundle_accessor.swift"
+      ],
+      "tempsPath" : "/Users/alissonpdc/Documents/GitHub/macdown/.build/arm64-apple-macosx/debug/MacDown.build",
+      "wholeModuleOptimization" : false
+    },
+    "C.MacDownPackageTests-arm64-apple-macosx-debug.module" : {
+      "executable" : "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc",
+      "fileList" : "/Users/alissonpdc/Documents/GitHub/macdown/.build/arm64-apple-macosx/debug/MacDownPackageTests.build/sources",
+      "importPath" : "/Users/alissonpdc/Documents/GitHub/macdown/.build/arm64-apple-macosx/debug/Modules",
+      "inputs" : [
+        {
+          "kind" : "file",
+          "name" : "/Users/alissonpdc/Documents/GitHub/macdown/.build/arm64-apple-macosx/debug/MacDownPackageTests.derived/runner.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/alissonpdc/Documents/GitHub/macdown/.build/arm64-apple-macosx/debug/swift-version--58304C5D6DBC2206.txt"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/alissonpdc/Documents/GitHub/macdown/.build/arm64-apple-macosx/debug/Modules/MacDownTests.swiftmodule"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/alissonpdc/Documents/GitHub/macdown/.build/arm64-apple-macosx/debug/MacDownPackageTests.build/sources"
+        }
+      ],
+      "isLibrary" : true,
+      "moduleName" : "MacDownPackageTests",
+      "moduleOutputPath" : "/Users/alissonpdc/Documents/GitHub/macdown/.build/arm64-apple-macosx/debug/Modules/MacDownPackageTests.swiftmodule",
+      "objects" : [
+        "/Users/alissonpdc/Documents/GitHub/macdown/.build/arm64-apple-macosx/debug/MacDownPackageTests.build/runner.swift.o"
+      ],
+      "otherArguments" : [
+        "-target",
+        "arm64-apple-macosx13.0",
+        "-incremental",
+        "-enable-batch-mode",
+        "-serialize-diagnostics",
+        "-index-store-path",
+        "/Users/alissonpdc/Documents/GitHub/macdown/.build/arm64-apple-macosx/debug/index/store",
+        "-Onone",
+        "-enable-testing",
+        "-Xfrontend",
+        "-enable-cross-import-overlays",
+        "-j10",
+        "-DSWIFT_PACKAGE",
+        "-DDEBUG",
+        "-DSWIFT_MODULE_RESOURCE_BUNDLE_UNAVAILABLE",
+        "-module-cache-path",
+        "/Users/alissonpdc/Documents/GitHub/macdown/.build/arm64-apple-macosx/debug/ModuleCache",
+        "-parseable-output",
+        "-parse-as-library",
+        "-emit-objc-header",
+        "-emit-objc-header-path",
+        "/Users/alissonpdc/Documents/GitHub/macdown/.build/arm64-apple-macosx/debug/MacDownPackageTests.build/include/MacDownPackageTests-Swift.h",
+        "-color-diagnostics",
+        "-plugin-path",
+        "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/host/plugins/testing",
+        "-sdk",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.5.sdk",
+        "-F",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks",
+        "-I",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib",
+        "-L",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib",
+        "-g",
+        "-Xcc",
+        "-isysroot",
+        "-Xcc",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.5.sdk",
+        "-Xcc",
+        "-F",
+        "-Xcc",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks",
+        "-Xcc",
+        "-fPIC",
+        "-Xcc",
+        "-g",
+        "-package-name",
+        "macdown"
+      ],
+      "outputFileMapPath" : "/Users/alissonpdc/Documents/GitHub/macdown/.build/arm64-apple-macosx/debug/MacDownPackageTests.build/output-file-map.json",
+      "outputs" : [
+        {
+          "kind" : "file",
+          "name" : "/Users/alissonpdc/Documents/GitHub/macdown/.build/arm64-apple-macosx/debug/MacDownPackageTests.build/runner.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/alissonpdc/Documents/GitHub/macdown/.build/arm64-apple-macosx/debug/Modules/MacDownPackageTests.swiftmodule"
+        }
+      ],
+      "prepareForIndexing" : false,
+      "sources" : [
+        "/Users/alissonpdc/Documents/GitHub/macdown/.build/arm64-apple-macosx/debug/MacDownPackageTests.derived/runner.swift"
+      ],
+      "tempsPath" : "/Users/alissonpdc/Documents/GitHub/macdown/.build/arm64-apple-macosx/debug/MacDownPackageTests.build",
+      "wholeModuleOptimization" : false
+    },
+    "C.MacDownTests-arm64-apple-macosx-debug.module" : {
+      "executable" : "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc",
+      "fileList" : "/Users/alissonpdc/Documents/GitHub/macdown/.build/arm64-apple-macosx/debug/MacDownTests.build/sources",
+      "importPath" : "/Users/alissonpdc/Documents/GitHub/macdown/.build/arm64-apple-macosx/debug/Modules",
+      "inputs" : [
+        {
+          "kind" : "file",
+          "name" : "/Users/alissonpdc/Documents/GitHub/macdown/Tests/MacDownTests/DocumentStoreTests.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/alissonpdc/Documents/GitHub/macdown/Tests/MacDownTests/Models/FolderManagerTests.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/alissonpdc/Documents/GitHub/macdown/Tests/MacDownTests/Models/FolderTreeNodeTests.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/alissonpdc/Documents/GitHub/macdown/Tests/MacDownTests/RecentsManagerTests.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/alissonpdc/Documents/GitHub/macdown/Tests/MacDownTests/ThemeStateTests.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/alissonpdc/Documents/GitHub/macdown/.build/arm64-apple-macosx/debug/swift-version--58304C5D6DBC2206.txt"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/alissonpdc/Documents/GitHub/macdown/.build/arm64-apple-macosx/debug/MacDown"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/alissonpdc/Documents/GitHub/macdown/.build/arm64-apple-macosx/debug/MacDownTests.build/sources"
+        }
+      ],
+      "isLibrary" : true,
+      "moduleName" : "MacDownTests",
+      "moduleOutputPath" : "/Users/alissonpdc/Documents/GitHub/macdown/.build/arm64-apple-macosx/debug/Modules/MacDownTests.swiftmodule",
+      "objects" : [
+        "/Users/alissonpdc/Documents/GitHub/macdown/.build/arm64-apple-macosx/debug/MacDownTests.build/DocumentStoreTests.swift.o",
+        "/Users/alissonpdc/Documents/GitHub/macdown/.build/arm64-apple-macosx/debug/MacDownTests.build/FolderManagerTests.swift.o",
+        "/Users/alissonpdc/Documents/GitHub/macdown/.build/arm64-apple-macosx/debug/MacDownTests.build/FolderTreeNodeTests.swift.o",
+        "/Users/alissonpdc/Documents/GitHub/macdown/.build/arm64-apple-macosx/debug/MacDownTests.build/RecentsManagerTests.swift.o",
+        "/Users/alissonpdc/Documents/GitHub/macdown/.build/arm64-apple-macosx/debug/MacDownTests.build/ThemeStateTests.swift.o"
+      ],
+      "otherArguments" : [
+        "-target",
+        "arm64-apple-macosx14.0",
+        "-incremental",
+        "-enable-batch-mode",
+        "-serialize-diagnostics",
+        "-index-store-path",
+        "/Users/alissonpdc/Documents/GitHub/macdown/.build/arm64-apple-macosx/debug/index/store",
+        "-Onone",
+        "-enable-testing",
+        "-Xfrontend",
+        "-enable-cross-import-overlays",
+        "-j10",
+        "-DSWIFT_PACKAGE",
+        "-DDEBUG",
+        "-DSWIFT_MODULE_RESOURCE_BUNDLE_UNAVAILABLE",
+        "-module-cache-path",
+        "/Users/alissonpdc/Documents/GitHub/macdown/.build/arm64-apple-macosx/debug/ModuleCache",
+        "-parseable-output",
+        "-parse-as-library",
+        "-color-diagnostics",
+        "-swift-version",
+        "5",
+        "-plugin-path",
+        "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/host/plugins/testing",
+        "-sdk",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.5.sdk",
+        "-F",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks",
+        "-I",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib",
+        "-L",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib",
+        "-g",
+        "-Xcc",
+        "-isysroot",
+        "-Xcc",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.5.sdk",
+        "-Xcc",
+        "-F",
+        "-Xcc",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks",
+        "-Xcc",
+        "-fPIC",
+        "-Xcc",
+        "-g",
+        "-package-name",
+        "macdown"
+      ],
+      "outputFileMapPath" : "/Users/alissonpdc/Documents/GitHub/macdown/.build/arm64-apple-macosx/debug/MacDownTests.build/output-file-map.json",
+      "outputs" : [
+        {
+          "kind" : "file",
+          "name" : "/Users/alissonpdc/Documents/GitHub/macdown/.build/arm64-apple-macosx/debug/MacDownTests.build/DocumentStoreTests.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/alissonpdc/Documents/GitHub/macdown/.build/arm64-apple-macosx/debug/MacDownTests.build/FolderManagerTests.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/alissonpdc/Documents/GitHub/macdown/.build/arm64-apple-macosx/debug/MacDownTests.build/FolderTreeNodeTests.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/alissonpdc/Documents/GitHub/macdown/.build/arm64-apple-macosx/debug/MacDownTests.build/RecentsManagerTests.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/alissonpdc/Documents/GitHub/macdown/.build/arm64-apple-macosx/debug/MacDownTests.build/ThemeStateTests.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/alissonpdc/Documents/GitHub/macdown/.build/arm64-apple-macosx/debug/Modules/MacDownTests.swiftmodule"
+        }
+      ],
+      "prepareForIndexing" : false,
+      "sources" : [
+        "/Users/alissonpdc/Documents/GitHub/macdown/Tests/MacDownTests/DocumentStoreTests.swift",
+        "/Users/alissonpdc/Documents/GitHub/macdown/Tests/MacDownTests/Models/FolderManagerTests.swift",
+        "/Users/alissonpdc/Documents/GitHub/macdown/Tests/MacDownTests/Models/FolderTreeNodeTests.swift",
+        "/Users/alissonpdc/Documents/GitHub/macdown/Tests/MacDownTests/RecentsManagerTests.swift",
+        "/Users/alissonpdc/Documents/GitHub/macdown/Tests/MacDownTests/ThemeStateTests.swift"
+      ],
+      "tempsPath" : "/Users/alissonpdc/Documents/GitHub/macdown/.build/arm64-apple-macosx/debug/MacDownTests.build",
+      "wholeModuleOptimization" : false
+    }
+  },
+  "swiftFrontendCommands" : {
+
+  },
+  "swiftTargetScanArgs" : {
+    "MacDown" : [
+      "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc",
+      "-module-name",
+      "MacDown",
+      "-package-name",
+      "macdown",
+      "-c",
+      "/Users/alissonpdc/Documents/GitHub/macdown/Sources/MacDown/AppDelegate.swift",
+      "/Users/alissonpdc/Documents/GitHub/macdown/Sources/MacDown/MacDownApp.swift",
+      "/Users/alissonpdc/Documents/GitHub/macdown/Sources/MacDown/Models/DocumentStore.swift",
+      "/Users/alissonpdc/Documents/GitHub/macdown/Sources/MacDown/Models/FolderManager.swift",
+      "/Users/alissonpdc/Documents/GitHub/macdown/Sources/MacDown/Models/FolderTreeNode.swift",
+      "/Users/alissonpdc/Documents/GitHub/macdown/Sources/MacDown/Models/OpenDocument.swift",
+      "/Users/alissonpdc/Documents/GitHub/macdown/Sources/MacDown/Models/RecentsManager.swift",
+      "/Users/alissonpdc/Documents/GitHub/macdown/Sources/MacDown/Theme/ThemeState.swift",
+      "/Users/alissonpdc/Documents/GitHub/macdown/Sources/MacDown/Views/ContentView.swift",
+      "/Users/alissonpdc/Documents/GitHub/macdown/Sources/MacDown/Views/FolderTreeItemView.swift",
+      "/Users/alissonpdc/Documents/GitHub/macdown/Sources/MacDown/Views/FoldersSection.swift",
+      "/Users/alissonpdc/Documents/GitHub/macdown/Sources/MacDown/Views/MarkdownView.swift",
+      "/Users/alissonpdc/Documents/GitHub/macdown/Sources/MacDown/Views/RecentsSection.swift",
+      "/Users/alissonpdc/Documents/GitHub/macdown/Sources/MacDown/Views/SidebarView.swift",
+      "/Users/alissonpdc/Documents/GitHub/macdown/.build/arm64-apple-macosx/debug/MacDown.build/DerivedSources/resource_bundle_accessor.swift",
+      "-I",
+      "/Users/alissonpdc/Documents/GitHub/macdown/.build/arm64-apple-macosx/debug/Modules",
+      "-target",
+      "arm64-apple-macosx13.0",
+      "-incremental",
+      "-enable-batch-mode",
+      "-serialize-diagnostics",
+      "-index-store-path",
+      "/Users/alissonpdc/Documents/GitHub/macdown/.build/arm64-apple-macosx/debug/index/store",
+      "-Onone",
+      "-enable-testing",
+      "-j10",
+      "-DSWIFT_PACKAGE",
+      "-DDEBUG",
+      "-DSWIFT_MODULE_RESOURCE_BUNDLE_AVAILABLE",
+      "-module-cache-path",
+      "/Users/alissonpdc/Documents/GitHub/macdown/.build/arm64-apple-macosx/debug/ModuleCache",
+      "-parseable-output",
+      "-Xfrontend",
+      "-entry-point-function-name",
+      "-Xfrontend",
+      "MacDown_main",
+      "-color-diagnostics",
+      "-swift-version",
+      "5",
+      "-plugin-path",
+      "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/host/plugins/testing",
+      "-sdk",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.5.sdk",
+      "-F",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks",
+      "-I",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib",
+      "-L",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib",
+      "-g",
+      "-Xcc",
+      "-isysroot",
+      "-Xcc",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.5.sdk",
+      "-Xcc",
+      "-F",
+      "-Xcc",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks",
+      "-Xcc",
+      "-fPIC",
+      "-Xcc",
+      "-g",
+      "-package-name",
+      "macdown",
+      "-driver-use-frontend-path",
+      "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc"
+    ],
+    "MacDownPackageTests" : [
+      "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc",
+      "-module-name",
+      "MacDownPackageTests",
+      "-package-name",
+      "macdown",
+      "-c",
+      "/Users/alissonpdc/Documents/GitHub/macdown/.build/arm64-apple-macosx/debug/MacDownPackageTests.derived/runner.swift",
+      "-I",
+      "/Users/alissonpdc/Documents/GitHub/macdown/.build/arm64-apple-macosx/debug/Modules",
+      "-target",
+      "arm64-apple-macosx13.0",
+      "-incremental",
+      "-enable-batch-mode",
+      "-serialize-diagnostics",
+      "-index-store-path",
+      "/Users/alissonpdc/Documents/GitHub/macdown/.build/arm64-apple-macosx/debug/index/store",
+      "-Onone",
+      "-enable-testing",
+      "-Xfrontend",
+      "-enable-cross-import-overlays",
+      "-j10",
+      "-DSWIFT_PACKAGE",
+      "-DDEBUG",
+      "-DSWIFT_MODULE_RESOURCE_BUNDLE_UNAVAILABLE",
+      "-module-cache-path",
+      "/Users/alissonpdc/Documents/GitHub/macdown/.build/arm64-apple-macosx/debug/ModuleCache",
+      "-parseable-output",
+      "-parse-as-library",
+      "-emit-objc-header",
+      "-emit-objc-header-path",
+      "/Users/alissonpdc/Documents/GitHub/macdown/.build/arm64-apple-macosx/debug/MacDownPackageTests.build/include/MacDownPackageTests-Swift.h",
+      "-color-diagnostics",
+      "-plugin-path",
+      "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/host/plugins/testing",
+      "-sdk",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.5.sdk",
+      "-F",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks",
+      "-I",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib",
+      "-L",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib",
+      "-g",
+      "-Xcc",
+      "-isysroot",
+      "-Xcc",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.5.sdk",
+      "-Xcc",
+      "-F",
+      "-Xcc",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks",
+      "-Xcc",
+      "-fPIC",
+      "-Xcc",
+      "-g",
+      "-package-name",
+      "macdown",
+      "-driver-use-frontend-path",
+      "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc"
+    ],
+    "MacDownTests" : [
+      "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc",
+      "-module-name",
+      "MacDownTests",
+      "-package-name",
+      "macdown",
+      "-c",
+      "/Users/alissonpdc/Documents/GitHub/macdown/Tests/MacDownTests/DocumentStoreTests.swift",
+      "/Users/alissonpdc/Documents/GitHub/macdown/Tests/MacDownTests/Models/FolderManagerTests.swift",
+      "/Users/alissonpdc/Documents/GitHub/macdown/Tests/MacDownTests/Models/FolderTreeNodeTests.swift",
+      "/Users/alissonpdc/Documents/GitHub/macdown/Tests/MacDownTests/RecentsManagerTests.swift",
+      "/Users/alissonpdc/Documents/GitHub/macdown/Tests/MacDownTests/ThemeStateTests.swift",
+      "-I",
+      "/Users/alissonpdc/Documents/GitHub/macdown/.build/arm64-apple-macosx/debug/Modules",
+      "-target",
+      "arm64-apple-macosx14.0",
+      "-incremental",
+      "-enable-batch-mode",
+      "-serialize-diagnostics",
+      "-index-store-path",
+      "/Users/alissonpdc/Documents/GitHub/macdown/.build/arm64-apple-macosx/debug/index/store",
+      "-Onone",
+      "-enable-testing",
+      "-Xfrontend",
+      "-enable-cross-import-overlays",
+      "-j10",
+      "-DSWIFT_PACKAGE",
+      "-DDEBUG",
+      "-DSWIFT_MODULE_RESOURCE_BUNDLE_UNAVAILABLE",
+      "-module-cache-path",
+      "/Users/alissonpdc/Documents/GitHub/macdown/.build/arm64-apple-macosx/debug/ModuleCache",
+      "-parseable-output",
+      "-parse-as-library",
+      "-color-diagnostics",
+      "-swift-version",
+      "5",
+      "-plugin-path",
+      "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/host/plugins/testing",
+      "-sdk",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.5.sdk",
+      "-F",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks",
+      "-I",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib",
+      "-L",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib",
+      "-g",
+      "-Xcc",
+      "-isysroot",
+      "-Xcc",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.5.sdk",
+      "-Xcc",
+      "-F",
+      "-Xcc",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks",
+      "-Xcc",
+      "-fPIC",
+      "-Xcc",
+      "-g",
+      "-package-name",
+      "macdown",
+      "-driver-use-frontend-path",
+      "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc"
+    ]
+  },
+  "targetDependencyMap" : {
+    "MacDown" : [
+
+    ],
+    "MacDownPackageTests" : [
+      "MacDownTests",
+      "MacDown"
+    ],
+    "MacDownTests" : [
+      "MacDown"
+    ]
+  },
+  "testDiscoveryCommands" : {
+
+  },
+  "testEntryPointCommands" : {
+    "/Users/alissonpdc/Documents/GitHub/macdown/.build/arm64-apple-macosx/debug/MacDownPackageTests.derived/runner.swift" : {
+      "inputs" : [
+
+      ],
+      "outputs" : [
+        {
+          "kind" : "file",
+          "name" : "/Users/alissonpdc/Documents/GitHub/macdown/.build/arm64-apple-macosx/debug/MacDownPackageTests.derived/runner.swift"
+        }
+      ]
+    }
+  },
+  "traitConfiguration" : {
+    "default" : {
+
+    }
+  },
+  "writeCommands" : {
+    "/Users/alissonpdc/Documents/GitHub/macdown/.build/arm64-apple-macosx/debug/MacDown-entitlement.plist" : {
+      "alwaysOutOfDate" : false,
+      "inputs" : [
+        {
+          "kind" : "virtual",
+          "name" : "<entitlement-plist>"
+        },
+        {
+          "kind" : "virtual",
+          "name" : "<com.apple.security.get-task-allow>"
+        }
+      ],
+      "outputFilePath" : "/Users/alissonpdc/Documents/GitHub/macdown/.build/arm64-apple-macosx/debug/MacDown-entitlement.plist"
+    },
+    "/Users/alissonpdc/Documents/GitHub/macdown/.build/arm64-apple-macosx/debug/MacDown.build/sources" : {
+      "alwaysOutOfDate" : false,
+      "inputs" : [
+        {
+          "kind" : "virtual",
+          "name" : "<sources-file-list>"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/alissonpdc/Documents/GitHub/macdown/Sources/MacDown/AppDelegate.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/alissonpdc/Documents/GitHub/macdown/Sources/MacDown/MacDownApp.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/alissonpdc/Documents/GitHub/macdown/Sources/MacDown/Models/DocumentStore.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/alissonpdc/Documents/GitHub/macdown/Sources/MacDown/Models/FolderManager.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/alissonpdc/Documents/GitHub/macdown/Sources/MacDown/Models/FolderTreeNode.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/alissonpdc/Documents/GitHub/macdown/Sources/MacDown/Models/OpenDocument.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/alissonpdc/Documents/GitHub/macdown/Sources/MacDown/Models/RecentsManager.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/alissonpdc/Documents/GitHub/macdown/Sources/MacDown/Theme/ThemeState.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/alissonpdc/Documents/GitHub/macdown/Sources/MacDown/Views/ContentView.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/alissonpdc/Documents/GitHub/macdown/Sources/MacDown/Views/FolderTreeItemView.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/alissonpdc/Documents/GitHub/macdown/Sources/MacDown/Views/FoldersSection.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/alissonpdc/Documents/GitHub/macdown/Sources/MacDown/Views/MarkdownView.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/alissonpdc/Documents/GitHub/macdown/Sources/MacDown/Views/RecentsSection.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/alissonpdc/Documents/GitHub/macdown/Sources/MacDown/Views/SidebarView.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/alissonpdc/Documents/GitHub/macdown/.build/arm64-apple-macosx/debug/MacDown.build/DerivedSources/resource_bundle_accessor.swift"
+        }
+      ],
+      "outputFilePath" : "/Users/alissonpdc/Documents/GitHub/macdown/.build/arm64-apple-macosx/debug/MacDown.build/sources"
+    },
+    "/Users/alissonpdc/Documents/GitHub/macdown/.build/arm64-apple-macosx/debug/MacDown.product/Objects.LinkFileList" : {
+      "alwaysOutOfDate" : false,
+      "inputs" : [
+        {
+          "kind" : "virtual",
+          "name" : "<link-file-list>"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/alissonpdc/Documents/GitHub/macdown/.build/arm64-apple-macosx/debug/MacDown.build/AppDelegate.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/alissonpdc/Documents/GitHub/macdown/.build/arm64-apple-macosx/debug/MacDown.build/ContentView.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/alissonpdc/Documents/GitHub/macdown/.build/arm64-apple-macosx/debug/MacDown.build/DocumentStore.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/alissonpdc/Documents/GitHub/macdown/.build/arm64-apple-macosx/debug/MacDown.build/FolderManager.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/alissonpdc/Documents/GitHub/macdown/.build/arm64-apple-macosx/debug/MacDown.build/FolderTreeItemView.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/alissonpdc/Documents/GitHub/macdown/.build/arm64-apple-macosx/debug/MacDown.build/FolderTreeNode.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/alissonpdc/Documents/GitHub/macdown/.build/arm64-apple-macosx/debug/MacDown.build/FoldersSection.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/alissonpdc/Documents/GitHub/macdown/.build/arm64-apple-macosx/debug/MacDown.build/MacDownApp.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/alissonpdc/Documents/GitHub/macdown/.build/arm64-apple-macosx/debug/MacDown.build/MarkdownView.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/alissonpdc/Documents/GitHub/macdown/.build/arm64-apple-macosx/debug/MacDown.build/OpenDocument.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/alissonpdc/Documents/GitHub/macdown/.build/arm64-apple-macosx/debug/MacDown.build/RecentsManager.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/alissonpdc/Documents/GitHub/macdown/.build/arm64-apple-macosx/debug/MacDown.build/RecentsSection.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/alissonpdc/Documents/GitHub/macdown/.build/arm64-apple-macosx/debug/MacDown.build/SidebarView.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/alissonpdc/Documents/GitHub/macdown/.build/arm64-apple-macosx/debug/MacDown.build/ThemeState.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/alissonpdc/Documents/GitHub/macdown/.build/arm64-apple-macosx/debug/MacDown.build/resource_bundle_accessor.swift.o"
+        }
+      ],
+      "outputFilePath" : "/Users/alissonpdc/Documents/GitHub/macdown/.build/arm64-apple-macosx/debug/MacDown.product/Objects.LinkFileList"
+    },
+    "/Users/alissonpdc/Documents/GitHub/macdown/.build/arm64-apple-macosx/debug/MacDownPackageTests.build/sources" : {
+      "alwaysOutOfDate" : false,
+      "inputs" : [
+        {
+          "kind" : "virtual",
+          "name" : "<sources-file-list>"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/alissonpdc/Documents/GitHub/macdown/.build/arm64-apple-macosx/debug/MacDownPackageTests.derived/runner.swift"
+        }
+      ],
+      "outputFilePath" : "/Users/alissonpdc/Documents/GitHub/macdown/.build/arm64-apple-macosx/debug/MacDownPackageTests.build/sources"
+    },
+    "/Users/alissonpdc/Documents/GitHub/macdown/.build/arm64-apple-macosx/debug/MacDownPackageTests.product/Objects.LinkFileList" : {
+      "alwaysOutOfDate" : false,
+      "inputs" : [
+        {
+          "kind" : "virtual",
+          "name" : "<link-file-list>"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/alissonpdc/Documents/GitHub/macdown/.build/arm64-apple-macosx/debug/MacDown.build/AppDelegate.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/alissonpdc/Documents/GitHub/macdown/.build/arm64-apple-macosx/debug/MacDown.build/ContentView.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/alissonpdc/Documents/GitHub/macdown/.build/arm64-apple-macosx/debug/MacDown.build/DocumentStore.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/alissonpdc/Documents/GitHub/macdown/.build/arm64-apple-macosx/debug/MacDown.build/FolderManager.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/alissonpdc/Documents/GitHub/macdown/.build/arm64-apple-macosx/debug/MacDown.build/FolderTreeItemView.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/alissonpdc/Documents/GitHub/macdown/.build/arm64-apple-macosx/debug/MacDown.build/FolderTreeNode.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/alissonpdc/Documents/GitHub/macdown/.build/arm64-apple-macosx/debug/MacDown.build/FoldersSection.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/alissonpdc/Documents/GitHub/macdown/.build/arm64-apple-macosx/debug/MacDown.build/MacDownApp.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/alissonpdc/Documents/GitHub/macdown/.build/arm64-apple-macosx/debug/MacDown.build/MarkdownView.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/alissonpdc/Documents/GitHub/macdown/.build/arm64-apple-macosx/debug/MacDown.build/OpenDocument.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/alissonpdc/Documents/GitHub/macdown/.build/arm64-apple-macosx/debug/MacDown.build/RecentsManager.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/alissonpdc/Documents/GitHub/macdown/.build/arm64-apple-macosx/debug/MacDown.build/RecentsSection.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/alissonpdc/Documents/GitHub/macdown/.build/arm64-apple-macosx/debug/MacDown.build/SidebarView.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/alissonpdc/Documents/GitHub/macdown/.build/arm64-apple-macosx/debug/MacDown.build/ThemeState.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/alissonpdc/Documents/GitHub/macdown/.build/arm64-apple-macosx/debug/MacDown.build/resource_bundle_accessor.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/alissonpdc/Documents/GitHub/macdown/.build/arm64-apple-macosx/debug/MacDownPackageTests.build/runner.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/alissonpdc/Documents/GitHub/macdown/.build/arm64-apple-macosx/debug/MacDownTests.build/DocumentStoreTests.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/alissonpdc/Documents/GitHub/macdown/.build/arm64-apple-macosx/debug/MacDownTests.build/FolderManagerTests.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/alissonpdc/Documents/GitHub/macdown/.build/arm64-apple-macosx/debug/MacDownTests.build/FolderTreeNodeTests.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/alissonpdc/Documents/GitHub/macdown/.build/arm64-apple-macosx/debug/MacDownTests.build/RecentsManagerTests.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/alissonpdc/Documents/GitHub/macdown/.build/arm64-apple-macosx/debug/MacDownTests.build/ThemeStateTests.swift.o"
+        }
+      ],
+      "outputFilePath" : "/Users/alissonpdc/Documents/GitHub/macdown/.build/arm64-apple-macosx/debug/MacDownPackageTests.product/Objects.LinkFileList"
+    },
+    "/Users/alissonpdc/Documents/GitHub/macdown/.build/arm64-apple-macosx/debug/MacDownTests.build/sources" : {
+      "alwaysOutOfDate" : false,
+      "inputs" : [
+        {
+          "kind" : "virtual",
+          "name" : "<sources-file-list>"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/alissonpdc/Documents/GitHub/macdown/Tests/MacDownTests/DocumentStoreTests.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/alissonpdc/Documents/GitHub/macdown/Tests/MacDownTests/Models/FolderManagerTests.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/alissonpdc/Documents/GitHub/macdown/Tests/MacDownTests/Models/FolderTreeNodeTests.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/alissonpdc/Documents/GitHub/macdown/Tests/MacDownTests/RecentsManagerTests.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/alissonpdc/Documents/GitHub/macdown/Tests/MacDownTests/ThemeStateTests.swift"
+        }
+      ],
+      "outputFilePath" : "/Users/alissonpdc/Documents/GitHub/macdown/.build/arm64-apple-macosx/debug/MacDownTests.build/sources"
+    },
+    "/Users/alissonpdc/Documents/GitHub/macdown/.build/arm64-apple-macosx/debug/swift-version--58304C5D6DBC2206.txt" : {
+      "alwaysOutOfDate" : true,
+      "inputs" : [
+        {
+          "kind" : "virtual",
+          "name" : "<swift-get-version>"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc"
+        }
+      ],
+      "outputFilePath" : "/Users/alissonpdc/Documents/GitHub/macdown/.build/arm64-apple-macosx/debug/swift-version--58304C5D6DBC2206.txt"
+    }
+  }
+}
