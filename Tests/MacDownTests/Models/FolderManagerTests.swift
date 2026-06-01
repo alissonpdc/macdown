@@ -66,6 +66,14 @@ struct FolderManagerTests {
         let nodeID = manager.folderTrees.first?.id
 
         if let nodeID = nodeID {
+            // After import, isExpanded is true
+            #expect(manager.folderTrees.first?.isExpanded == true)
+
+            // Toggle once - should be false
+            manager.toggleFolderExpansion(nodeID)
+            #expect(manager.folderTrees.first?.isExpanded == false)
+
+            // Toggle again - should be true
             manager.toggleFolderExpansion(nodeID)
             #expect(manager.folderTrees.first?.isExpanded == true)
         }
