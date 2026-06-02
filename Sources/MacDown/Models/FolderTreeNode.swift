@@ -1,12 +1,14 @@
 import Foundation
+import Observation
 
-final class FolderTreeNode: Identifiable {
+@MainActor
+final class FolderTreeNode: Identifiable, ObservableObject {
     let id: UUID = UUID()
     let name: String
     let url: URL
     let isFolder: Bool
     var children: [FolderTreeNode] = []
-    var isExpanded: Bool = false
+    @Published var isExpanded: Bool = false
     let parentFolderPath: String
 
     init(
