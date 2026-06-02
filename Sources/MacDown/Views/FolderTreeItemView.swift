@@ -24,21 +24,35 @@ struct FolderTreeItemView: View {
 
     private var folderRow: some View {
         HStack(spacing: 6) {
-            Image(systemName: node.isExpanded ? "folder.open" : "folder")
-                .font(.system(size: 12))
-                .foregroundColor(.secondary)
-
-            Text(node.name)
-                .lineLimit(1)
-                .frame(maxWidth: .infinity, alignment: .leading)
-
-            Spacer()
-
+            // Chevron first (always visible for folders with children)
             if !node.children.isEmpty {
                 Image(systemName: "chevron.right")
                     .font(.system(size: 10, weight: .semibold))
                     .foregroundColor(.secondary)
                     .rotationEffect(.degrees(node.isExpanded ? 90 : 0))
+            } else {
+                // Placeholder space for folders without children (for alignment)
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 10, weight: .semibold))
+                    .foregroundColor(.clear)
+            }
+
+            // Folder icon second
+            Image(systemName: node.isExpanded ? "folder.open" : "folder")
+                .font(.system(size: 12))
+                .foregroundColor(.secondary)
+
+            // Name
+            Text(node.name)
+                .lineLimit(1)
+                .frame(maxWidth: .infinity, alignment: .leading)
+
+            // Path only for root folders
+            if isRootFolder {
+                Text(node.parentFolderPath)
+                    .font(.caption2)
+                    .foregroundColor(.secondary)
+                    .lineLimit(1)
             }
         }
         .contentShape(Rectangle())
@@ -46,6 +60,10 @@ struct FolderTreeItemView: View {
             folderManager.toggleFolderExpansion(node.id)
         }
         .padding(.vertical, 2)
+    }
+
+    private var isRootFolder: Bool {
+        folderManager.folderTrees.contains { $0.id == node.id }
     }
 
     private var fileRow: some View {
