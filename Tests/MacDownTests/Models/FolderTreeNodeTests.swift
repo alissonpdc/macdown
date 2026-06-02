@@ -6,6 +6,7 @@ import Foundation
 struct FolderTreeNodeTests {
 
     @Test("Create file node")
+    @MainActor
     func testCreateFileNode() {
         let url = URL(fileURLWithPath: "/tmp/test.md")
         let node = FolderTreeNode(
@@ -23,6 +24,7 @@ struct FolderTreeNodeTests {
     }
 
     @Test("Create folder node with children")
+    @MainActor
     func testCreateFolderNode() {
         let folderURL = URL(fileURLWithPath: "/tmp/docs")
         let fileURL = URL(fileURLWithPath: "/tmp/docs/file.md")
@@ -49,6 +51,7 @@ struct FolderTreeNodeTests {
     }
 
     @Test("Expansion state defaults to false")
+    @MainActor
     func testDefaultExpansion() {
         let node = FolderTreeNode(
             name: "folder",
