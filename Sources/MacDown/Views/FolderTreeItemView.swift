@@ -24,25 +24,27 @@ struct FolderTreeItemView: View {
     }
 
     private var folderRow: some View {
-        HStack(spacing: 6) {
-            // Solid disclosure triangle first, rotates when expanded.
-            // Invisible (but space-reserving) for folders without children.
-            Image(systemName: "arrowtriangle.right.fill")
-                .font(.system(size: 9))
-                .foregroundColor(node.children.isEmpty ? .clear : .secondary)
-                .rotationEffect(.degrees(node.isExpanded ? 90 : 0))
+        VStack(alignment: .leading, spacing: 2) {
+            HStack(spacing: 6) {
+                // Solid disclosure triangle first, rotates when expanded.
+                // Invisible (but space-reserving) for folders without children.
+                Image(systemName: "arrowtriangle.right.fill")
+                    .font(.system(size: 9))
+                    .foregroundColor(node.children.isEmpty ? .clear : .secondary)
+                    .rotationEffect(.degrees(node.isExpanded ? 90 : 0))
 
-            // Folder icon second (uses valid SF Symbols for both states)
-            Image(systemName: node.isExpanded ? "folder.fill" : "folder")
-                .font(.system(size: 12))
-                .foregroundColor(.secondary)
+                // Folder icon second (uses valid SF Symbols for both states)
+                Image(systemName: node.isExpanded ? "folder.fill" : "folder")
+                    .font(.system(size: 12))
+                    .foregroundColor(.secondary)
 
-            // Name
-            Text(node.name)
-                .lineLimit(1)
-                .frame(maxWidth: .infinity, alignment: .leading)
+                // Name
+                Text(node.name)
+                    .lineLimit(1)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            }
 
-            // Path only for the root folder
+            // Path on its own line below, left-aligned with the icon (root only)
             if isRoot {
                 Text(node.parentFolderPath)
                     .font(.caption2)
@@ -50,6 +52,7 @@ struct FolderTreeItemView: View {
                     .lineLimit(1)
             }
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
         .contentShape(Rectangle())
         .onTapGesture {
             folderManager.toggleFolderExpansion(node.id)
