@@ -37,7 +37,8 @@ struct ContentView: View {
             }
         }
         .onAppear {
-            searchState.onNavigate = { tab, local in
+            searchState.onNavigate = { [weak searchState] tab, local in
+                guard let searchState else { return }
                 if store.activeIndex != tab { store.activeIndex = tab }
                 guard store.documents.indices.contains(tab) else { return }
                 let id = store.documents[tab].id
