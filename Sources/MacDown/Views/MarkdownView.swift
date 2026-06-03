@@ -20,9 +20,11 @@ struct MarkdownView: NSViewRepresentable {
     }
 
     func updateNSView(_ webView: WKWebView, context: Context) {
-        context.coordinator.documentID = documentID
-        context.coordinator.searchState = searchState
-        searchState.register(context.coordinator, for: documentID)
+        if context.coordinator.documentID != documentID {
+            context.coordinator.documentID = documentID
+            context.coordinator.searchState = searchState
+            searchState.register(context.coordinator, for: documentID)
+        }
         context.coordinator.pendingContent = content
         context.coordinator.pendingTheme = resolvedTheme
         if !webView.isLoading {
@@ -89,7 +91,10 @@ struct MarkdownView: NSViewRepresentable {
             let js = "searchHighlight(\(encodeJS(query)))"
             return await withCheckedContinuation { continuation in
                 webView.evaluateJavaScript(js) { result, _ in
-                    continuation.resume(returning: (result as? Int) ?? 0)
+                    // WKWebView bridges JS numbers to NSNumber (double-backed),
+                    // so cast through NSNumber rather than directly to Int.
+                    let count = (result as? NSNumber)?.intValue ?? 0
+                    continuation.resume(returning: count)
                 }
             }
         }
