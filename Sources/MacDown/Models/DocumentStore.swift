@@ -60,6 +60,19 @@ final class DocumentStore: ObservableObject {
         }
     }
 
+    /// Reorders an open document, preserving which document is active.
+    /// `destination` is the target slot index in the current array.
+    func move(from source: Int, to destination: Int) {
+        guard documents.indices.contains(source), source != destination else { return }
+        let activeID = activeDocument?.id
+        let doc = documents.remove(at: source)
+        let insertIndex = min(max(destination, 0), documents.count)
+        documents.insert(doc, at: insertIndex)
+        if let activeID, let newActive = documents.firstIndex(where: { $0.id == activeID }) {
+            activeIndex = newActive
+        }
+    }
+
     func clearRecents() {
         recentsManager.clear()
     }
