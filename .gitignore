@@ -1,0 +1,15 @@
+# Swift Package Manager
+/.build/
+.swiftpm/
+Package.resolved
+
+# App empacotado (gerado por `make build`)
+/MacDown.app/
+
+# macOS
+.DS_Store
+
+# Xcode (caso seja aberto no Xcode)
+*.xcuserstate
+xcuserdata/
+DerivedData/
