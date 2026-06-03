@@ -46,6 +46,7 @@ struct ContentView: View {
                         Button("") { closeActiveTab() }
                             .keyboardShortcut("w", modifiers: .command)
                             .hidden()
+                            .accessibilityHidden(true)
                     }
                 }
             )
