@@ -54,6 +54,9 @@ struct ContentView: View {
                 runSearchPass()
             }
         }
+        .onChange(of: theme.current) { _ in
+            if searchState.isVisible { runSearchPass() }
+        }
         .onReceive(NotificationCenter.default.publisher(for: .activateFindCurrentFile)) { _ in
             searchState.activate(mode: .currentFile)
             runSearchPass()

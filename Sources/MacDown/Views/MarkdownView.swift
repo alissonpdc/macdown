@@ -25,10 +25,17 @@ struct MarkdownView: NSViewRepresentable {
             context.coordinator.searchState = searchState
             searchState.register(context.coordinator, for: documentID)
         }
-        context.coordinator.pendingContent = content
-        context.coordinator.pendingTheme = resolvedTheme
-        if !webView.isLoading {
-            context.coordinator.flush()
+        // Only (re)render when content or theme actually changed. render() rebuilds
+        // #content.innerHTML, which would destroy the search <mark> highlights injected
+        // by searchHighlight(); frequent search-state-driven updates must not do that.
+        let theme = resolvedTheme
+        if context.coordinator.lastRenderedContent != content
+            || context.coordinator.lastRenderedTheme != theme {
+            context.coordinator.pendingContent = content
+            context.coordinator.pendingTheme = theme
+            if !webView.isLoading {
+                context.coordinator.flush()
+            }
         }
     }
 
@@ -63,6 +70,8 @@ struct MarkdownView: NSViewRepresentable {
         var documentID: UUID?
         var pendingContent: String?
         var pendingTheme: String?
+        var lastRenderedContent: String?
+        var lastRenderedTheme: String?
 
         func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
             flush()
@@ -75,6 +84,8 @@ struct MarkdownView: NSViewRepresentable {
             let jsonData = (try? JSONEncoder().encode(content)) ?? Data()
             let jsonString = String(data: jsonData, encoding: .utf8) ?? "\"\""
             webView.evaluateJavaScript("render(\(jsonString), '\(theme)')", completionHandler: nil)
+            lastRenderedContent = content
+            lastRenderedTheme = theme
             pendingContent = nil
             pendingTheme = nil
         }
