@@ -1,6 +1,11 @@
 import SwiftUI
 import CoreServices
 
+extension Notification.Name {
+    static let activateFindCurrentFile = Notification.Name("ActivateFindCurrentFile")
+    static let activateFindAllTabs = Notification.Name("ActivateFindAllTabs")
+}
+
 @main
 struct MacDownApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
@@ -22,22 +27,40 @@ struct MacDownApp: App {
         }
         .commands {
             CommandGroup(replacing: .newItem) {
-                Button("Abrir arquivo…") {
-                    presentOpenPanel()
-                }
-                .keyboardShortcut("o", modifiers: .command)
+                Menu {
+                    Button("Abrir arquivo…") {
+                        presentOpenPanel()
+                    }
+                    .keyboardShortcut("o", modifiers: .command)
 
-                Divider()
+                    Button("Adicionar pasta ao Workspace") {
+                        addFolderToWorkspace()
+                    }
+                    .keyboardShortcut("o", modifiers: [.command, .shift])
 
-                Button("Adicionar pasta ao Workspace") {
-                    addFolderToWorkspace()
+                    Button("Abrir pasta") {
+                        openNewWindowWithFolder()
+                    }
+                    .keyboardShortcut("n", modifiers: [.command, .shift])
+                } label: {
+                    Label("Open", systemImage: "folder")
                 }
-                .keyboardShortcut("o", modifiers: [.command, .shift])
+            }
 
-                Button("Abrir pasta") {
-                    openNewWindowWithFolder()
+            CommandGroup(after: .textEditing) {
+                Menu {
+                    Button("Buscar no arquivo") {
+                        NotificationCenter.default.post(name: .activateFindCurrentFile, object: nil)
+                    }
+                    .keyboardShortcut("f", modifiers: .command)
+
+                    Button("Buscar em todas as abas") {
+                        NotificationCenter.default.post(name: .activateFindAllTabs, object: nil)
+                    }
+                    .keyboardShortcut("f", modifiers: [.command, .shift])
+                } label: {
+                    Label("Find", systemImage: "magnifyingglass")
                 }
-                .keyboardShortcut("n", modifiers: [.command, .shift])
             }
         }
     }
