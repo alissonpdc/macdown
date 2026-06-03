@@ -4,20 +4,35 @@ import WebKit
 struct MarkdownView: NSViewRepresentable {
     let content: String
     let theme: AppTheme
+    let documentID: UUID
+
+    @EnvironmentObject var searchState: SearchState
 
     func makeNSView(context: Context) -> WKWebView {
         let webView = WKWebView()
         webView.navigationDelegate = context.coordinator
         context.coordinator.webView = webView
+        context.coordinator.documentID = documentID
+        context.coordinator.searchState = searchState
+        searchState.register(context.coordinator, for: documentID)
         loadRendererPage(in: webView)
         return webView
     }
 
     func updateNSView(_ webView: WKWebView, context: Context) {
+        context.coordinator.documentID = documentID
+        context.coordinator.searchState = searchState
+        searchState.register(context.coordinator, for: documentID)
         context.coordinator.pendingContent = content
         context.coordinator.pendingTheme = resolvedTheme
         if !webView.isLoading {
             context.coordinator.flush()
+        }
+    }
+
+    static func dismantleNSView(_ nsView: WKWebView, coordinator: Coordinator) {
+        if let id = coordinator.documentID {
+            coordinator.searchState?.unregister(for: id)
         }
     }
 
@@ -40,8 +55,10 @@ struct MarkdownView: NSViewRepresentable {
         webView.loadFileURL(url, allowingReadAccessTo: url.deletingLastPathComponent())
     }
 
-    final class Coordinator: NSObject, WKNavigationDelegate {
+    final class Coordinator: NSObject, WKNavigationDelegate, DocumentSearchController {
         weak var webView: WKWebView?
+        weak var searchState: SearchState?
+        var documentID: UUID?
         var pendingContent: String?
         var pendingTheme: String?
 
@@ -58,6 +75,41 @@ struct MarkdownView: NSViewRepresentable {
             webView.evaluateJavaScript("render(\(jsonString), '\(theme)')", completionHandler: nil)
             pendingContent = nil
             pendingTheme = nil
+        }
+
+        // MARK: - DocumentSearchController
+
+        private func encodeJS(_ string: String) -> String {
+            let data = (try? JSONEncoder().encode(string)) ?? Data()
+            return String(data: data, encoding: .utf8) ?? "\"\""
+        }
+
+        func highlight(_ query: String) async -> Int {
+            guard let webView else { return 0 }
+            let js = "searchHighlight(\(encodeJS(query)))"
+            return await withCheckedContinuation { continuation in
+                webView.evaluateJavaScript(js) { result, _ in
+                    continuation.resume(returning: (result as? Int) ?? 0)
+                }
+            }
+        }
+
+        func goToMatch(_ index: Int) async {
+            guard let webView else { return }
+            await withCheckedContinuation { continuation in
+                webView.evaluateJavaScript("goToMatch(\(index))") { _, _ in
+                    continuation.resume()
+                }
+            }
+        }
+
+        func clearSearch() async {
+            guard let webView else { return }
+            await withCheckedContinuation { continuation in
+                webView.evaluateJavaScript("clearSearch()") { _, _ in
+                    continuation.resume()
+                }
+            }
         }
     }
 }
