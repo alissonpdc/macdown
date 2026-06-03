@@ -15,6 +15,11 @@ struct ContentView: View {
                 .environmentObject(folderManager)
         } detail: {
             VStack(spacing: 0) {
+                if !store.documents.isEmpty {
+                    TabBarView()
+                    Divider()
+                }
+
                 if searchState.isVisible {
                     FindBarView()
                         .environmentObject(searchState)
@@ -24,17 +29,26 @@ struct ContentView: View {
                 if store.documents.isEmpty {
                     emptyState
                 } else {
-                    TabView(selection: $store.activeIndex) {
-                        ForEach(Array(store.documents.enumerated()), id: \.offset) { index, doc in
+                    ZStack {
+                        ForEach(Array(store.documents.enumerated()), id: \.element.id) { index, doc in
                             MarkdownView(content: doc.content, theme: theme.current, documentID: doc.id)
                                 .environmentObject(searchState)
-                                .tabItem { Text(doc.title) }
-                                .tag(index)
+                                .opacity(index == store.activeIndex ? 1 : 0)
+                                .allowsHitTesting(index == store.activeIndex)
+                                .zIndex(index == store.activeIndex ? 1 : 0)
                         }
                     }
-                    .tabViewStyle(.automatic)
                 }
             }
+            .background(
+                Group {
+                    if !store.documents.isEmpty {
+                        Button("") { closeActiveTab() }
+                            .keyboardShortcut("w", modifiers: .command)
+                            .hidden()
+                    }
+                }
+            )
         }
         .onAppear {
             searchState.onNavigate = { [weak searchState] tab, local in
@@ -74,6 +88,11 @@ struct ContentView: View {
 
     private func runSearchPass() {
         Task { await performSearch() }
+    }
+
+    private func closeActiveTab() {
+        guard !store.documents.isEmpty else { return }
+        store.close(at: store.activeIndex)
     }
 
     @MainActor
