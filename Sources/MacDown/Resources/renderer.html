@@ -14,6 +14,15 @@
     line-height: 1.6;
   }
   #content { max-width: 860px; margin: 0 auto; }
+  mark.md-search {
+    background: #ffe58f;
+    color: inherit;
+    border-radius: 2px;
+    padding: 0 1px;
+  }
+  mark.md-search.current {
+    background: #ff9d00;
+  }
 </style>
 <script src="marked.min.js"></script>
 <script src="highlight.min.js"></script>
@@ -33,6 +42,77 @@
   function render(markdown, theme) {
     document.getElementById('theme-css').href = 'themes/github-' + theme + '.css';
     document.getElementById('content').innerHTML = marked.parse(markdown);
+  }
+
+  var __searchMatches = [];
+  var __currentMatch = -1;
+
+  function clearSearch() {
+    __searchMatches = [];
+    __currentMatch = -1;
+    var marks = document.querySelectorAll('mark.md-search');
+    for (var i = 0; i < marks.length; i++) {
+      var m = marks[i];
+      var parent = m.parentNode;
+      if (!parent) continue;
+      parent.replaceChild(document.createTextNode(m.textContent), m);
+      parent.normalize();
+    }
+  }
+
+  function searchHighlight(query) {
+    clearSearch();
+    if (!query) { return 0; }
+    var content = document.getElementById('content');
+    var needle = query.toLowerCase();
+    var walker = document.createTreeWalker(content, NodeFilter.SHOW_TEXT, null, false);
+    var textNodes = [];
+    var node;
+    while ((node = walker.nextNode())) {
+      var p = node.parentNode;
+      if (p && p.nodeName !== 'SCRIPT' && p.nodeName !== 'STYLE' && p.nodeName !== 'MARK') {
+        textNodes.push(node);
+      }
+    }
+    for (var i = 0; i < textNodes.length; i++) {
+      var tn = textNodes[i];
+      var text = tn.nodeValue;
+      var lower = text.toLowerCase();
+      var idx = lower.indexOf(needle);
+      if (idx === -1) { continue; }
+      var frag = document.createDocumentFragment();
+      var pos = 0;
+      while (idx !== -1) {
+        if (idx > pos) {
+          frag.appendChild(document.createTextNode(text.slice(pos, idx)));
+        }
+        var mark = document.createElement('mark');
+        mark.className = 'md-search';
+        mark.textContent = text.slice(idx, idx + needle.length);
+        frag.appendChild(mark);
+        __searchMatches.push(mark);
+        pos = idx + needle.length;
+        idx = lower.indexOf(needle, pos);
+      }
+      if (pos < text.length) {
+        frag.appendChild(document.createTextNode(text.slice(pos)));
+      }
+      if (tn.parentNode) {
+        tn.parentNode.replaceChild(frag, tn);
+      }
+    }
+    return __searchMatches.length;
+  }
+
+  function goToMatch(index) {
+    if (index < 0 || index >= __searchMatches.length) { return; }
+    if (__currentMatch >= 0 && __currentMatch < __searchMatches.length) {
+      __searchMatches[__currentMatch].classList.remove('current');
+    }
+    __currentMatch = index;
+    var el = __searchMatches[index];
+    el.classList.add('current');
+    el.scrollIntoView({ block: 'center', behavior: 'smooth' });
   }
 </script>
 </head>
