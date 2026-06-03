@@ -63,6 +63,11 @@ struct MacDownApp: App {
                 }
             }
         }
+
+        Settings {
+            SettingsView()
+                .environmentObject(ThemeState.shared)
+        }
     }
 
     private func askToSetAsDefaultApp() {
