@@ -1,7 +1,8 @@
 import SwiftUI
 
 struct FolderTreeItemView: View {
-    let node: FolderTreeNode
+    @ObservedObject var node: FolderTreeNode
+    var isRoot: Bool = false
     @EnvironmentObject var folderManager: FolderManager
     @EnvironmentObject var store: DocumentStore
 
@@ -24,21 +25,15 @@ struct FolderTreeItemView: View {
 
     private var folderRow: some View {
         HStack(spacing: 6) {
-            // Chevron first (always visible for folders with children)
-            if !node.children.isEmpty {
-                Image(systemName: "chevron.right")
-                    .font(.system(size: 10, weight: .semibold))
-                    .foregroundColor(.secondary)
-                    .rotationEffect(.degrees(node.isExpanded ? 90 : 0))
-            } else {
-                // Placeholder space for folders without children (for alignment)
-                Image(systemName: "chevron.right")
-                    .font(.system(size: 10, weight: .semibold))
-                    .foregroundColor(.clear)
-            }
+            // Solid disclosure triangle first, rotates when expanded.
+            // Invisible (but space-reserving) for folders without children.
+            Image(systemName: "arrowtriangle.right.fill")
+                .font(.system(size: 9))
+                .foregroundColor(node.children.isEmpty ? .clear : .secondary)
+                .rotationEffect(.degrees(node.isExpanded ? 90 : 0))
 
-            // Folder icon second
-            Image(systemName: node.isExpanded ? "folder.open" : "folder")
+            // Folder icon second (uses valid SF Symbols for both states)
+            Image(systemName: node.isExpanded ? "folder.fill" : "folder")
                 .font(.system(size: 12))
                 .foregroundColor(.secondary)
 
@@ -47,8 +42,8 @@ struct FolderTreeItemView: View {
                 .lineLimit(1)
                 .frame(maxWidth: .infinity, alignment: .leading)
 
-            // Path only for root folders
-            if isRootFolder {
+            // Path only for the root folder
+            if isRoot {
                 Text(node.parentFolderPath)
                     .font(.caption2)
                     .foregroundColor(.secondary)
@@ -62,38 +57,24 @@ struct FolderTreeItemView: View {
         .padding(.vertical, 2)
     }
 
-    private var isRootFolder: Bool {
-        folderManager.folderTrees.contains { $0.id == node.id }
-    }
-
     private var fileRow: some View {
         HStack(spacing: 6) {
             Image(systemName: "doc.text")
                 .font(.system(size: 12))
                 .foregroundColor(.secondary)
 
-            VStack(alignment: .leading, spacing: 2) {
-                Text(node.name)
-                    .lineLimit(1)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-
-                Text(node.parentFolderPath)
-                    .font(.caption2)
-                    .foregroundColor(.secondary)
-                    .lineLimit(1)
-            }
+            Text(node.name)
+                .lineLimit(1)
+                .frame(maxWidth: .infinity, alignment: .leading)
 
             Spacer()
         }
         .contentShape(Rectangle())
-        .onTapGesture(count: 1) {
-            openFile(node.url)
-        }
         .onTapGesture(count: 2) {
             openFileInNewTab(node.url)
         }
         .onTapGesture {
-            openContextMenu()
+            openFile(node.url)
         }
         .padding(.vertical, 2)
         .contextMenu {
@@ -109,9 +90,5 @@ struct FolderTreeItemView: View {
 
     private func openFileInNewTab(_ url: URL) {
         try? store.openInNewTab(url)
-    }
-
-    private func openContextMenu() {
-        // Context menu is handled by .contextMenu modifier
     }
 }
