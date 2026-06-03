@@ -6,6 +6,7 @@ struct ContentView: View {
     @EnvironmentObject var theme: ThemeState
 
     @StateObject private var folderManager = FolderManager()
+    @StateObject private var searchState = SearchState()
 
     var body: some View {
         NavigationSplitView {
@@ -13,40 +14,82 @@ struct ContentView: View {
                 .environmentObject(store.recentsManager)
                 .environmentObject(folderManager)
         } detail: {
-            if store.documents.isEmpty {
-                emptyState
-            } else {
-                TabView(selection: $store.activeIndex) {
-                    ForEach(Array(store.documents.enumerated()), id: \.offset) { index, doc in
-                        MarkdownView(content: doc.content, theme: theme.current)
-                            .tabItem { Text(doc.title) }
-                            .tag(index)
-                    }
+            VStack(spacing: 0) {
+                if searchState.isVisible {
+                    FindBarView()
+                        .environmentObject(searchState)
+                    Divider()
                 }
-                .tabViewStyle(.automatic)
+
+                if store.documents.isEmpty {
+                    emptyState
+                } else {
+                    TabView(selection: $store.activeIndex) {
+                        ForEach(Array(store.documents.enumerated()), id: \.offset) { index, doc in
+                            MarkdownView(content: doc.content, theme: theme.current, documentID: doc.id)
+                                .environmentObject(searchState)
+                                .tabItem { Text(doc.title) }
+                                .tag(index)
+                        }
+                    }
+                    .tabViewStyle(.automatic)
+                }
             }
         }
-        .toolbar {
-            ToolbarItemGroup(placement: .navigation) {
-                Button("Abrir") { openFile() }
-                Button("Salvar") {}
-                    .disabled(true)
-            }
-            ToolbarItem(placement: .automatic) {
-                Picker("Tema", selection: $theme.current) {
-                    Text("Claro").tag(AppTheme.light)
-                    Text("Escuro").tag(AppTheme.dark)
-                    Text("Sistema").tag(AppTheme.system)
+        .onAppear {
+            searchState.onNavigate = { tab, local in
+                if store.activeIndex != tab { store.activeIndex = tab }
+                guard store.documents.indices.contains(tab) else { return }
+                let id = store.documents[tab].id
+                if let controller = searchState.controllers[id] {
+                    Task { await controller.goToMatch(local) }
                 }
-                .pickerStyle(.segmented)
-                .frame(width: 200)
             }
+        }
+        .onChange(of: searchState.query) { _ in runSearchPass() }
+        .onChange(of: searchState.mode) { _ in runSearchPass() }
+        .onChange(of: store.activeIndex) { _ in
+            if searchState.isVisible && searchState.mode == .currentFile {
+                runSearchPass()
+            }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .activateFindCurrentFile)) { _ in
+            searchState.activate(mode: .currentFile)
+            runSearchPass()
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .activateFindAllTabs)) { _ in
+            searchState.activate(mode: .allTabs)
+            runSearchPass()
         }
         .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("ImportFolderToWorkspace"))) { notification in
             if let url = notification.userInfo?["folderURL"] as? URL {
                 try? folderManager.importFolder(url)
             }
         }
+    }
+
+    private func runSearchPass() {
+        Task { await performSearch() }
+    }
+
+    @MainActor
+    private func performSearch() async {
+        let docs = store.documents
+        let query = searchState.query
+        let activeIndex = store.activeIndex
+        var counts = [Int](repeating: 0, count: docs.count)
+
+        for (i, doc) in docs.enumerated() {
+            guard let controller = searchState.controllers[doc.id] else { continue }
+            if query.isEmpty {
+                await controller.clearSearch()
+            } else if searchState.mode == .allTabs || i == activeIndex {
+                counts[i] = await controller.highlight(query)
+            } else {
+                await controller.clearSearch()
+            }
+        }
+        searchState.updateCounts(counts)
     }
 
     private var emptyState: some View {
