@@ -56,10 +56,6 @@ final class FolderManager: ObservableObject {
         for tree in folderTrees {
             collapseAllNodes(tree)
         }
-        // Keep root expanded
-        for tree in folderTrees {
-            tree.isExpanded = true
-        }
     }
 
     func setFilter(_ text: String) {
@@ -101,7 +97,10 @@ final class FolderManager: ObservableObject {
 
             if resourceValues.isDirectory == true {
                 let childNode = try buildFolderTree(url: item, isRoot: false)
-                node.children.append(childNode)
+                // Skip folders that contain no .md files anywhere in their subtree
+                if hasMarkdownDescendant(childNode) {
+                    node.children.append(childNode)
+                }
             } else if item.pathExtension == "md" || item.pathExtension == "markdown" {
                 let fileName = item.lastPathComponent
                 let filePath = item.deletingLastPathComponent().path
@@ -116,6 +115,18 @@ final class FolderManager: ObservableObject {
         }
 
         return node
+    }
+
+    private func hasMarkdownDescendant(_ node: FolderTreeNode) -> Bool {
+        for child in node.children {
+            if !child.isFolder {
+                return true
+            }
+            if hasMarkdownDescendant(child) {
+                return true
+            }
+        }
+        return false
     }
 
     private func expandFirstLevel(_ node: FolderTreeNode) {
