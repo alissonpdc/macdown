@@ -64,7 +64,7 @@ struct FoldersSection: View {
             } else {
                 VStack(alignment: .leading, spacing: 0) {
                     ForEach(folderManager.folderTrees, id: \.id) { root in
-                        FolderTreeItemView(node: root)
+                        FolderTreeItemView(node: root, isRoot: true)
                             .padding(.horizontal, 8)
                             .padding(.vertical, 4)
                     }
