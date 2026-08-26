@@ -78,7 +78,7 @@ struct FrontmatterCard: View {
 }
 
 struct BlockView: View {
-    let block: BlockNode
+    let block: any BlockNode
     var onOpenLink: (URL) -> Void = { _ in }
     var linkBaseURL: URL = URL(fileURLWithPath: "/")
 

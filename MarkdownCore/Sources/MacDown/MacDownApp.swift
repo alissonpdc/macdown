@@ -34,7 +34,7 @@ struct MacDownApp: App {
             ContentView(initialURL: initialURL)
                 .environmentObject(theme)
                 .onAppear { appDelegate.apply(theme) }
-                .onChange(of: theme.current) { _ in appDelegate.apply(theme) }
+                .onChange(of: theme.current) { appDelegate.apply(theme) }
         }
         .commands {
             // R7.1 — Cmd+W fecha aba; Cmd+←/→ mudam de aba
