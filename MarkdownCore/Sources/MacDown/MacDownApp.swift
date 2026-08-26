@@ -4,7 +4,7 @@ import MarkdownCore
 @main
 struct MacDownApp: App {
     @State private var initialURL: URL?
-    @NSApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
+    @StateObject private var theme = ThemeStore()
 
     init() {
         _initialURL = State(initialValue: LaunchArgs.fileURL())
@@ -13,16 +13,21 @@ struct MacDownApp: App {
     var body: some Scene {
         WindowGroup {
             ContentView(initialURL: initialURL)
+                .environmentObject(theme)
+                .preferredColorScheme(theme.current.colorScheme)
         }
-        .defaultSize(width: 900, height: 640)
-    }
-}
-
-/// Executável SPM não tem bundle .app: sem isso o macOS mantém o processo
-/// como agente de fundo (sem Dock, sem trazer a janela à frente).
-final class AppDelegate: NSObject, NSApplicationDelegate {
-    func applicationDidFinishLaunching(_ notification: Notification) {
-        NSApp.setActivationPolicy(.regular)
-        NSApp.activate(ignoringOtherApps: true)
+        .commands {
+            CommandGroup(after: .windowArrangement) {
+                Picker("Aparência", selection: Binding(
+                    get: { theme.current },
+                    set: { theme.set($0) }
+                )) {
+                    Text("Sistema").tag(AppearanceMode.system)
+                    Text("Claro").tag(AppearanceMode.light)
+                    Text("Escuro").tag(AppearanceMode.dark)
+                }
+                .pickerStyle(.inline)
+            }
+        }
     }
 }
