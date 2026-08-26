@@ -14,7 +14,7 @@ public struct ReaderTab: Identifiable, Equatable {
     }
 
     public var title: String {
-        document.url.deletingPathExtension().lastPathComponent
+        DisplayName.file(document.url)
     }
 }
 

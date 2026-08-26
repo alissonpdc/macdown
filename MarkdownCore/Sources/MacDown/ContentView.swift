@@ -59,6 +59,12 @@ struct ContentView: View {
         .onReceive(NotificationCenter.default.publisher(for: .macDownOpenFolder)) { note in
             if let url = note.object as? URL { loadFolder(url) }
         }
+        .onReceive(NotificationCenter.default.publisher(for: .macDownOpenFile)) { _ in
+            openViaPanel()
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .macDownOpenFolderPanel)) { _ in
+            openFolderViaPanel()
+        }
         .onReceive(NotificationCenter.default.publisher(for: .macDownNextTab)) { _ in
             tabStore.selectNext()
         }
@@ -114,5 +120,13 @@ struct ContentView: View {
         guard let id = tabStore.activeTabID else { return }
         // abrir arquivo existente apenas foca a aba; visita nova entra no histórico
         tabStore.recordVisit(url.path, in: id)
+    }
+
+    private func openFolderViaPanel() {
+        let panel = NSOpenPanel()
+        panel.canChooseDirectories = true
+        panel.canChooseFiles = false
+        guard panel.runModal() == .OK, let url = panel.url else { return }
+        loadFolder(url)
     }
 }
