@@ -70,19 +70,78 @@ struct ReaderTabView: View {
         } else if let fm = doc.frontmatter, !fm.fields.isEmpty {
             FrontmatterCard(fields: fm.fields)
         }
-        ForEach(Array(doc.document.blocks.enumerated()), id: \.offset) { index, block in
-            // R13.1 — destaque verde-suave em blocos adicionados/modificados
-            if let status = statuses?[index], status != .unchanged {
-                BlockView(block: block, onOpenLink: onOpenLink, linkBaseURL: doc.url)
-                    .padding(8)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .background(
-                        status == .strong ? Color.green.opacity(0.25) : Color.green.opacity(0.10),
-                        in: RoundedRectangle(cornerRadius: 6)
-                    )
-            } else {
-                BlockView(block: block, onOpenLink: onOpenLink, linkBaseURL: doc.url)
+        let rows = displayRows(doc, statuses: statuses)
+        ForEach(rows) { row in
+            switch row.content {
+            case .block(let block):
+                // R13.1 — destaque verde-suave em blocos adicionados/modificados
+                if let status = row.status, status != .unchanged {
+                    BlockView(block: block, onOpenLink: onOpenLink, linkBaseURL: doc.url)
+                        .padding(8)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .background(
+                            status == .strong ? Color.green.opacity(0.25) : Color.green.opacity(0.10),
+                            in: RoundedRectangle(cornerRadius: 6)
+                        )
+                } else {
+                    BlockView(block: block, onOpenLink: onOpenLink, linkBaseURL: doc.url)
+                }
+            case .removed(let texts):
+                // R13.1 — blocos removidos do baseline aparecem esmaecidos com −
+                VStack(alignment: .leading, spacing: 2) {
+                    ForEach(texts, id: \.self) { text in
+                        Text("− " + text)
+                            .strikethrough()
+                            .font(.callout)
+                    }
+                }
+                .foregroundStyle(.secondary)
+                .padding(8)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background(Color.red.opacity(0.08), in: RoundedRectangle(cornerRadius: 6))
             }
+        }
+    }
+
+    /// Intercala os blocos atuais com as remoções nas posições corretas.
+    private func displayRows(_ doc: OpenDocument,
+                             statuses: [BlockDiffer.Status]?) -> [DisplayRow] {
+        var rows: [DisplayRow] = []
+        var nextRemoval = 0
+        let removals = statuses != nil ? (store.tabs.first { $0.id == tabID }?.diffResult?.removals ?? []) : []
+
+        func appendRemoved(_ r: BlockDiffer.Removal) {
+            rows.append(DisplayRow(content: .removed(r.texts), status: nil))
+            nextRemoval += 1
+        }
+
+        for (index, block) in doc.document.blocks.enumerated() {
+            while nextRemoval < removals.count && removals[nextRemoval].insertAt <= index {
+                appendRemoved(removals[nextRemoval])
+            }
+            rows.append(DisplayRow(content: .block(block),
+                                   status: statuses?[index]))
+        }
+        while nextRemoval < removals.count {
+            appendRemoved(removals[nextRemoval])
+        }
+        return rows
+    }
+}
+
+/// Linha de renderização: bloco atual ou conteúdo removido do baseline (visão Diff).
+private struct DisplayRow: Identifiable {
+    enum Content {
+        case block(any BlockNode)
+        case removed([String])
+    }
+
+    let content: Content
+    let status: BlockDiffer.Status?
+    var id: String {
+        switch content {
+        case .block(let b): return "b-\(ObjectIdentifier(b as AnyObject).hashValue)-\(String(describing: type(of: b)))"
+        case .removed(let t): return "r-" + t.joined(separator: "|")
         }
     }
 }

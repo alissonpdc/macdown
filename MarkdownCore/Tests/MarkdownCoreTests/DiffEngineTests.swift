@@ -64,6 +64,51 @@ final class DiffEngineTests: XCTestCase {
         XCTAssertEqual(result.removedCount, 1)
     }
 
+    // MARK: R13.1 — remoções reportadas para renderização
+
+    func testRemovedMiddleBlockIsReportedBetweenNeighbors() {
+        let result = BlockDiffer.diff(
+            baseline: doc([p("a"), p("b"), p("c")]),
+            updated: doc([p("a"), p("c")])
+        )
+        XCTAssertEqual(result.removals.count, 1)
+        XCTAssertEqual(result.removals[0].insertAt, 1)
+        XCTAssertEqual(result.removals[0].texts, ["b"])
+    }
+
+    func testRemovedTailIsReportedAtEnd() {
+        let result = BlockDiffer.diff(baseline: doc([p("a"), p("b")]), updated: doc([p("a")]))
+        XCTAssertEqual(result.removals, [.init(insertAt: 1, texts: ["b"])])
+    }
+
+    func testRemovedHeadIsReportedAtStart() {
+        let result = BlockDiffer.diff(baseline: doc([p("a"), p("b")]), updated: doc([p("b")]))
+        XCTAssertEqual(result.removals, [.init(insertAt: 0, texts: ["a"])])
+    }
+
+    func testConsecutiveRemovedBlocksAreGrouped() {
+        let result = BlockDiffer.diff(
+            baseline: doc([p("a"), p("b"), p("c"), p("d")]),
+            updated: doc([p("a"), p("d")])
+        )
+        XCTAssertEqual(result.removals, [.init(insertAt: 1, texts: ["b", "c"])])
+    }
+
+    func testNoRemovalsWhenNothingDisappears() {
+        let result = BlockDiffer.diff(baseline: doc([p("a")]), updated: doc([p("a"), p("x")]))
+        XCTAssertTrue(result.removals.isEmpty)
+    }
+
+    func testPlainTextOfBlockKinds() {
+        XCTAssertEqual(BlockDiffer.plainText(of: h("Título")), "Título")
+        XCTAssertEqual(BlockDiffer.plainText(of: p("texto")), "texto")
+        XCTAssertEqual(BlockDiffer.plainText(of: ListNode(items: ["um", "dois"], isTaskList: false)),
+                       "- um\n- dois")
+        let task = TaskListItemsNode(items: [.init(isChecked: true, text: "feito"),
+                                             .init(isChecked: false, text: "falta")])
+        XCTAssertEqual(BlockDiffer.plainText(of: task), "[x] feito\n[ ] falta")
+    }
+
     // R13.2 — mudanças já presentes em rounds anteriores ficam fracas.
     func testKnownChangeIsWeak() {
         let midSig = BlockDiffer.signature(of: p("conteúdo do round 1"))
