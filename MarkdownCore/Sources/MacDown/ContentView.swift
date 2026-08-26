@@ -23,6 +23,9 @@ struct ContentView: View {
         }
         .frame(minWidth: 600, minHeight: 400)
         .onAppear(perform: openInitial)
+        .onReceive(NotificationCenter.default.publisher(for: .macDownCloseActiveTab)) { _ in
+            if let id = tabStore.activeTabID { tabStore.close(id: id) }
+        }
     }
 
     private func openInitial() {
