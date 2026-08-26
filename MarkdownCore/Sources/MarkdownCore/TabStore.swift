@@ -22,6 +22,7 @@ public struct ReaderTab: Identifiable, Equatable {
 public final class TabStore: ObservableObject {
     @Published public private(set) var tabs: [ReaderTab] = []
     @Published public var activeTabID: UUID?
+    var histories: [UUID: History] = [:]
 
     public init() {}
 
@@ -37,12 +38,15 @@ public final class TabStore: ObservableObject {
         }
         let tab = ReaderTab(document: try OpenDocument(url: url))
         tabs.append(tab)
+        histories[tab.id] = History()
+        recordVisit(url.path, in: tab.id)
         select(tab.id)
     }
 
     public func close(id: UUID) {
         guard let index = tabs.firstIndex(where: { $0.id == id }) else { return }
         tabs.remove(at: index)
+        histories.removeValue(forKey: id)
         if activeTabID == id {
             // R6.1 — vizinho herda o foco (preferindo o da esquerda)
             let next = index > 0 ? index - 1 : min(index, tabs.count - 1)
@@ -58,5 +62,43 @@ public final class TabStore: ObservableObject {
     public func setScrollOffset(_ offset: CGFloat, for id: UUID) {
         guard let i = tabs.firstIndex(where: { $0.id == id }) else { return }
         tabs[i].scrollOffset = offset
+    }
+
+    // MARK: R6.3 — histórico de navegação por aba
+
+    public func recordVisit(_ path: String, in tabID: UUID) {
+        guard histories[tabID] != nil else { return }
+        histories[tabID]?.push(path)
+    }
+
+    public func canGoBack(in tabID: UUID) -> Bool { histories[tabID]?.canGoBack ?? false }
+    public func canGoForward(in tabID: UUID) -> Bool { histories[tabID]?.canGoForward ?? false }
+
+    public func currentHistoryEntry(in tabID: UUID) -> URL? {
+        histories[tabID]?.current.map { URL(fileURLWithPath: $0) }
+    }
+
+    /// Volta/avança no histórico; retorna o destino (a view carrega e reseta scroll).
+    @discardableResult
+    public func goBack(in tabID: UUID) -> URL? {
+        guard histories[tabID]?.canGoBack == true else { return nil }
+        histories[tabID]?.goBack()
+        return navigateToCurrentEntry(in: tabID)
+    }
+
+    @discardableResult
+    public func goForward(in tabID: UUID) -> URL? {
+        guard histories[tabID]?.canGoForward == true else { return nil }
+        histories[tabID]?.goForward()
+        return navigateToCurrentEntry(in: tabID)
+    }
+
+    private func navigateToCurrentEntry(in tabID: UUID) -> URL? {
+        guard let path = histories[tabID]?.current,
+              let index = tabs.firstIndex(where: { $0.id == tabID }),
+              let doc = try? OpenDocument(url: URL(fileURLWithPath: path)) else { return nil }
+        tabs[index] = ReaderTab(document: doc, id: tabID)
+        activeTabID = tabID
+        return tabs[index].document.url
     }
 }
