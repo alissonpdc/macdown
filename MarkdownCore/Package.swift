@@ -16,6 +16,11 @@ let package = Package(
             dependencies: ["MarkdownCore"],
             path: "Sources/MacDown"
         ),
+        .executableTarget(
+            name: "plistgen",
+            dependencies: ["MarkdownCore"],
+            path: "Sources/plistgen"
+        ),
         .testTarget(name: "MarkdownCoreTests", dependencies: ["MarkdownCore"]),
     ]
 )
