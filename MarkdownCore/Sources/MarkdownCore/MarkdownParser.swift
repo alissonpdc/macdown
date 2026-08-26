@@ -18,7 +18,7 @@ public struct MarkdownParser {
             return HeadingNode(level: heading.level, inlineText: heading.plainText)
         }
         if let paragraph = node as? Paragraph {
-            return ParagraphNode(text: paragraph.plainText)
+            return ParagraphNode(text: paragraph.plainText, rawMarkdown: node.format())
         }
         if let code = node as? CodeBlock {
             return CodeBlockNode(language: code.language, code: code.code)

@@ -4,6 +4,8 @@ import MarkdownCore
 /// R6.1 — barra de abas estilo Chrome com botão de fechar e nova aba.
 struct TabBarView: View {
     @ObservedObject var store: TabStore
+    var onOpenFile: () -> Void
+    var recordVisit: (URL) -> Void
 
     var body: some View {
         HStack(spacing: 4) {
@@ -16,7 +18,7 @@ struct TabBarView: View {
                 )
             }
             Button {
-                openFile()
+                onOpenFile()
             } label: {
                 Image(systemName: "plus")
                     .frame(width: 24, height: 24)
@@ -30,16 +32,6 @@ struct TabBarView: View {
         .background(.bar)
     }
 
-    private func openFile() {
-        let panel = NSOpenPanel()
-        panel.allowedContentTypes = [.init(filenameExtension: "md") ?? .text,
-                                      .init(filenameExtension: "markdown") ?? .text,
-                                      .init(filenameExtension: "mdown") ?? .text,
-                                      .init(filenameExtension: "mkd") ?? .text]
-        panel.allowsMultipleSelection = true
-        guard panel.runModal() == .OK else { return }
-        for url in panel.urls { try? store.open(url: url) }
-    }
 }
 
 struct TabItemView: View {

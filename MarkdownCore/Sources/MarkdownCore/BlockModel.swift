@@ -1,6 +1,15 @@
 import Foundation
 public struct ParagraphNode: BlockNode, Equatable {
     public let text: String
+    /// markdown original do bloco — preserva links/negrito para renderização clicável
+    public let rawMarkdown: String
+
+    public init(text: String, rawMarkdown: String) {
+        self.text = text
+        self.rawMarkdown = rawMarkdown
+    }
+
+    public static func == (a: ParagraphNode, b: ParagraphNode) -> Bool { a.text == b.text }
 }
 
 public struct CodeBlockNode: BlockNode, Equatable {

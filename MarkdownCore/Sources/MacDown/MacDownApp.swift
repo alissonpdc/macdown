@@ -19,12 +19,30 @@ struct MacDownApp: App {
                 .onChange(of: theme.current) { _ in appDelegate.apply(theme) }
         }
         .commands {
-            // R7.1 — Cmd+W fecha a aba ativa
+            // R7.1 — Cmd+W fecha a aba ativa; Cmd+←/→ navegam no histórico da aba
             CommandGroup(after: .newItem) {
+                Button("Open Folder…") {
+                    let panel = NSOpenPanel()
+                    panel.canChooseDirectories = true
+                    panel.canChooseFiles = false
+                    guard panel.runModal() == .OK, let url = panel.url else { return }
+                    NotificationCenter.default.post(name: .macDownOpenFolder, object: url)
+                }
+                Divider()
                 Button("Close Tab") {
                     NotificationCenter.default.post(name: .macDownCloseActiveTab, object: nil)
                 }
                 .keyboardShortcut("w", modifiers: .command)
+            }
+            CommandMenu("Navigate") {
+                Button("Back") {
+                    NotificationCenter.default.post(name: .macDownGoBack, object: nil)
+                }
+                .keyboardShortcut("[", modifiers: .command)
+                Button("Forward") {
+                    NotificationCenter.default.post(name: .macDownGoForward, object: nil)
+                }
+                .keyboardShortcut("]", modifiers: .command)
             }
             // R9.1 — View menu (PRD: "Seleção via menu nativo (View/Aparência)")
             CommandGroup(after: .toolbar) {
@@ -44,6 +62,9 @@ struct MacDownApp: App {
 
 extension Notification.Name {
     static let macDownCloseActiveTab = Notification.Name("macDownCloseActiveTab")
+    static let macDownGoBack = Notification.Name("macDownGoBack")
+    static let macDownGoForward = Notification.Name("macDownGoForward")
+    static let macDownOpenFolder = Notification.Name("macDownOpenFolder")
 }
 
 /// Ativa o app como .regular e aplica a aparência no nível AppKit.
