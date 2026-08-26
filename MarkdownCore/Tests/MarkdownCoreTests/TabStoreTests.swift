@@ -73,9 +73,9 @@ final class TabStoreTests: XCTestCase {
         XCTAssertEqual(store.activeTab?.scrollOffset, 420)
     }
 
-    func testTitleIsFileNameWithoutExtension() throws {
+    func testTitleIsFileNameWithExtension() throws {
         let store = TabStore()
         try store.open(url: a)
-        XCTAssertEqual(store.tabs[0].title, "a")
+        XCTAssertEqual(store.tabs[0].title, "a.md")
     }
 }

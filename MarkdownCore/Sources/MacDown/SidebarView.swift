@@ -46,10 +46,14 @@ struct SidebarView: View {
                     fileRows(child.files, depth: depth + 1)
                 }
             } label: {
-                // chevron+ícone+nome deslocados como um bloco
-                Label(node.name, systemImage: "folder")
-                    .font(.system(size: 12))
-                    .padding(.leading, CGFloat(depth) * indentStep)
+                // padding no HStack interno: chevron (do DisclosureGroup) + ícone + nome deslocam juntos
+                HStack(spacing: 6) {
+                    Image(systemName: "folder")
+                        .foregroundStyle(.secondary)
+                    Text(node.name)
+                }
+                .font(.system(size: 12))
+                .padding(.leading, CGFloat(depth) * indentStep)
             }
         }.eraseToAnyView()
     }
@@ -67,7 +71,7 @@ struct SidebarView: View {
             HStack(spacing: 4) {
                 Image(systemName: "doc.text")
                     .foregroundStyle(isActive ? Color.accentColor : .secondary)
-                Text(file.deletingPathExtension().lastPathComponent)
+                Text(DisplayName.file(file))
                     .lineLimit(1)
             }
             .font(.system(size: 12))

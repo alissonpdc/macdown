@@ -38,14 +38,16 @@ struct MacDownApp: App {
         }
         .commands {
             // R7.1 — Cmd+W fecha aba; Cmd+←/→ mudam de aba
-            CommandGroup(after: .newItem) {
-                Button("Open Folder…") {
-                    let panel = NSOpenPanel()
-                    panel.canChooseDirectories = true
-                    panel.canChooseFiles = false
-                    guard panel.runModal() == .OK, let url = panel.url else { return }
-                    NotificationCenter.default.post(name: .macDownOpenFolder, object: url)
+            // R7.1 — Cmd+O abre arquivo, Cmd+Shift+O abre pasta; Cmd+W fecha aba
+            CommandGroup(replacing: .newItem) {
+                Button("Open…") {
+                    NotificationCenter.default.post(name: .macDownOpenFile, object: nil)
                 }
+                .keyboardShortcut("o", modifiers: .command)
+                Button("Open Folder…") {
+                    NotificationCenter.default.post(name: .macDownOpenFolderPanel, object: nil)
+                }
+                .keyboardShortcut("o", modifiers: [.command, .shift])
                 Divider()
                 Button("Close Tab") {
                     NotificationCenter.default.post(name: .macDownCloseActiveTab, object: nil)
@@ -89,6 +91,8 @@ extension Notification.Name {
     static let macDownGoBack = Notification.Name("macDownGoBack")
     static let macDownGoForward = Notification.Name("macDownGoForward")
     static let macDownOpenFolder = Notification.Name("macDownOpenFolder")
+    static let macDownOpenFile = Notification.Name("macDownOpenFile")
+    static let macDownOpenFolderPanel = Notification.Name("macDownOpenFolderPanel")
     static let macDownNextTab = Notification.Name("macDownNextTab")
     static let macDownPreviousTab = Notification.Name("macDownPreviousTab")
 }
