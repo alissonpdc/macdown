@@ -63,7 +63,7 @@
 - [x] Watch arquivo aberto e árvore (FSEvents/DispatchSource) (R4.1, R4.3)
 - [x] Rename/move externo atualiza abas/sidebar (R4.4)
 - [x] Indicador discreto de atualizado (R4.2)
-- [ ] Diff engine puro: baseline→novo, rounds cumulativos, confirmar leitura (R13.1–R13.3)
+- [x] Diff engine puro: baseline→novo, rounds cumulativos, confirmar leitura (R13.1–R13.3)
 
 ### Fase 7 — Busca
 - [ ] Cmd+F no documento, ocorrências, destaque (R5.1)

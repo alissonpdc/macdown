@@ -18,10 +18,19 @@ extension TabStore {
         }
     }
 
-    /// R4.2 — usuário confirma que leu as mudanças externas.
+    /// R4.2 — usuário confirma que leu as mudanças externas (R13.2: baseline vira o atual).
     public func confirmExternalUpdate(in tabID: UUID) {
         guard let index = tabs.firstIndex(where: { $0.id == tabID }) else { return }
         tabs[index].hasExternalUpdate = false
+        tabs[index].baseline = nil
+        tabs[index].diffResult = nil
+        tabs[index].knownChanges = []
+    }
+
+    /// R13.3 — alterna visão "Nova"/"Diff" da aba.
+    public func toggleDiffView(in tabID: UUID) {
+        guard let index = tabs.firstIndex(where: { $0.id == tabID }) else { return }
+        tabs[index].showsDiff.toggle()
     }
 
     private func handleRename(from oldURL: URL, to newURL: URL) {
@@ -35,14 +44,30 @@ extension TabStore {
         }
     }
 
-    /// R4.1 — recarrega o documento (re-render preservando scroll); R4.2 — marca indicador.
+    /// R4.1 — recarrega o documento (re-render preservando scroll);
+    /// R4.2 — marca indicador; R13.x — calcula diff cumulativo contra o baseline.
     private func handleExternalModification(of url: URL) {
         let path = url.standardizedFileURL.path
         for index in tabs.indices where tabs[index].document.url.standardizedFileURL.path == path {
             let tab = tabs[index]
             guard let doc = try? OpenDocument(url: tab.document.url), doc != tab.document else { continue }
-            tabs[index] = ReaderTab(document: doc, id: tab.id, scrollOffset: tab.scrollOffset,
-                                    hasExternalUpdate: true)
+            let base = tab.baseline ?? tab.document
+            let result = BlockDiffer.diff(baseline: base.document, updated: doc.document,
+                                          knownChanges: tab.knownChanges)
+            // assinaturas destacadas neste round ficam conhecidas (fracas nos próximos)
+            let changedSigs = zip(doc.document.blocks, result.statuses)
+                .filter { $0.1 != .unchanged }
+                .map { BlockDiffer.signature(of: $0.0) }
+            tabs[index] = ReaderTab(
+                document: doc,
+                id: tab.id,
+                scrollOffset: tab.scrollOffset,
+                hasExternalUpdate: true,
+                baseline: base,
+                diffResult: result,
+                knownChanges: tab.knownChanges.union(changedSigs),
+                showsDiff: tab.showsDiff
+            )
         }
     }
 }
@@ -54,13 +79,29 @@ public struct ReaderTab: Identifiable, Equatable {
     public var scrollOffset: CGFloat
     /// R4.2 — conteúdo mudou fora do app e o usuário ainda não confirmou a leitura.
     public var hasExternalUpdate: Bool
+    /// R13.2 — última versão confirmada como lida; nil = sem pendências.
+    public var baseline: OpenDocument?
+    /// R13.1/R13.2 — diff baseline→atual pendente.
+    public var diffResult: BlockDiffer.Result?
+    /// R13.2 — assinaturas de blocos alterados em rounds anteriores (destaque fraco).
+    public var knownChanges: Set<String>
+    /// R13.3 — aba exibindo a visão "Diff" em vez da visão "Nova".
+    public var showsDiff: Bool
 
     public init(document: OpenDocument, id: UUID = UUID(), scrollOffset: CGFloat = 0,
-                hasExternalUpdate: Bool = false) {
+                hasExternalUpdate: Bool = false,
+                baseline: OpenDocument? = nil,
+                diffResult: BlockDiffer.Result? = nil,
+                knownChanges: Set<String> = [],
+                showsDiff: Bool = false) {
         self.id = id
         self.document = document
         self.scrollOffset = scrollOffset
         self.hasExternalUpdate = hasExternalUpdate
+        self.baseline = baseline
+        self.diffResult = diffResult
+        self.knownChanges = knownChanges
+        self.showsDiff = showsDiff
     }
 
     public var title: String {
