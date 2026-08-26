@@ -7,6 +7,8 @@ struct ContentView: View {
     @State private var loadError: String?
     @State private var folderTree: FolderNode?
     @State private var expandedFolders: Set<String> = []
+    /// Fase 6 — watch da pasta aberta + arquivos soltos (R4.1/R4.3/R4.4).
+    @State private var watcher: FileWatcher?
 
     var body: some View {
         NavigationSplitView {
@@ -17,6 +19,7 @@ struct ContentView: View {
                 onOpenFile: { url in
                     try? tabStore.open(url: url)
                     recordVisitIfNeeded(url)
+                    refreshWatchers()
                 }
             )
         } detail: {
@@ -30,6 +33,7 @@ struct ContentView: View {
                             // R6.2 — link interno abre em nova aba
                             try? tabStore.open(url: target)
                             recordVisitIfNeeded(target)
+                            refreshWatchers()
                         }
                     )
                 } else if let error = loadError {
@@ -81,6 +85,7 @@ struct ContentView: View {
             do {
                 try tabStore.open(url: url)
                 loadError = nil
+                refreshWatchers()
             } catch OpenDocumentError.readFailed {
                 loadError = "File not found or unreadable: \(url.path)"
             } catch {
@@ -99,6 +104,44 @@ struct ContentView: View {
                 expandedFolders.insert(child.url.path)
             }
         }
+        refreshWatchers()
+    }
+
+    // MARK: Fase 6 — FileWatcher (R4.x)
+
+    /// Observa a pasta da sidebar e cada arquivo aberto fora dela.
+    private func refreshWatchers() {
+        watcher?.stop()
+        var paths: [URL] = []
+        if let root = folderTree?.url { paths.append(root) }
+        let rootPath = folderTree?.url.standardizedFileURL.path
+        for tab in tabStore.tabs {
+            let path = tab.document.url.standardizedFileURL.path
+            if let rootPath, path.hasPrefix(rootPath + "/") { continue }
+            if !paths.contains(where: { $0.standardizedFileURL == tab.document.url.standardizedFileURL }) {
+                paths.append(tab.document.url)
+            }
+        }
+        guard !paths.isEmpty else { return }
+
+        watcher = FileWatcher(paths: paths.map { $0.resolvingSymlinksInPath() }) { events in
+            handleWatchEvents(events)
+        }
+        watcher?.start()
+    }
+
+    private func handleWatchEvents(_ events: [WatchEvent]) {
+        tabStore.apply(events) // R4.1 re-render + R4.2 indicador + R4.4 rename em abas
+        // R4.3 — mudanças estruturais recarregam a árvore da sidebar
+        let structural = events.contains { event in
+            switch event.kind {
+            case .created, .deleted: return true
+            case .renamed: return true
+            case .modified: return false
+            }
+        }
+        guard structural, let root = folderTree?.url else { return }
+        folderTree = FolderScanner.scan(root: root)
     }
 
     private func openViaPanel() {
@@ -114,6 +157,7 @@ struct ContentView: View {
             try? tabStore.open(url: url)
             recordVisitIfNeeded(url)
         }
+        refreshWatchers()
     }
 
     private func recordVisitIfNeeded(_ url: URL) {
