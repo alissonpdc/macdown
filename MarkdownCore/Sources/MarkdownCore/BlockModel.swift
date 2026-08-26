@@ -1,19 +1,19 @@
 import Foundation
-public struct ParagraphNode: BlockNode {
+public struct ParagraphNode: BlockNode, Equatable {
     public let text: String
 }
 
-public struct CodeBlockNode: BlockNode {
+public struct CodeBlockNode: BlockNode, Equatable {
     public let language: String?
     public let code: String
 }
 
-public struct ListNode: BlockNode {
+public struct ListNode: BlockNode, Equatable {
     public let items: [String]
     public let isTaskList: Bool
 }
 
-public struct QuoteNode: BlockNode {
+public struct QuoteNode: BlockNode, Equatable {
     public let plainText: String
 }
 
