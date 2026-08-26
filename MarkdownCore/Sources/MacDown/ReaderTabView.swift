@@ -74,33 +74,47 @@ struct ReaderTabView: View {
         ForEach(rows) { row in
             switch row.content {
             case .block(let block):
-                // R13.1 — destaque verde-suave em blocos adicionados/modificados
+                // R13.1 — blocos adicionados/modificados: gutter "+" verde estilo GitHub
                 if let status = row.status, status != .unchanged {
-                    BlockView(block: block, onOpenLink: onOpenLink, linkBaseURL: doc.url)
-                        .padding(8)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .background(
-                            status == .strong ? Color.green.opacity(0.25) : Color.green.opacity(0.10),
-                            in: RoundedRectangle(cornerRadius: 6)
-                        )
+                    diffRow(sign: "+", color: .green, strong: status == .strong) {
+                        BlockView(block: block, onOpenLink: onOpenLink, linkBaseURL: doc.url)
+                    }
                 } else {
                     BlockView(block: block, onOpenLink: onOpenLink, linkBaseURL: doc.url)
                 }
             case .removed(let texts):
-                // R13.1 — blocos removidos do baseline aparecem esmaecidos com −
-                VStack(alignment: .leading, spacing: 2) {
-                    ForEach(texts, id: \.self) { text in
-                        Text("− " + text)
-                            .strikethrough()
-                            .font(.callout)
+                // R13.1 — blocos removidos do baseline: gutter "−" vermelho estilo GitHub
+                diffRow(sign: "-", color: .red, strong: true) {
+                    VStack(alignment: .leading, spacing: 2) {
+                        ForEach(texts, id: \.self) { text in
+                            Text(text)
+                                .strikethrough()
+                                .font(.callout)
+                        }
                     }
                 }
                 .foregroundStyle(.secondary)
-                .padding(8)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .background(Color.red.opacity(0.08), in: RoundedRectangle(cornerRadius: 6))
             }
         }
+    }
+
+    /// Linha estilo "compare" do GitHub web: gutter com sinal (+/−) e fundo colorido.
+    @ViewBuilder
+    private func diffRow<Content: View>(sign: String, color: Color, strong: Bool,
+                                        @ViewBuilder content: () -> Content) -> some View {
+        HStack(alignment: .top, spacing: 6) {
+            Text(sign)
+                .font(.callout.bold())
+                .foregroundStyle(color)
+                .frame(width: 12, alignment: .leading)
+            content()
+        }
+        .padding(8)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(
+            color.opacity(strong ? 0.28 : 0.12),
+            in: RoundedRectangle(cornerRadius: 6)
+        )
     }
 
     /// Intercala os blocos atuais com as remoções nas posições corretas.
