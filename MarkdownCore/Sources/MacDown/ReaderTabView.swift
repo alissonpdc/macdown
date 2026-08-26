@@ -8,10 +8,15 @@ struct ReaderTabView: View {
     var onOpenLink: (URL) -> Void = { _ in }
 
     var body: some View {
+        let tab = store.tabs.first(where: { $0.id == tabID })
         ScrollView([.vertical]) {
             VStack(alignment: .leading, spacing: 12) {
-                if let doc = store.tabs.first(where: { $0.id == tabID })?.document {
-                    documentBody(doc)
+                if let tab, tab.diffResult != nil && tab.hasExternalUpdate {
+                    diffHeader(tab)
+                }
+                if let doc = tab?.document {
+                    documentBody(doc,
+                                 statuses: tab?.showsDiff == true ? tab?.diffResult?.statuses : nil)
                 }
             }
             .padding(24)
@@ -30,16 +35,54 @@ struct ReaderTabView: View {
         }
     }
 
+    /// R13.3 — alterna visão "Nova"/"Diff" e mostra o resumo do round atual.
     @ViewBuilder
-    private func documentBody(_ doc: OpenDocument) -> some View {
+    private func diffHeader(_ tab: ReaderTab) -> some View {
+        HStack(spacing: 10) {
+            Picker("Visão", selection: Binding(
+                get: { tab.showsDiff },
+                set: { _ in store.toggleDiffView(in: tabID) }
+            )) {
+                Text("Nova").tag(false)
+                Text("Diff").tag(true)
+            }
+            .pickerStyle(.segmented)
+            .frame(width: 140)
+            Spacer()
+            if tab.showsDiff, let result = tab.diffResult {
+                // R13.1 — resumo do indicador
+                Text(result.summary)
+                    .font(.callout.monospacedDigit())
+                    .foregroundStyle(.secondary)
+            }
+            Button("Confirmar leitura") {
+                store.confirmExternalUpdate(in: tabID)
+            }
+            .buttonStyle(.link)
+        }
+    }
+
+    @ViewBuilder
+    private func documentBody(_ doc: OpenDocument, statuses: [BlockDiffer.Status]?) -> some View {
         if let error = doc.frontmatterError {
             Label(error, systemImage: "exclamationmark.triangle")
                 .foregroundStyle(.orange)
         } else if let fm = doc.frontmatter, !fm.fields.isEmpty {
             FrontmatterCard(fields: fm.fields)
         }
-        ForEach(Array(doc.document.blocks.enumerated()), id: \.offset) { _, block in
-            BlockView(block: block, onOpenLink: onOpenLink, linkBaseURL: doc.url)
+        ForEach(Array(doc.document.blocks.enumerated()), id: \.offset) { index, block in
+            // R13.1 — destaque verde-suave em blocos adicionados/modificados
+            if let status = statuses?[index], status != .unchanged {
+                BlockView(block: block, onOpenLink: onOpenLink, linkBaseURL: doc.url)
+                    .padding(8)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .background(
+                        status == .strong ? Color.green.opacity(0.25) : Color.green.opacity(0.10),
+                        in: RoundedRectangle(cornerRadius: 6)
+                    )
+            } else {
+                BlockView(block: block, onOpenLink: onOpenLink, linkBaseURL: doc.url)
+            }
         }
     }
 }

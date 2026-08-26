@@ -75,6 +75,10 @@ struct ContentView: View {
         .onReceive(NotificationCenter.default.publisher(for: .macDownPreviousTab)) { _ in
             tabStore.selectPrevious()
         }
+        .onReceive(NotificationCenter.default.publisher(for: .macDownToggleDiff)) { _ in
+            // R13.3 — Cmd+D alterna a visão da aba ativa
+            if let id = tabStore.activeTabID { tabStore.toggleDiffView(in: id) }
+        }
     }
 
     private func openInitial() {

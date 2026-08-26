@@ -68,7 +68,13 @@ struct MacDownApp: App {
                 Button("Forward") {
                     NotificationCenter.default.post(name: .macDownGoForward, object: nil)
                 }
-                .keyboardShortcut("]", modifiers: .command)
+                    .keyboardShortcut("]", modifiers: .command)
+                Divider()
+                // R13.3 — alterna visão Nova/Diff
+                Button("Toggle Diff View") {
+                    NotificationCenter.default.post(name: .macDownToggleDiff, object: nil)
+                }
+                    .keyboardShortcut("d", modifiers: .command)
             }
             // R9.1 — View menu
             CommandGroup(after: .toolbar) {
@@ -95,6 +101,7 @@ extension Notification.Name {
     static let macDownOpenFolderPanel = Notification.Name("macDownOpenFolderPanel")
     static let macDownNextTab = Notification.Name("macDownNextTab")
     static let macDownPreviousTab = Notification.Name("macDownPreviousTab")
+    static let macDownToggleDiff = Notification.Name("macDownToggleDiff")
 }
 
 /// Ativa o app como .regular e aplica a aparência no nível AppKit.
