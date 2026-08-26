@@ -25,20 +25,21 @@
 ## Checklist
 
 ### Fase 0 — Esqueleto + CI
-- [ ] Projeto Xcode: targets MacDown / MarkdownCore / MarkdownCoreTests / MacDownUITests
-- [ ] Suite de teste vazia rodando verde via `xcodebuild test`
-- [ ] Script/gate local de teste documentado
+- [x] MarkdownCore package local (SPM, macOS 14+) com test target
+- [ ] App target MacDown (SwiftUI)
+- [x] Suite rodando verde (`swift test`)
+- [x] Gate de teste documentado neste arquivo
 
 ### Fase 1 — MarkdownCore (parse)
-- [ ] Parser cmark-gfm integrado ao Core
-- [ ] Modelo de blocos (heading, paragraph, code, table, list, task item…)
-- [ ] Fixtures GFM: tabelas, task lists, strikethrough, autolinks, footnotes (R3.1)
-- [ ] AST navegável para TOC/tasks/busca/âncoras
+- [x] Parser swift-markdown (cmark-gfm) integrado ao Core
+- [x] Modelo de blocos inicial (HeadingNode, TableNode, TaskListItemsNode, GenericBlockNode)
+- [x] Fixtures GFM: tabelas, task lists, strikethrough, autolinks, footnotes (R3.1)
+- [x] AST navegável: paragraph, code (linguagem), list/quote genéricos; outline+slug p/ TOC (R3.7/R3.8), TaskSummary (R3.13), PlainTextExtractor
 
 ### Fase 2 — Documento
-- [ ] Split frontmatter antes do parse
-- [ ] YAML mínimo: chaves, valores, listas (R3.4 base)
-- [ ] YAML malformado → erro estruturado (R10.2)
+- [x] Split frontmatter antes do parse
+- [x] YAML mínimo: chaves, valores, listas (R3.4 base)
+- [x] YAML malformado / não-suportado → erro estruturado (R10.2)
 - [ ] NSDocument abrir arquivo único (R1.1, R1.2 base)
 
 ### Fase 3 — ReaderView (+ início dos UI tests)
