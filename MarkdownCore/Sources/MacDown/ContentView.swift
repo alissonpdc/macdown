@@ -3,21 +3,22 @@ import MarkdownCore
 
 struct ContentView: View {
     let initialURL: URL?
-    @State private var document: OpenDocument?
+    @StateObject private var tabStore = TabStore()
     @State private var loadError: String?
 
     var body: some View {
-        Group {
-            if let doc = document {
-                ReaderView(doc: doc)
+        VStack(spacing: 0) {
+            TabBarView(store: tabStore)
+            if let tab = tabStore.activeTab {
+                ReaderTabView(tabID: tab.id, store: tabStore)
             } else if let error = loadError {
-                ContentUnavailableView("Não foi possível abrir",
+                ContentUnavailableView("Couldn't open file",
                                        systemImage: "exclamationmark.triangle",
                                        description: Text(error))
             } else {
                 ContentUnavailableView("MacDown",
                                        systemImage: "doc.richtext",
-                                       description: Text("Abra um arquivo .md para começar"))
+                                       description: Text("Open a .md file to start reading"))
             }
         }
         .frame(minWidth: 600, minHeight: 400)
@@ -27,37 +28,75 @@ struct ContentView: View {
     private func openInitial() {
         guard let url = initialURL else { return }
         do {
-            document = try OpenDocument(url: url)
+            try tabStore.open(url: url)
             loadError = nil
         } catch OpenDocumentError.readFailed {
-            loadError = "Arquivo não encontrado ou ilegível: \(url.path)"
+            loadError = "File not found or unreadable: \(url.path)"
         } catch {
             loadError = error.localizedDescription
         }
     }
 }
 
-/// Renderização do documento na tela.
-struct ReaderView: View {
-    let doc: OpenDocument
+/// Conteúdo de uma aba com persistência da posição de scroll (R2.5).
+struct ReaderTabView: View {
+    let tabID: ReaderTab.ID
+    @ObservedObject var store: TabStore
 
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 12) {
-                if let error = doc.frontmatterError {
-                    Label(error, systemImage: "exclamationmark.triangle")
-                        .foregroundStyle(.orange)
-                } else if let fm = doc.frontmatter, !fm.fields.isEmpty {
-                    FrontmatterCard(fields: fm.fields)
+        ScrollViewReader { proxy in
+            ScrollView([.vertical]) {
+                VStack(alignment: .leading, spacing: 12) {
+                    blocks
                 }
-                ForEach(Array(doc.document.blocks.enumerated()), id: \.offset) { _, block in
-                    BlockView(block: block)
-                }
+                .padding(24)
+                .frame(maxWidth: 720, alignment: .center)
+                .frame(maxWidth: .infinity)
+                .background(GeometryReader { geo in
+                    Color.clear.preference(
+                        key: ScrollOffsetKey.self,
+                        value: geo.frame(in: .named("reader")).origin.y
+                    )
+                })
             }
-            .padding(24)
-            .frame(maxWidth: 720, alignment: .center)
-            .frame(maxWidth: .infinity)
+            .coordinateSpace(name: "reader")
+            .onPreferenceChange(ScrollOffsetKey.self) { offset in
+                store.setScrollOffset(-offset, for: tabID)
+            }
         }
+    }
+
+    private var doc: OpenDocument? {
+        store.tabs.first(where: { $0.id == tabID })?.document
+    }
+
+    @ViewBuilder
+    private var blocks: some View {
+        if let doc = doc {
+            documentBody(doc)
+        }
+    }
+
+    @ViewBuilder
+    private func documentBody(_ doc: OpenDocument) -> some View {
+        Group {
+            if let error = doc.frontmatterError {
+                Label(error, systemImage: "exclamationmark.triangle")
+                    .foregroundStyle(.orange)
+            } else if let fm = doc.frontmatter, !fm.fields.isEmpty {
+                FrontmatterCard(fields: fm.fields)
+            }
+            ForEach(Array(doc.document.blocks.enumerated()), id: \.offset) { _, block in
+                BlockView(block: block)
+            }
+        }
+    }
+}
+
+struct ScrollOffsetKey: PreferenceKey {
+    static var defaultValue: CGFloat = 0
+    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
+        value += nextValue()
     }
 }
 

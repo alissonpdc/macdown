@@ -5,12 +5,16 @@ public enum OpenDocumentError: Error, Equatable {
 }
 
 /// Um arquivo `.md` aberto: URL + frontmatter extraído (R3.4/R10.2) + corpo parseado.
-public struct OpenDocument {
+public struct OpenDocument: Equatable {
     public let url: URL
     public let rawText: String
     public let frontmatter: Frontmatter?
     public let frontmatterError: String?
     public let document: CoreDocument
+
+    public static func == (a: OpenDocument, b: OpenDocument) -> Bool {
+        a.url == b.url && a.rawText == b.rawText
+    }
 
     public init(url: URL) throws {
         guard let text = try? String(contentsOf: url, encoding: .utf8) else {
