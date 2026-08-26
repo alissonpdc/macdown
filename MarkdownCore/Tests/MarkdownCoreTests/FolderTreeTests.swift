@@ -36,9 +36,15 @@ final class FolderTreeTests: XCTestCase {
         XCTAssertEqual(sub?.files.map(\.lastPathComponent).sorted(), ["c.mdown", "d.mkd"])
     }
 
-    func testEmptyFolderStillAppears() {
-        let tree = FolderScanner.scan(root: root)
+    func testPruningOffKeepsEmptyFolders() {
+        // com poda desligada, pasta vazia aparece
+        let tree = FolderScanner.scan(root: root, pruningEmptyFolders: false)
         XCTAssertTrue(tree.children.contains { $0.name == "img" && $0.files.isEmpty })
+    }
+
+    func testDefaultScanPrunesEmptyFolders() {
+        let tree = FolderScanner.scan(root: root)
+        XCTAssertFalse(tree.children.contains { $0.name == "img" })
     }
 
     func testFileNamesAreSorted() {

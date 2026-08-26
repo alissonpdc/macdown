@@ -13,7 +13,7 @@ struct SidebarView: View {
             if let tree = tree {
                 ScrollView {
                     VStack(alignment: .leading, spacing: 1) {
-                        folderChildren(tree)
+                        folderChildren(tree, depth: 0)
                         fileRows(tree.files, indent: false)
                     }
                     .padding(8)
@@ -29,8 +29,8 @@ struct SidebarView: View {
         .background(Color(nsColor: .windowBackgroundColor))
     }
 
-    /// Subpastas colapsáveis de um nó. AnyView quebra a inferência recursiva.
-    private func folderChildren(_ node: FolderNode) -> AnyView {
+    /// Subpastas colapsáveis de um nó, com indentação por profundidade. AnyView quebra a recursão.
+    private func folderChildren(_ node: FolderNode, depth: Int) -> AnyView {
         ForEach(node.children, id: \.url) { child in
             DisclosureGroup(
                 isExpanded: Binding(
@@ -39,14 +39,19 @@ struct SidebarView: View {
                 )
             ) {
                 VStack(alignment: .leading, spacing: 1) {
-                    folderChildren(child)
+                    folderChildren(child, depth: depth + 1)
                     fileRows(child.files, indent: true)
                 }
             } label: {
-                Label(child.name, systemImage: "folder")
-                    .font(.system(size: 12))
+                folderLabel(child, depth: depth)
             }
         }.eraseToAnyView()
+    }
+
+    private func folderLabel(_ node: FolderNode, depth: Int) -> some View {
+        Label(node.name, systemImage: "folder")
+            .font(.system(size: 12))
+            .padding(.leading, CGFloat(depth) * 14)
     }
 
     @ViewBuilder
