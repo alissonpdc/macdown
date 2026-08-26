@@ -6,7 +6,8 @@ public struct WatchEvent: Equatable, Sendable {
         case modified
         case created
         case deleted
-        case renamed
+        /// `url` = novo caminho; associado = caminho anterior.
+        case renamed(previous: URL)
     }
 
     public let url: URL
@@ -132,19 +133,17 @@ public final class FileWatcher {
     // MARK: polling de diretório (created/deleted/rename)
 
     private var pollTimer: DispatchSourceTimer?
-    private var lastSnapshot: Set<String> = []
+    private var lastSnapshot: [String: UInt64] = [:]
 
     private func startDirectoryPolling(for dir: URL) {
-        lastSnapshot.formUnion(Self.markdownChildren(of: dir))
+        lastSnapshot.merge(Self.markdownChildren(of: dir), uniquingKeysWith: { _, new in new })
         let timer = DispatchSource.makeTimerSource(queue: queue)
         timer.schedule(deadline: .now() + 0.5, repeating: 0.5)
         timer.setEventHandler { [weak self] in
             guard let self = self, !self.stopped else { return }
-            let now = Set(Self.markdownChildren(of: dir))
-            let created = now.subtracting(self.lastSnapshot).map { WatchEvent(url: URL(fileURLWithPath: $0), kind: .created) }
-            let deleted = self.lastSnapshot.subtracting(now).map { WatchEvent(url: URL(fileURLWithPath: $0), kind: .deleted) }
+            let now = Self.markdownChildren(of: dir)
+            let events = Self.diff(previous: lastSnapshot, current: now)
             self.lastSnapshot = now
-            let events = created + deleted
             guard !events.isEmpty else { return }
             DispatchQueue.main.async { self.handler(events) }
         }
@@ -152,11 +151,37 @@ public final class FileWatcher {
         pollTimer = timer
     }
 
-    private static func markdownChildren(of rawDir: URL) -> [String] {
+    /// R4.4 — created/deleted viram `.renamed` quando compartilham inode (mesmo arquivo, outro nome).
+    static func diff(previous: [String: UInt64], current: [String: UInt64]) -> [WatchEvent] {
+        var events: [WatchEvent] = []
+        var created = Set(current.keys).subtracting(previous.keys)
+        for oldPath in previous.keys where current[oldPath] == nil {
+            let inode = previous[oldPath] ?? 0
+            if inode != 0, let newPath = created.first(where: { current[$0] == inode }) {
+                events.append(WatchEvent(url: URL(fileURLWithPath: newPath),
+                                         kind: .renamed(previous: URL(fileURLWithPath: oldPath))))
+                created.remove(newPath)
+            } else {
+                events.append(WatchEvent(url: URL(fileURLWithPath: oldPath), kind: .deleted))
+            }
+        }
+        events += created.map { WatchEvent(url: URL(fileURLWithPath: $0), kind: .created) }
+        return events.sorted { $0.url.path < $1.url.path }
+    }
+
+    private static func markdownChildren(of rawDir: URL) -> [String: UInt64] {
         let dir = canonical(rawDir)
-        return (try? FileManager.default.contentsOfDirectory(at: dir, includingPropertiesForKeys: nil, options: []))?
-            .filter { FolderScanner.isMarkdown($0) }
-            .map { canonical($0).path } ?? []
+        guard let items = try? FileManager.default.contentsOfDirectory(
+            at: dir,
+            includingPropertiesForKeys: [.fileIdentifierKey],
+            options: []
+        ) else { return [:] }
+        var result: [String: UInt64] = [:]
+        for item in items where FolderScanner.isMarkdown(item) {
+            let inode = (try? item.resourceValues(forKeys: [.fileIdentifierKey]))?.fileIdentifier ?? 0
+            result[canonical(item).path] = inode
+        }
+        return result
     }
 
     /// contentsOfDirectory devolve `/private/var/...` mesmo quando a raiz observada é `/var/...`;

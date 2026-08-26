@@ -1,16 +1,66 @@
 import SwiftUI
 import Foundation
 
+// R4.4 — renomear/mover externamente atualiza abas sem órfãs; R4.1/R4.2 — mudança externa
+// re-renderiza (recarregando o documento) e marca o indicador discreto de atualizado.
+extension TabStore {
+    /// Aplica eventos do FileWatcher ao estado das abas.
+    public func apply(_ events: [WatchEvent]) {
+        for event in events {
+            switch event.kind {
+            case .renamed(let previous):
+                handleRename(from: previous, to: event.url)
+            case .modified:
+                handleExternalModification(of: event.url)
+            default:
+                break
+            }
+        }
+    }
+
+    /// R4.2 — usuário confirma que leu as mudanças externas.
+    public func confirmExternalUpdate(in tabID: UUID) {
+        guard let index = tabs.firstIndex(where: { $0.id == tabID }) else { return }
+        tabs[index].hasExternalUpdate = false
+    }
+
+    private func handleRename(from oldURL: URL, to newURL: URL) {
+        let oldPath = oldURL.standardizedFileURL.path
+        for index in tabs.indices where tabs[index].document.url.standardizedFileURL.path == oldPath {
+            guard let doc = try? OpenDocument(url: newURL) else { continue }
+            let tab = tabs[index]
+            tabs[index] = ReaderTab(document: doc, id: tab.id, scrollOffset: tab.scrollOffset,
+                                    hasExternalUpdate: tab.hasExternalUpdate)
+            histories[tab.id]?.remapPath(from: oldURL.path, to: newURL.resolvingSymlinksInPath().path)
+        }
+    }
+
+    /// R4.1 — recarrega o documento (re-render preservando scroll); R4.2 — marca indicador.
+    private func handleExternalModification(of url: URL) {
+        let path = url.standardizedFileURL.path
+        for index in tabs.indices where tabs[index].document.url.standardizedFileURL.path == path {
+            let tab = tabs[index]
+            guard let doc = try? OpenDocument(url: tab.document.url), doc != tab.document else { continue }
+            tabs[index] = ReaderTab(document: doc, id: tab.id, scrollOffset: tab.scrollOffset,
+                                    hasExternalUpdate: true)
+        }
+    }
+}
+
 /// Uma aba aberta: documento + estado de leitura da sessão (R2.5).
 public struct ReaderTab: Identifiable, Equatable {
     public let id: UUID
     public let document: OpenDocument
     public var scrollOffset: CGFloat
+    /// R4.2 — conteúdo mudou fora do app e o usuário ainda não confirmou a leitura.
+    public var hasExternalUpdate: Bool
 
-    public init(document: OpenDocument, id: UUID = UUID(), scrollOffset: CGFloat = 0) {
+    public init(document: OpenDocument, id: UUID = UUID(), scrollOffset: CGFloat = 0,
+                hasExternalUpdate: Bool = false) {
         self.id = id
         self.document = document
         self.scrollOffset = scrollOffset
+        self.hasExternalUpdate = hasExternalUpdate
     }
 
     public var title: String {

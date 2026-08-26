@@ -33,4 +33,11 @@ public struct History: Equatable {
         guard canGoForward else { return }
         index += 1
     }
+
+    /// R4.4 — rename/move: reescreve o caminho em todas as entradas.
+    public mutating func remapPath(from oldPath: String, to newPath: String) {
+        for i in entries.indices where entries[i] == oldPath {
+            entries[i] = newPath
+        }
+    }
 }

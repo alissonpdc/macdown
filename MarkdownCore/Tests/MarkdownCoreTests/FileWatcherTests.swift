@@ -58,6 +58,25 @@ final class FileWatcherTests: XCTestCase {
         wait(for: [exp], timeout: 5)
     }
 
+    func testDetectsRenameAsSingleRenamedEvent() throws {
+        let exp = expectation(description: "renamed event")
+        let newURL = root.appendingPathComponent("c.md").resolvingSymlinksInPath()
+        let oldURL = root.appendingPathComponent("b.md").resolvingSymlinksInPath()
+        watcher = FileWatcher(paths: [root]) { events in
+            for event in events {
+                if case .renamed(let previous) = event.kind,
+                   event.url.standardizedFileURL == newURL.standardizedFileURL,
+                   previous.standardizedFileURL == oldURL.standardizedFileURL {
+                    exp.fulfill()
+                }
+            }
+        }
+        watcher.start()
+        Thread.sleep(forTimeInterval: 0.3)
+        try FileManager.default.moveItem(at: root.appendingPathComponent("b.md"), to: newURL)
+        wait(for: [exp], timeout: 5)
+    }
+
     func testIgnoresNonMarkdownFiles() throws {
         var sawTxt = false
         watcher = FileWatcher(paths: [root], markdownOnly: true) { events in

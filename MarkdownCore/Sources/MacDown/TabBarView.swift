@@ -13,6 +13,7 @@ struct TabBarView: View {
                 TabItemView(
                     tab: tab,
                     isActive: tab.id == store.activeTabID,
+                    onConfirmUpdate: { store.confirmExternalUpdate(in: tab.id) },
                     onSelect: { store.select(tab.id) },
                     onClose: { store.close(id: tab.id) }
                 )
@@ -37,6 +38,8 @@ struct TabBarView: View {
 struct TabItemView: View {
     let tab: ReaderTab
     let isActive: Bool
+    var hasExternalUpdate = false
+    var onConfirmUpdate: () -> Void = {}
     let onSelect: () -> Void
     let onClose: () -> Void
     @State private var hovering = false
@@ -44,6 +47,15 @@ struct TabItemView: View {
 
     var body: some View {
         HStack(spacing: 6) {
+            // R4.2 — indicador discreto de atualizado; clique confirma a leitura
+            if tab.hasExternalUpdate {
+                Circle()
+                    .fill(Color.orange)
+                    .frame(width: 7, height: 7)
+                    .onTapGesture(perform: onConfirmUpdate)
+                    .help("Conteúdo atualizado fora do app — clique para confirmar")
+                    .accessibilityLabel("Conteúdo atualizado")
+            }
             Text(tab.title)
                 .lineLimit(1)
                 .frame(maxWidth: 140)
