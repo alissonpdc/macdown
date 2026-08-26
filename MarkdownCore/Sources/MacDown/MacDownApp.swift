@@ -17,14 +17,15 @@ struct MacDownApp: App {
                 .preferredColorScheme(theme.current.colorScheme)
         }
         .commands {
-            CommandGroup(after: .windowArrangement) {
-                Picker("Aparência", selection: Binding(
+            // R9.1 — View menu (PRD: "Seleção via menu nativo (View/Aparência)")
+            CommandGroup(after: .toolbar) {
+                Picker("Appearance", selection: Binding(
                     get: { theme.current },
                     set: { theme.set($0) }
                 )) {
-                    Text("Sistema").tag(AppearanceMode.system)
-                    Text("Claro").tag(AppearanceMode.light)
-                    Text("Escuro").tag(AppearanceMode.dark)
+                    Text("System").tag(AppearanceMode.system)
+                    Text("Light").tag(AppearanceMode.light)
+                    Text("Dark").tag(AppearanceMode.dark)
                 }
                 .pickerStyle(.inline)
             }
