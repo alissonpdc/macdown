@@ -2,26 +2,42 @@ import SwiftUI
 import MarkdownCore
 
 struct ContentView: View {
+    let initialURL: URL?
     @State private var document: OpenDocument?
+    @State private var loadError: String?
 
     var body: some View {
         Group {
             if let doc = document {
                 ReaderView(doc: doc)
+            } else if let error = loadError {
+                ContentUnavailableView("Não foi possível abrir",
+                                       systemImage: "exclamationmark.triangle",
+                                       description: Text(error))
             } else {
-                Text("Abra um arquivo .md para começar")
-                    .foregroundStyle(.secondary)
+                ContentUnavailableView("MacDown",
+                                       systemImage: "doc.richtext",
+                                       description: Text("Abra um arquivo .md para começar"))
             }
         }
         .frame(minWidth: 600, minHeight: 400)
+        .onAppear(perform: openInitial)
     }
 
-    func open(url: URL) {
-        document = try? OpenDocument(url: url)
+    private func openInitial() {
+        guard let url = initialURL else { return }
+        do {
+            document = try OpenDocument(url: url)
+            loadError = nil
+        } catch OpenDocumentError.readFailed {
+            loadError = "Arquivo não encontrado ou ilegível: \(url.path)"
+        } catch {
+            loadError = error.localizedDescription
+        }
     }
 }
 
-/// Fase 3 (base) — renderização do documento na tela.
+/// Renderização do documento na tela.
 struct ReaderView: View {
     let doc: OpenDocument
 
