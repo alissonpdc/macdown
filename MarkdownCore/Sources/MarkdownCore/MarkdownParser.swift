@@ -6,14 +6,14 @@ public struct MarkdownParser {
 
     public func parse(_ markdown: String) -> CoreDocument {
         let parsed = Markdown.Document(parsing: markdown, options: [.parseBlockDirectives])
-        var blocks: [BlockNode] = []
+        var blocks: [any BlockNode] = []
         for child in parsed.blockChildren {
             blocks.append(blockNode(from: child))
         }
         return CoreDocument(blocks: blocks)
     }
 
-    private func blockNode(from node: any Markup) -> BlockNode {
+    private func blockNode(from node: any Markup) -> any BlockNode {
         if let heading = node as? Markdown.Heading {
             return HeadingNode(level: heading.level, inlineText: heading.plainText)
         }
@@ -40,7 +40,7 @@ public struct MarkdownParser {
         return GenericBlockNode(kindName: String(describing: type(of: node)))
     }
 
-    private func listNode(from children: MarkupChildren) -> BlockNode {
+    private func listNode(from children: MarkupChildren) -> any BlockNode {
         var tasks: [TaskItem] = []
         var texts: [String] = []
         for item in children {

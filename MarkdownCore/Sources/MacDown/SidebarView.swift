@@ -1,8 +1,9 @@
 import SwiftUI
 import MarkdownCore
 
-/// R2.2/R2.3 — sidebar em árvore: subpastas colapsáveis, arquivos .md clicáveis, ativo destacado.
-/// Cada linha é deslocada como um bloco inteiro (chevron + ícone + nome) por depth * 14pt.
+/// R2.2/R2.3 — sidebar em árvore com linhas customizadas (sem DisclosureGroup:
+/// o chevron nativo fica preso à margem e os insets variam).
+/// Cada linha desloca como um bloco: depth * 14pt.
 struct SidebarView: View {
     let tree: FolderNode?
     @Binding var expandedFolders: Set<String>
@@ -15,7 +16,7 @@ struct SidebarView: View {
         Group {
             if let tree = tree {
                 ScrollView {
-                    VStack(alignment: .leading, spacing: 1) {
+                    VStack(alignment: .leading, spacing: 0) {
                         folderRows(tree.children, depth: 0)
                         fileRows(tree.files, depth: 0)
                     }
@@ -36,31 +37,20 @@ struct SidebarView: View {
 
     private func folderRows(_ folders: [FolderNode], depth: Int) -> AnyView {
         ForEach(folders, id: \.url) { folder in
-            self.folderRow(folder, depth: depth)
+            FolderRowView(
+                folder: folder,
+                depth: depth,
+                indentStep: indentStep,
+                isExpanded: Binding(
+                    get: { expandedFolders.contains(folder.url.path) },
+                    set: { if $0 { expandedFolders.insert(folder.url.path) } else { expandedFolders.remove(folder.url.path) } }
+                ),
+                content: {
+                    self.folderRows(folder.children, depth: depth + 1)
+                    self.fileRows(folder.files, depth: depth + 1)
+                }
+            )
         }.eraseToAnyView()
-    }
-
-    @ViewBuilder
-    private func folderRow(_ folder: FolderNode, depth: Int) -> some View {
-        let isExpanded = Binding(
-            get: { expandedFolders.contains(folder.url.path) },
-            set: { if $0 { expandedFolders.insert(folder.url.path) } else { expandedFolders.remove(folder.url.path) } }
-        )
-        DisclosureGroup(isExpanded: isExpanded) {
-            self.folderRows(folder.children, depth: depth + 1)
-            self.fileRows(folder.files, depth: depth + 1)
-        } label: {
-            // o padding é aplicado na linha inteira; o chevron nativo fica à esquerda dele,
-            // então compensamos deslocando o conteúdo interno e deixando o chevron acompanhar
-            HStack(spacing: 6) {
-                Image(systemName: "folder")
-                    .foregroundStyle(.secondary)
-                Text(folder.name)
-                    .lineLimit(1)
-            }
-            .font(.system(size: 12))
-            .padding(.leading, CGFloat(depth) * indentStep)
-        }
     }
 
     // MARK: arquivos
@@ -80,15 +70,69 @@ struct SidebarView: View {
                     .foregroundStyle(isActive ? Color.accentColor : .secondary)
                 Text(DisplayName.file(file))
                     .lineLimit(1)
+                Spacer(minLength: 0)
             }
             .font(.system(size: 12))
-            .frame(maxWidth: .infinity, alignment: .leading)
             .padding(.vertical, 2)
+            .padding(.horizontal, 4)
             .background(isActive ? Color.accentColor.opacity(0.15) : .clear, in: RoundedRectangle(cornerRadius: 4))
-            .padding(.leading, CGFloat(depth + 1) * indentStep) // alinha sob o nome da pasta (após chevron)
+            .padding(.leading, CGFloat(depth + 1) * indentStep)
         }
         .buttonStyle(.plain)
         .accessibilityLabel("Open \(file.lastPathComponent)")
+    }
+}
+
+/// Linha de pasta com chevron customizado que acompanha a indentação.
+private struct FolderRowView<Content: View>: View {
+    let folder: FolderNode
+    let depth: Int
+    let indentStep: CGFloat
+    @Binding var isExpanded: Bool
+    let content: Content
+    @State private var hovering = false
+
+    init(folder: FolderNode, depth: Int, indentStep: CGFloat, isExpanded: Binding<Bool>, @ViewBuilder content: () -> Content) {
+        self.folder = folder
+        self.depth = depth
+        self.indentStep = indentStep
+        self._isExpanded = isExpanded
+        self.content = content()
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            Button {
+                withAnimation(.easeOut(duration: 0.15)) { isExpanded.toggle() }
+            } label: {
+                HStack(spacing: 4) {
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: 9, weight: .semibold))
+                        .foregroundStyle(.secondary)
+                        .rotationEffect(.degrees(isExpanded ? 90 : 0))
+                    Image(systemName: "folder")
+                        .foregroundStyle(.secondary)
+                    Text(folder.name)
+                        .lineLimit(1)
+                    Spacer(minLength: 0)
+                }
+                .font(.system(size: 12))
+                .padding(.vertical, 2)
+                .padding(.horizontal, 4)
+                .background(
+                    hovering ? Color.primary.opacity(0.05) : .clear,
+                    in: RoundedRectangle(cornerRadius: 4)
+                )
+                .padding(.leading, CGFloat(depth) * indentStep)
+            }
+            .buttonStyle(.plain)
+            .onHover { hovering = $0 }
+            .accessibilityLabel("Folder \(folder.name)")
+
+            if isExpanded {
+                content
+            }
+        }
     }
 }
 

@@ -1,8 +1,8 @@
 public protocol BlockNode: Equatable {}
 
 public struct CoreDocument: Equatable {
-    public let blocks: [BlockNode]
-    public init(blocks: [BlockNode]) { self.blocks = blocks }
+    public let blocks: [any BlockNode]
+    public init(blocks: [any BlockNode]) { self.blocks = blocks }
     public static func == (a: CoreDocument, b: CoreDocument) -> Bool { a.blocks.count == b.blocks.count }
 }
 
