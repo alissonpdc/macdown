@@ -42,6 +42,7 @@ struct SidebarView: View {
                     folderChildren(child, depth: depth + 1)
                     fileRows(child.files, indent: true)
                 }
+                .padding(.leading, CGFloat(depth + 1) * 14)
             } label: {
                 folderLabel(child, depth: depth)
             }

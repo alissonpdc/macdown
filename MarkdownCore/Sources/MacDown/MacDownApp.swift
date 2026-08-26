@@ -98,6 +98,7 @@ final class AppearanceAppDelegate: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.setActivationPolicy(.regular)
         NSApp.activate(ignoringOtherApps: true)
+        TabShortcutMonitor.install()
     }
 
     /// Light = aqua, Dark = darkAqua, System = nil (segue o macOS).
