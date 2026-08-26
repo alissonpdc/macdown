@@ -6,6 +6,11 @@ public struct FolderNode {
     public let url: URL
     public let files: [URL]
     public let children: [FolderNode]
+
+    /// A subárvore contém ao menos um arquivo markdown?
+    public var containsMarkdown: Bool {
+        !files.isEmpty || children.contains { $0.containsMarkdown }
+    }
 }
 
 public enum FolderScanner {
@@ -16,8 +21,10 @@ public enum FolderScanner {
     }
 
     /// Scan recursivo; o próprio root vira o nó raiz.
-    public static func scan(root: URL) -> FolderNode {
-        scanFolder(root)
+    /// `pruningEmptyFolders`: descarta pastas sem nenhum .md na subárvore inteira (feedback UX).
+    public static func scan(root: URL, pruningEmptyFolders: Bool = true) -> FolderNode {
+        let node = scanFolder(root)
+        return pruningEmptyFolders ? pruned(node) ?? node : node
     }
 
     private static func scanFolder(_ folder: URL) -> FolderNode {
@@ -39,5 +46,11 @@ public enum FolderScanner {
             files: mdFiles,
             children: subfolders.map(scanFolder)
         )
+    }
+
+    private static func pruned(_ node: FolderNode) -> FolderNode? {
+        guard node.containsMarkdown else { return nil }
+        let keptChildren = node.children.compactMap(pruned)
+        return FolderNode(name: node.name, url: node.url, files: node.files, children: keptChildren)
     }
 }

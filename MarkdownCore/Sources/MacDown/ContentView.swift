@@ -59,6 +59,12 @@ struct ContentView: View {
         .onReceive(NotificationCenter.default.publisher(for: .macDownOpenFolder)) { note in
             if let url = note.object as? URL { loadFolder(url) }
         }
+        .onReceive(NotificationCenter.default.publisher(for: .macDownNextTab)) { _ in
+            tabStore.selectNext()
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .macDownPreviousTab)) { _ in
+            tabStore.selectPrevious()
+        }
     }
 
     private func openInitial() {

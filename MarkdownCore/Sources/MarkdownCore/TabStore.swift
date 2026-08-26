@@ -64,6 +64,28 @@ public final class TabStore: ObservableObject {
         tabs[i].scrollOffset = offset
     }
 
+    // MARK: navegação entre abas (Cmd+←/→, Ctrl+Tab)
+
+    /// Aba seguinte, com wrap-around cíclico.
+    public func selectNext() {
+        cycle(+1)
+    }
+
+    /// Aba anterior, com wrap-around cíclico.
+    public func selectPrevious() {
+        cycle(-1)
+    }
+
+    private func cycle(_ step: Int) {
+        guard tabs.count > 1 else { return }
+        #if DEBUG
+        // print("cycle from", activeTabID as Any, "of", tabs.count)
+        #endif
+        let current = activeTabID.flatMap { id in tabs.firstIndex { $0.id == id } } ?? 0
+        let next = (current + step + tabs.count) % tabs.count
+        select(tabs[next].id)
+    }
+
     // MARK: R6.3 — histórico de navegação por aba
 
     public func recordVisit(_ path: String, in tabID: UUID) {
