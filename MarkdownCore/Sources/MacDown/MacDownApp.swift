@@ -15,9 +15,7 @@ struct MacDownApp: App {
         WindowGroup {
             ContentView(initialURL: initialURL)
                 .environmentObject(theme)
-                // preferredColorScheme sozinho não reverte o override da janela
-                // ao voltar p/ System; NSApp.appearance propaga de verdade.
-                .preferredColorScheme(theme.current.colorScheme)
+                .onAppear { appDelegate.apply(theme) }
                 .onChange(of: theme.current) { _ in appDelegate.apply(theme) }
         }
         .commands {
