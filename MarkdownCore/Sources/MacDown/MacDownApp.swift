@@ -19,6 +19,13 @@ struct MacDownApp: App {
                 .onChange(of: theme.current) { _ in appDelegate.apply(theme) }
         }
         .commands {
+            // R7.1 — Cmd+W fecha a aba ativa
+            CommandGroup(after: .newItem) {
+                Button("Close Tab") {
+                    NotificationCenter.default.post(name: .macDownCloseActiveTab, object: nil)
+                }
+                .keyboardShortcut("w", modifiers: .command)
+            }
             // R9.1 — View menu (PRD: "Seleção via menu nativo (View/Aparência)")
             CommandGroup(after: .toolbar) {
                 Picker("Appearance", selection: Binding(
@@ -35,15 +42,18 @@ struct MacDownApp: App {
     }
 }
 
-/// Aplica a aparência no nível AppKit (janelas inteiras), cobrindo o caso
-/// System após um modo explícito — que o SwiftUI não desfaz sozinho.
+extension Notification.Name {
+    static let macDownCloseActiveTab = Notification.Name("macDownCloseActiveTab")
+}
+
+/// Ativa o app como .regular e aplica a aparência no nível AppKit.
 final class AppearanceAppDelegate: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.setActivationPolicy(.regular)
         NSApp.activate(ignoringOtherApps: true)
     }
 
-    /// Chamado pelo App com o tema corrente (via onChange e na inicialização).
+    /// Light = aqua, Dark = darkAqua, System = nil (segue o macOS).
     func apply(_ theme: ThemeStore) {
         switch theme.current {
         case .light: NSApp.appearance = NSAppearance(named: .aqua)
