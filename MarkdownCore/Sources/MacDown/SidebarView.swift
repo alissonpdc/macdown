@@ -2,11 +2,14 @@ import SwiftUI
 import MarkdownCore
 
 /// R2.2/R2.3 — sidebar em árvore: subpastas colapsáveis, arquivos .md clicáveis, ativo destacado.
+/// Indentação: cada linha recebe exatamente um padding = depth * 14pt (sem acúmulo).
 struct SidebarView: View {
     let tree: FolderNode?
     @Binding var expandedFolders: Set<String>
     let activeURL: URL?
     let onOpenFile: (URL) -> Void
+
+    private let indentStep: CGFloat = 14
 
     var body: some View {
         Group {
@@ -14,7 +17,7 @@ struct SidebarView: View {
                 ScrollView {
                     VStack(alignment: .leading, spacing: 1) {
                         folderChildren(tree, depth: 0)
-                        fileRows(tree.files, indent: false)
+                        fileRows(tree.files, depth: 0)
                     }
                     .padding(8)
                 }
@@ -29,7 +32,7 @@ struct SidebarView: View {
         .background(Color(nsColor: .windowBackgroundColor))
     }
 
-    /// Subpastas colapsáveis de um nó, com indentação por profundidade. AnyView quebra a recursão.
+    /// Subpastas colapsáveis. AnyView quebra a inferência recursiva de tipo.
     private func folderChildren(_ node: FolderNode, depth: Int) -> AnyView {
         ForEach(node.children, id: \.url) { child in
             DisclosureGroup(
@@ -40,29 +43,25 @@ struct SidebarView: View {
             ) {
                 VStack(alignment: .leading, spacing: 1) {
                     folderChildren(child, depth: depth + 1)
-                    fileRows(child.files, indent: true)
+                    fileRows(child.files, depth: depth + 1)
                 }
-                .padding(.leading, CGFloat(depth + 1) * 14)
             } label: {
-                folderLabel(child, depth: depth)
+                // chevron+ícone+nome deslocados como um bloco
+                Label(node.name, systemImage: "folder")
+                    .font(.system(size: 12))
+                    .padding(.leading, CGFloat(depth) * indentStep)
             }
         }.eraseToAnyView()
     }
 
-    private func folderLabel(_ node: FolderNode, depth: Int) -> some View {
-        Label(node.name, systemImage: "folder")
-            .font(.system(size: 12))
-            .padding(.leading, CGFloat(depth) * 14)
-    }
-
     @ViewBuilder
-    private func fileRows(_ files: [URL], indent: Bool) -> some View {
+    private func fileRows(_ files: [URL], depth: Int) -> some View {
         ForEach(files, id: \.self) { file in
-            fileRow(file, indent: indent)
+            fileRow(file, depth: depth)
         }
     }
 
-    private func fileRow(_ file: URL, indent: Bool) -> some View {
+    private func fileRow(_ file: URL, depth: Int) -> some View {
         let isActive = file.standardizedFileURL == activeURL?.standardizedFileURL
         return Button(action: { onOpenFile(file) }) {
             HStack(spacing: 4) {
@@ -74,8 +73,8 @@ struct SidebarView: View {
             .font(.system(size: 12))
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(.vertical, 2)
-            .padding(.leading, indent ? 20 : 4)
             .background(isActive ? Color.accentColor.opacity(0.15) : .clear, in: RoundedRectangle(cornerRadius: 4))
+            .padding(.leading, CGFloat(depth) * indentStep)
         }
         .buttonStyle(.plain)
         .accessibilityLabel("Open \(file.lastPathComponent)")
