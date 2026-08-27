@@ -66,7 +66,13 @@ struct MarkdownWebView: NSViewRepresentable {
         if let request = scrollToHeading,
            context.coordinator.lastTOCToken != request.token {
             context.coordinator.lastTOCToken = request.token
-            scroll(to: request.slug, in: webView)
+            if webView.isLoading {
+                // R3.7 — requisição chegou durante recarga: guarda p/ executar no didFinish,
+                // senão o JS roda antes do documento existir e é perdido.
+                context.coordinator.pendingTOCSlug = request.slug
+            } else {
+                scroll(to: request.slug, in: webView)
+            }
         }
 
         if context.coordinator.lastSearchQuery != searchQuery ||
@@ -85,16 +91,30 @@ struct MarkdownWebView: NSViewRepresentable {
     }
 
     /// R3.7 — rola até o heading com id = slug (gerado pelo MarkdownHTMLConverter).
-    /// Slugs já são url/texto seguros, mas o escape evita quebra do JS.
+    /// Caminho ÚNICO: posiciona o topo do heading com scroll suave (sem
+    /// scrollIntoViewIfNeeded, que cancelava a animação e causava "pulo").
+    /// Se a página ainda está carregando recursos, espera o evento `load`
+    /// para que as posições dos headings estejam finais na 1ª tentativa.
     private func scroll(to slug: String, in webView: WKWebView) {
         let escaped = slug.replacingOccurrences(of: "\\", with: "\\\\")
                           .replacingOccurrences(of: "'", with: "\\'")
         webView.evaluateJavaScript("""
         (function(){
-            var el = document.getElementById('\(escaped)');
-            if (!el) return;
-            el.scrollIntoView({behavior:'smooth', block:'start'});
-            if (el.scrollIntoViewIfNeeded) el.scrollIntoViewIfNeeded(true);
+            var slug = '\(escaped)';
+            function jump(){
+                var el = document.getElementById(slug);
+                if (!el) return;
+                requestAnimationFrame(function(){
+                    requestAnimationFrame(function(){
+                        el.scrollIntoView({behavior:'smooth', block:'start'});
+                    });
+                });
+            }
+            if (document.readyState === 'complete') {
+                jump();
+            } else {
+                window.addEventListener('load', function(){ jump(); }, {once:true});
+            }
         })();
         """)
     }
@@ -164,6 +184,8 @@ struct MarkdownWebView: NSViewRepresentable {
         var lastSearchQuery: String = ""
         var lastSearchCurrent: Int = 0
         var lastTOCToken: Int = 0
+        /// R3.7 — slug aguardando o fim da navegação para executar o scroll.
+        var pendingTOCSlug: String?
 
         init(_ parent: MarkdownWebView) {
             self.parent = parent
@@ -194,9 +216,10 @@ struct MarkdownWebView: NSViewRepresentable {
                 let js = "window.scrollTo(0, \(parent.scrollPosition));"
                 webView.evaluateJavaScript(js)
             }
-            // R3.7 — re-aplica o último salto do TOC após recarga do HTML
-            if let request = parent.scrollToHeading {
-                parent.scroll(to: request.slug, in: webView)
+            // R3.7 — executa salto do TOC que chegou durante o carregamento
+            if let slug = pendingTOCSlug {
+                pendingTOCSlug = nil
+                parent.scroll(to: slug, in: webView)
             }
             if !parent.searchQuery.isEmpty {
                 parent.highlightSearch(in: webView)

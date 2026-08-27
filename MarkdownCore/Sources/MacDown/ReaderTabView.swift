@@ -12,6 +12,8 @@ struct ReaderTabView: View {
     @State private var scrollOffset: CGFloat = 0
     /// R3.7 — último pedido de navegação do TOC (token crescente).
     @State private var tocRequest: TocNavigateRequest?
+    /// R3.7 — largura da coluna TOC (0 = ainda não ajustada → usa largura ideal).
+    @AppStorage("tocPanelWidth") private var tocPanelWidthStored: Double = 0
 
     var body: some View {
         let tab = store.tabs.first(where: { $0.id == tabID })
@@ -23,6 +25,7 @@ struct ReaderTabView: View {
         let searchQuery = isActiveSearch ? (search?.query ?? "") : ""
         let searchCurrent = search?.current ?? 0
         let searchCount = search?.count ?? 0
+        let tocOutline = (tab?.document).map { DocumentOutline($0.document) }
         VStack(spacing: 0) {
             if let tab, tab.diffResult != nil && tab.hasExternalUpdate {
                 diffHeader(tab)
@@ -42,11 +45,12 @@ struct ReaderTabView: View {
                     )
                 }
                 if uiPrefs.showTOC {
-                    Divider()
-                    if let doc = tab?.document {
-                        TocPanelView(outline: DocumentOutline(doc.document)) { slug in
-                            tocRequest = TocNavigateRequest(token: (tocRequest?.token ?? 0) + 1, slug: slug)
-                        }
+                    if let outline = tocOutline {
+                        TocPanelView(outline: outline,
+                                     onSelect: { slug in
+                                         tocRequest = TocNavigateRequest(token: (tocRequest?.token ?? 0) + 1, slug: slug)
+                                     },
+                                     width: tocWidthBinding(for: outline))
                     }
                 }
             }
@@ -58,6 +62,19 @@ struct ReaderTabView: View {
     }
 
     // MARK: - HTML generation
+
+    /// R3.7 — largura do TOC: ideal medida pelos títulos até o primeiro ajuste manual.
+    private func tocWidthBinding(for outline: DocumentOutline) -> Binding<CGFloat> {
+        Binding(
+            get: {
+                tocPanelWidthStored > 0 ? CGFloat(tocPanelWidthStored) : TocPanelView.idealWidth(for: outline)
+            },
+            set: { newValue in
+                let clamped = max(TocPanelView.minWidth, min(TocPanelView.maxWidth, newValue))
+                tocPanelWidthStored = Double(clamped)
+            }
+        )
+    }
 
     private func buildHTML(doc: OpenDocument, statuses: [BlockDiffer.Status]?) -> String {
         let converter = MarkdownHTMLConverter()
