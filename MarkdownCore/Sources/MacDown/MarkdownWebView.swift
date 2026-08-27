@@ -3,6 +3,9 @@ import WebKit
 
 /// Wrapper SwiftUI para WKWebView que renderiza markdown convertido para HTML.
 struct MarkdownWebView: NSViewRepresentable {
+    /// Canal de mensagens JS→Swift para a seção ativa (R3.7 sync inversa).
+    static let tocMessageName = "macDownTOC"
+
     let html: String
     let scrollPosition: CGFloat
     let searchQuery: String
@@ -11,6 +14,8 @@ struct MarkdownWebView: NSViewRepresentable {
     let baseURL: URL?
     /// R3.7 — navegação do TOC: rola até o heading com o slug informado.
     var scrollToHeading: TocNavigateRequest?
+    /// R3.7 — seção ativa detectada pelo scroll do conteúdo (nil = antes do 1º heading).
+    var onActiveHeadingChange: (_ activeSlug: String?) -> Void = { _ in }
     let onOpenLink: (URL) -> Void
 
     init(html: String,
@@ -20,6 +25,7 @@ struct MarkdownWebView: NSViewRepresentable {
          searchCurrent: Int = 0,
          baseURL: URL? = nil,
          scrollToHeading: TocNavigateRequest? = nil,
+         onActiveHeadingChange: @escaping (_ activeSlug: String?) -> Void = { _ in },
          onOpenLink: @escaping (URL) -> Void = { _ in }) {
         self.html = html
         self.scrollPosition = scrollPosition
@@ -28,6 +34,7 @@ struct MarkdownWebView: NSViewRepresentable {
         self.searchCurrent = searchCurrent
         self.baseURL = baseURL
         self.scrollToHeading = scrollToHeading
+        self.onActiveHeadingChange = onActiveHeadingChange
         self.onOpenLink = onOpenLink
     }
 
@@ -38,6 +45,7 @@ struct MarkdownWebView: NSViewRepresentable {
     func makeNSView(context: Context) -> WKWebView {
         let config = WKWebViewConfiguration()
         config.preferences.setValue(true, forKey: "allowFileAccessFromFileURLs")
+        config.userContentController.add(context.coordinator, name: Self.tocMessageName)
         let webView = WKWebView(frame: .zero, configuration: config)
         webView.navigationDelegate = context.coordinator
         webView.setValue(false, forKey: "drawsBackground")
@@ -47,6 +55,10 @@ struct MarkdownWebView: NSViewRepresentable {
         webView.loadHTMLString(fullHTML, baseURL: baseURL)
 
         return webView
+    }
+
+    static func dismantleNSView(_ webView: WKWebView, coordinator: Coordinator) {
+        webView.configuration.userContentController.removeAllScriptMessageHandlers()
     }
 
     func updateNSView(_ webView: WKWebView, context: Context) {
@@ -66,8 +78,11 @@ struct MarkdownWebView: NSViewRepresentable {
         if let request = scrollToHeading,
            context.coordinator.lastTOCToken != request.token {
             context.coordinator.lastTOCToken = request.token
+            // R3.7 — pausa o tracking do scroll durante a animação programática,
+            // para não destacar seções intermediárias cruzadas no caminho.
+            context.coordinator.beginProgrammaticScroll()
             if webView.isLoading {
-                // R3.7 — requisição chegou durante recarga: guarda p/ executar no didFinish,
+                // Requisição chegou durante recarga: guarda p/ executar no didFinish,
                 // senão o JS roda antes do documento existir e é perdido.
                 context.coordinator.pendingTOCSlug = request.slug
             } else {
@@ -86,9 +101,51 @@ struct MarkdownWebView: NSViewRepresentable {
     private func themedHTML(_ html: String) -> String {
         let isDark = NSApp.effectiveAppearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
         let css = isDark ? "dark" : "light"
+        let themeScript = "<script>document.documentElement.setAttribute('data-theme', '\(css)');</script>"
         return html.replacingOccurrences(of: "</head>",
-            with: "<script>document.documentElement.setAttribute('data-theme', '\(css)');</script></head>")
+            with: themeScript + Self.activeHeadingTrackerJS + "</head>")
     }
+
+    /// R3.7 (sync inversa) — escuta o scroll e reporta o último h1..h6 com id cujo
+    /// top ficou acima do topo da viewport (+ tolerância). Throttle ~120ms e envia
+    /// SOMENTE quando o id muda. O load event cobre reposicionamento pós-imagens.
+    static let activeHeadingTrackerJS = """
+    <script>
+    (function(){
+        if (window.__macDownTocTracking) return;
+        window.__macDownTocTracking = true;
+        var TOLERANCE = 40;
+        var THROTTLE_MS = 120;
+        var lastSentId = null, lastReportAt = 0, pendingTimer = null;
+        function computeActive(){
+            var headings = document.querySelectorAll('h1[id],h2[id],h3[id],h4[id],h5[id],h6[id]');
+            var active = '';
+            for (var i = 0; i < headings.length; i++){
+                if (headings[i].getBoundingClientRect().top <= TOLERANCE){
+                    active = headings[i].id;
+                } else { break; }
+            }
+            return active;
+        }
+        function report(){
+            pendingTimer = null;
+            lastReportAt = Date.now();
+            var id = computeActive();
+            if (id !== lastSentId){
+                lastSentId = id;
+                try { window.webkit.messageHandlers.macDownTOC.postMessage(id); } catch(e) {}
+            }
+        }
+        function schedule(){
+            if (pendingTimer) return;
+            var wait = Math.max(0, THROTTLE_MS - (Date.now() - lastReportAt));
+            pendingTimer = setTimeout(report, wait);
+        }
+        window.addEventListener('scroll', schedule, {passive:true});
+        window.addEventListener('load', schedule);
+    })();
+    </script>
+    """
 
     /// R3.7 — rola até o heading com id = slug (gerado pelo MarkdownHTMLConverter).
     /// Caminho ÚNICO: posiciona o topo do heading com scroll suave (sem
@@ -177,7 +234,7 @@ struct MarkdownWebView: NSViewRepresentable {
 
     // MARK: - Coordinator
 
-    class Coordinator: NSObject, WKNavigationDelegate {
+    class Coordinator: NSObject, WKNavigationDelegate, WKScriptMessageHandler {
         var parent: MarkdownWebView
         var lastHTML: String = ""
         var pendingScroll: CGFloat = -1
@@ -186,9 +243,40 @@ struct MarkdownWebView: NSViewRepresentable {
         var lastTOCToken: Int = 0
         /// R3.7 — slug aguardando o fim da navegação para executar o scroll.
         var pendingTOCSlug: String?
+        /// R3.7 — tracking do scroll suspenso durante a animação TOC→conteúdo.
+        private(set) var suppressTOCFeedback = false
+        private var lastSuppressedActiveSlug: String?
 
         init(_ parent: MarkdownWebView) {
             self.parent = parent
+        }
+
+        /// Pausa o destaque por ~650ms (duração da animação suave), evitando que
+        /// seções intermediárias pisquem no TOC. O último id reportado durante a
+        /// pausa é aplicado ao retomar.
+        func beginProgrammaticScroll() {
+            suppressTOCFeedback = true
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.65) { [weak self] in
+                guard let self else { return }
+                self.suppressTOCFeedback = false
+                if let id = self.lastSuppressedActiveSlug {
+                    self.lastSuppressedActiveSlug = nil
+                    self.parent.onActiveHeadingChange(id.isEmpty ? nil : id)
+                }
+            }
+        }
+
+        // MARK: WKScriptMessageHandler (JS → Swift)
+
+        func userContentController(_ userContentController: WKUserContentController,
+                                   didReceive message: WKScriptMessage) {
+            guard message.name == MarkdownWebView.tocMessageName,
+                  let id = message.body as? String else { return }
+            if suppressTOCFeedback {
+                lastSuppressedActiveSlug = id
+                return
+            }
+            parent.onActiveHeadingChange(id.isEmpty ? nil : id)
         }
 
         func webView(_ webView: WKWebView, decidePolicyFor navigationAction: WKNavigationAction,

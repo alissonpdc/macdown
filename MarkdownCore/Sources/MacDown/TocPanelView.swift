@@ -43,6 +43,8 @@ struct TocPanelView: View {
     let requiredWidth: CGFloat
     /// Largura inicial da sessão (largura ideal do primeiro documento aberto).
     let initialWidth: CGFloat
+    /// R3.7 sync inversa — seção ativa conforme o scroll do conteúdo.
+    let activeSlug: String?
 
     static let minWidth: CGFloat = 150
     static let maxWidth: CGFloat = 420
@@ -60,11 +62,13 @@ struct TocPanelView: View {
     init(outline: DocumentOutline,
          onSelect: @escaping (_ slug: String) -> Void,
          requiredWidth: CGFloat,
-         initialWidth: CGFloat) {
+         initialWidth: CGFloat,
+         activeSlug: String?) {
         self.outline = outline
         self.onSelect = onSelect
         self.requiredWidth = requiredWidth
         self.initialWidth = initialWidth
+        self.activeSlug = activeSlug
         _width = State(initialValue: Self.clamp(initialWidth))
     }
 
@@ -99,6 +103,7 @@ struct TocPanelView: View {
                     TocList(outline: outline,
                             indentStep: indentStep,
                             rowHorizontalPadding: rowHorizontalPadding,
+                            activeSlug: activeSlug,
                             onSelect: onSelect)
                 }
             }
@@ -171,12 +176,15 @@ struct TocPanelView: View {
 
 // MARK: - Lista (isolada da largura: drag não re-renderiza as linhas)
 
-/// Subview separada porque não depende de `width`: enquanto o usuário arrasta o
-/// divider, apenas a constante do frame muda — este subtree é preservado pelo diff.
+/// R3.7 (sync inversa) — o slug da seção ativa chega via onActiveHeadingChange e
+/// é destacado com cor de acento/bold/fundo arredondado, herdando tema via cores
+/// semânticas do SwiftUI (accentColor/primary) — nenhuma cor hardcoded.
 private struct TocList: View {
     let outline: DocumentOutline
     let indentStep: CGFloat
     let rowHorizontalPadding: CGFloat
+    /// Slug da seção ativa conforme scroll do conteúdo (nil = antes do 1º heading).
+    let activeSlug: String?
     let onSelect: (_ slug: String) -> Void
 
     @State private var hoveringSlug: String?
@@ -191,22 +199,26 @@ private struct TocList: View {
             }
             .padding(containerPadding)
         }
+        .accessibilityIdentifier("tocList")
     }
 
     private func row(_ entry: OutlineEntry) -> some View {
-        Button {
+        let isActive = activeSlug == entry.slug
+        return Button {
             onSelect(entry.slug)
         } label: {
             Text(entry.title)
                 .lineLimit(1)
-                .font(entry.level <= 1 ? .system(size: 12, weight: .semibold) : .system(size: 12))
-                .foregroundStyle(hoveringSlug == entry.slug ? Color.accentColor : .primary)
+                .font(.system(size: 12,
+                              weight: (isActive || entry.level <= 1) ? .semibold : .regular))
+                .foregroundStyle(isActive || hoveringSlug == entry.slug ? Color.accentColor : .primary)
                 .padding(.vertical, 2)
                 .padding(.horizontal, rowHorizontalPadding)
                 .padding(.leading, CGFloat(max(entry.level - 1, 0)) * indentStep)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .background(
-                    hoveringSlug == entry.slug ? Color.primary.opacity(0.05) : .clear,
+                    isActive ? Color.accentColor.opacity(0.14)
+                        : hoveringSlug == entry.slug ? Color.primary.opacity(0.05) : .clear,
                     in: RoundedRectangle(cornerRadius: 4)
                 )
                 .contentShape(Rectangle())
@@ -215,5 +227,6 @@ private struct TocList: View {
         .onHover { hovering in hoveringSlug = hovering ? entry.slug : nil }
         .help("Go to \(entry.title)")
         .accessibilityLabel("Section \(entry.title), level \(entry.level)")
+        .accessibilityAddTraits(isActive ? [.isSelected] : [])
     }
 }

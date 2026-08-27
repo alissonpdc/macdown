@@ -73,7 +73,7 @@
 - [ ] Syntax highlighting completo (R3.2)
 - [ ] Copiar Comando shell: limpar prompts/comentários/continuações (R3.2)
 - [ ] Fold de código >30 linhas (R3.10)
-- [ ] Outline/TOC bidirecional (R3.7)
+- [x] Outline/TOC bidirecional (R3.7) — TocPanelView lateral direito (Cmd+Shift+T, coluna redimensionável grow-only) + navegação por clique via âncoras + destaque da seção ativa ao rolar (scroll listener JS → WKScriptMessageHandler)
 - [ ] Âncoras com hover `#` (R3.8)
 - [ ] Tabelas largas rolam horizontal (R3.9)
 - [ ] Footer: breadcrumb + palavras/caracteres + tasks (R8.1, R3.13)
