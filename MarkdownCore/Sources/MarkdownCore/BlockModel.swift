@@ -15,15 +15,29 @@ public struct ParagraphNode: BlockNode, Equatable {
 public struct CodeBlockNode: BlockNode, Equatable {
     public let language: String?
     public let code: String
+
+    public init(language: String?, code: String) {
+        self.language = language
+        self.code = code
+    }
 }
 
 public struct ListNode: BlockNode, Equatable {
     public let items: [String]
     public let isTaskList: Bool
+
+    public init(items: [String], isTaskList: Bool = false) {
+        self.items = items
+        self.isTaskList = isTaskList
+    }
 }
 
 public struct QuoteNode: BlockNode, Equatable {
     public let plainText: String
+
+    public init(plainText: String) {
+        self.plainText = plainText
+    }
 }
 
 public struct OutlineEntry {
@@ -36,18 +50,22 @@ public struct DocumentOutline {
     public let entries: [OutlineEntry]
 
     public init(_ doc: CoreDocument) {
-        var seen: [String: Int] = [:]
+        var counts: [String: Int] = [:]
         entries = doc.blocks.compactMap { block in
             guard let h = block as? HeadingNode else { return nil }
-            var slug = Self.slugify(h.inlineText)
-            if let n = seen[slug] {
-                slug += "-\(n + 1)"
-                seen[h.inlineText.lowercased()] = n + 1
-            } else {
-                seen[slug] = 0
-            }
-            return OutlineEntry(level: h.level, title: h.inlineText, slug: slug)
+            return OutlineEntry(level: h.level,
+                                title: h.inlineText,
+                                slug: Self.uniqueSlug(Self.slugify(h.inlineText), counts: &counts))
         }
+    }
+
+    /// Atribui slug único a headings repetidos: 1ª ocorrência usa o slug puro,
+    /// as seguintes recebem sufixo -1, -2, … Deve ser a MESMA regra usada pelo
+    /// MarkdownHTMLConverter ao gerar ids, para que TOC/âncoras apontem certo.
+    static func uniqueSlug(_ slug: String, counts: inout [String: Int]) -> String {
+        let n = counts[slug] ?? 0
+        counts[slug] = n + 1
+        return n == 0 ? slug : "\(slug)-\(n)"
     }
 
     static func slugify(_ text: String) -> String {

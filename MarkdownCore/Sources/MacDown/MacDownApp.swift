@@ -15,6 +15,9 @@ final class TabCommandBus: ObservableObject {
 struct MacDownApp: App {
     @State private var initialURL: URL?
     @StateObject private var theme = ThemeStore()
+    @StateObject private var readingPrefs = ReadingPrefs()
+    /// R3.7 — estado persistido de visibilidade do TOC
+    @StateObject private var uiPrefs = UIPrefs()
     @StateObject private var tabBus: TabCommandBus
     @NSApplicationDelegateAdaptor(AppearanceAppDelegate.self) private var appDelegate
 
@@ -33,6 +36,8 @@ struct MacDownApp: App {
         WindowGroup {
             ContentView(initialURL: initialURL)
                 .environmentObject(theme)
+                .environmentObject(readingPrefs)
+                .environmentObject(uiPrefs)
                 .onAppear { appDelegate.apply(theme) }
                 .onChange(of: theme.current) { appDelegate.apply(theme) }
         }
@@ -87,6 +92,54 @@ struct MacDownApp: App {
                     Text("Dark").tag(AppearanceMode.dark)
                 }
                 .pickerStyle(.inline)
+                Divider()
+                // R3.7 — painel TOC lateral direito (Cmd+Shift+T)
+                Toggle("Table of Contents", isOn: Binding(
+                    get: { uiPrefs.showTOC },
+                    set: { uiPrefs.showTOC = $0 }
+                ))
+                    .keyboardShortcut("t", modifiers: [.command, .shift])
+                    .help("Toggle the table of contents panel")
+                Divider()
+                // R3.11 — Largura de leitura
+                Menu("Reading Width") {
+                    Button("Narrower (−)") { readingPrefs.decreaseWidth() }
+                        .keyboardShortcut("-", modifiers: [.command, .option])
+                    Button("Wider (+)") { readingPrefs.increaseWidth() }
+                        .keyboardShortcut("+", modifiers: [.command, .option])
+                    Divider()
+                    Button("Reset") { readingPrefs.widthCh = ReadingPrefs.defaultWidth }
+                }
+                // R11.1 — Zoom de texto
+                Menu("Text Zoom") {
+                    Button("Zoom In") { readingPrefs.zoomIn() }
+                        .keyboardShortcut("=", modifiers: .command)
+                    Button("Zoom Out") { readingPrefs.zoomOut() }
+                        .keyboardShortcut("-", modifiers: .command)
+                    Divider()
+                    Button("Reset Zoom") { readingPrefs.resetZoom() }
+                        .keyboardShortcut("0", modifiers: .command)
+                }
+            }
+            // R5.1 / R5.2 — Busca
+            CommandMenu("Find") {
+                Button("Find…") {
+                    NotificationCenter.default.post(name: .macDownFind, object: nil)
+                }
+                .keyboardShortcut("f", modifiers: .command)
+                Button("Find Next") {
+                    NotificationCenter.default.post(name: .macDownFindNext, object: nil)
+                }
+                .keyboardShortcut("g", modifiers: .command)
+                Button("Find Previous") {
+                    NotificationCenter.default.post(name: .macDownFindPrevious, object: nil)
+                }
+                .keyboardShortcut("g", modifiers: [.command, .shift])
+                Divider()
+                Button("Find in Folder…") {
+                    NotificationCenter.default.post(name: .macDownFindGlobal, object: nil)
+                }
+                .keyboardShortcut("f", modifiers: [.command, .shift])
             }
         }
     }
@@ -102,6 +155,10 @@ extension Notification.Name {
     static let macDownNextTab = Notification.Name("macDownNextTab")
     static let macDownPreviousTab = Notification.Name("macDownPreviousTab")
     static let macDownToggleDiff = Notification.Name("macDownToggleDiff")
+    static let macDownFind = Notification.Name("macDownFind")
+    static let macDownFindNext = Notification.Name("macDownFindNext")
+    static let macDownFindPrevious = Notification.Name("macDownFindPrevious")
+    static let macDownFindGlobal = Notification.Name("macDownFindGlobal")
 }
 
 /// Ativa o app como .regular e aplica a aparência no nível AppKit.
