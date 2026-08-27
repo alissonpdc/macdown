@@ -5,6 +5,7 @@ import MarkdownCore
 /// R3.7 — estado de UI persistido em UserDefaults (mesmo padrão de ReadingPrefs).
 final class UIPrefs: ObservableObject {
     static let showTOCKey = "showTableOfContents"
+    static let tocWidthKey = "tocPanelWidth"
 
     private let defaults: UserDefaults
 
@@ -12,12 +13,26 @@ final class UIPrefs: ObservableObject {
         didSet { defaults.set(showTOC, forKey: Self.showTOCKey) }
     }
 
+    /// Largura base da coluna TOC (0 = nunca definida → usa ideal calculado).
+    /// Referência única de verdade: escritas síncronas aqui sobrevivem ao encerramento,
+    /// ao contrário de assigns via closure sobre cópias struct (@AppStorage).
+    @Published var tocWidth: Double {
+        didSet { defaults.set(tocWidth, forKey: Self.tocWidthKey) }
+    }
+
     init(defaults: UserDefaults = .standard) {
         self.defaults = defaults
         showTOC = defaults.object(forKey: Self.showTOCKey) as? Bool ?? true
+        let stored = defaults.double(forKey: Self.tocWidthKey)
+        tocWidth = (stored > 0 && stored <= 10_000) ? stored : 0
     }
 
     func toggleTOC() { showTOC.toggle() }
+
+    /// Persiste como novo base, já com clamp de limites sensatos.
+    func setTocWidth(_ width: CGFloat) {
+        tocWidth = Double(TocPanelView.clamp(width))
+    }
 }
 
 /// Requisição de navegação do TOC para o WebView. O token crescente garante que
@@ -117,6 +132,9 @@ struct TocPanelView: View {
         .onChange(of: requiredWidth) { _, newRequired in
             growOnlyToFit(target: newRequired)
         }
+        // Rede de segurança: qualquer remoção do painel (troca de estado, fechar
+        // janela, Cmd+Q) persiste a largura corrente ANTES de sumir da hierarquia.
+        .onDisappear { onPersistWidth(Self.clamp(width)) }
     }
 
     // MARK: - Estados vazios
