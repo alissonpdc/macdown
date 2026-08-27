@@ -33,6 +33,37 @@ final class MarkdownHTMLConverterTests: XCTestCase {
         XCTAssertTrue(html.contains("code-header"))
     }
 
+    // R3.10 — fold de código >30 linhas
+    func testLineCountCountsNewlineSeparatedLinesIgnoringTrailingNewline() {
+        XCTAssertEqual(MarkdownHTMLConverter.lineCount(of: "let x = 1"), 1)
+        XCTAssertEqual(MarkdownHTMLConverter.lineCount(of: "a\nb\nc"), 3)
+        XCTAssertEqual(MarkdownHTMLConverter.lineCount(of: "a\nb\nc\n"), 3)
+        XCTAssertEqual(MarkdownHTMLConverter.lineCount(of: ""), 1)
+    }
+
+    func testCodeBlockFoldedWhenMoreThan30Lines() {
+        let code = (1...31).map { "line \($0)" }.joined(separator: "\n")
+        let doc = CoreDocument(blocks: [CodeBlockNode(language: "swift", code: code)])
+        let html = converter.convert(doc)
+        XCTAssertTrue(html.contains("code-block folded"), "31-line block should be folded")
+        XCTAssertTrue(html.contains("fold-btn"), "fold button should be present")
+        XCTAssertTrue(html.contains("31 linhas"), "fold button should show line count")
+    }
+
+    func testCodeBlockNotFoldedAt30LinesOrLess() {
+        let code = (1...30).map { "line \($0)" }.joined(separator: "\n")
+        let doc = CoreDocument(blocks: [CodeBlockNode(language: "swift", code: code)])
+        let html = converter.convert(doc)
+        XCTAssertFalse(html.contains("code-block folded"), "30-line block should not be folded")
+        XCTAssertFalse(html.contains("<button class=\"fold-btn\""), "fold button should be absent")
+    }
+
+    func testFoldCSSAndToggleScriptPresent() {
+        let html = converter.convert(CoreDocument(blocks: []))
+        XCTAssertTrue(html.contains(".code-block.folded pre"))
+        XCTAssertTrue(html.contains("function toggleFold"))
+    }
+
     func testBlockquote() {
         let doc = CoreDocument(blocks: [
             QuoteNode(plainText: "Important quote"),

@@ -47,6 +47,12 @@ public final class MarkdownHTMLConverter {
         case let c as CodeBlockNode:
             let lang = c.language ?? ""
             let highlighted = Self.syntaxHighlight(Self.escapeHTML(c.code), language: lang)
+            let lines = Self.lineCount(of: c.code)
+            if lines > Self.foldLineThreshold {
+                return """
+                <div class="code-block folded"><div class="code-header"><span class="lang">\(Self.escapeHTML(lang))</span><span class="header-actions"><button class="fold-btn" onclick="toggleFold(this)">Mostrar tudo (\(lines) linhas)</button><button class="copy-btn" onclick="copyCode(this)">Copiar</button></span></div><pre><code class="language-\(lang)">\(highlighted)</code></pre></div>\n
+                """
+            }
             return """
             <div class="code-block"><div class="code-header"><span class="lang">\(Self.escapeHTML(lang))</span><button class="copy-btn" onclick="copyCode(this)">Copiar</button></div><pre><code class="language-\(lang)">\(highlighted)</code></pre></div>\n
             """
@@ -262,6 +268,18 @@ public final class MarkdownHTMLConverter {
         return result
     }
 
+    // MARK: - Code fold (R3.10)
+
+    static let foldLineThreshold = 30
+
+    static func lineCount(of code: String) -> Int {
+        var lines = code.components(separatedBy: "\n")
+        if lines.count > 1, lines.last?.isEmpty == true {
+            lines.removeLast()
+        }
+        return max(lines.count, 1)
+    }
+
     // MARK: - Helpers
 
     /// Mesma regra de dedup de DocumentOutline — ids do HTML precisam casar
@@ -400,6 +418,30 @@ public final class MarkdownHTMLConverter {
         font-size: 12px;
     }
     .code-header + pre { margin-top: 0; border-radius: 0 0 6px 6px; }
+    .header-actions { display: flex; gap: 8px; }
+    .code-block.folded pre {
+        max-height: 500px;
+        overflow: hidden;
+        position: relative;
+    }
+    .code-block.folded pre::after {
+        content: "";
+        position: absolute;
+        left: 0; right: 0; bottom: 0;
+        height: 60px;
+        background: linear-gradient(to bottom, transparent, var(--code-bg));
+        pointer-events: none;
+    }
+    .fold-btn {
+        background: none;
+        border: 1px solid var(--border);
+        color: var(--fg-secondary);
+        padding: 2px 8px;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 12px;
+    }
+    .fold-btn:hover { color: var(--fg); border-color: var(--fg-secondary); }
     .lang { color: var(--fg-secondary); text-transform: uppercase; font-weight: 500; letter-spacing: 0.5px; }
     .copy-btn {
         background: none;
@@ -499,6 +541,14 @@ public final class MarkdownHTMLConverter {
         navigator.clipboard.writeText(code.textContent);
         btn.textContent = 'Copiado!';
         setTimeout(function() { btn.textContent = 'Copiar'; }, 1500);
+    }
+    function toggleFold(btn) {
+        var block = btn.closest('.code-block');
+        var folded = block.classList.toggle('folded');
+        var lines = block.querySelectorAll('code')[0].textContent.split('\\n').length;
+        var m = btn.textContent.match(/\\((\\d+) linhas\\)/);
+        var n = m ? m[1] : lines;
+        btn.textContent = folded ? 'Mostrar tudo (' + n + ' linhas)' : 'Recolher';
     }
     </script>
     </body>
