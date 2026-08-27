@@ -50,13 +50,8 @@ struct ReaderTabView: View {
                                 tocRequest = TocNavigateRequest(token: (tocRequest?.token ?? 0) + 1, slug: slug)
                             },
                             requiredWidth: TocPanelView.idealWidth(for: outline),
-                            // Base persistido na sessão anterior; ideal só na 1ª execução
-                            initialWidth: uiPrefs.tocWidth > 0
-                                ? CGFloat(uiPrefs.tocWidth)
-                                : TocPanelView.idealWidth(for: outline),
-                            onPersistWidth: { newWidth in
-                                uiPrefs.setTocWidth(newWidth)
-                            }
+                            // Largura da SESSÃO: default (ideal do 1º doc) a cada launch
+                            initialWidth: TocPanelView.idealWidth(for: outline)
                         )
                     }
                 }
