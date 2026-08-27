@@ -12,8 +12,6 @@ struct ReaderTabView: View {
     @State private var scrollOffset: CGFloat = 0
     /// R3.7 — último pedido de navegação do TOC (token crescente).
     @State private var tocRequest: TocNavigateRequest?
-    /// R3.7 — largura da coluna TOC (0 = ainda não ajustada → usa largura ideal).
-    @AppStorage("tocPanelWidth") private var tocPanelWidthStored: Double = 0
 
     var body: some View {
         let tab = store.tabs.first(where: { $0.id == tabID })
@@ -52,11 +50,12 @@ struct ReaderTabView: View {
                                 tocRequest = TocNavigateRequest(token: (tocRequest?.token ?? 0) + 1, slug: slug)
                             },
                             requiredWidth: TocPanelView.idealWidth(for: outline),
-                            initialWidth: tocPanelWidthStored > 0
-                                ? CGFloat(tocPanelWidthStored)
+                            // Base persistido na sessão anterior; ideal só na 1ª execução
+                            initialWidth: uiPrefs.tocWidth > 0
+                                ? CGFloat(uiPrefs.tocWidth)
                                 : TocPanelView.idealWidth(for: outline),
                             onPersistWidth: { newWidth in
-                                tocPanelWidthStored = Double(newWidth)
+                                uiPrefs.setTocWidth(newWidth)
                             }
                         )
                     }
