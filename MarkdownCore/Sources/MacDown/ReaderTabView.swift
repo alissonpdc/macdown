@@ -12,6 +12,8 @@ struct ReaderTabView: View {
     @State private var scrollOffset: CGFloat = 0
     /// R3.7 — último pedido de navegação do TOC (token crescente).
     @State private var tocRequest: TocNavigateRequest?
+    /// R3.7 sync inversa — seção ativa reportada pelo scroll do WebView.
+    @State private var activeHeadingSlug: String?
 
     var body: some View {
         let tab = store.tabs.first(where: { $0.id == tabID })
@@ -39,6 +41,9 @@ struct ReaderTabView: View {
                         searchCurrent: searchCurrent,
                         baseURL: doc.url.deletingLastPathComponent(),
                         scrollToHeading: tocRequest,
+                        onActiveHeadingChange: { slug in
+                            activeHeadingSlug = slug
+                        },
                         onOpenLink: onOpenLink
                     )
                 }
@@ -51,7 +56,8 @@ struct ReaderTabView: View {
                             },
                             requiredWidth: TocPanelView.idealWidth(for: outline),
                             // Largura da SESSÃO: default (ideal do 1º doc) a cada launch
-                            initialWidth: TocPanelView.idealWidth(for: outline)
+                            initialWidth: TocPanelView.idealWidth(for: outline),
+                            activeSlug: activeHeadingSlug
                         )
                     }
                 }
@@ -60,6 +66,10 @@ struct ReaderTabView: View {
             if let doc = tab?.document {
                 FooterView(info: FooterInfo(document: doc, folderRoot: folderRoot))
             }
+        }
+        .onChange(of: tabID) { _, _ in
+            // aba trocada: destaque precisa ser re-aprendido do novo documento
+            activeHeadingSlug = nil
         }
     }
 
