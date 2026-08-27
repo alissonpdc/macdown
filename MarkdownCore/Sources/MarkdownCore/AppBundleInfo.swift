@@ -13,6 +13,7 @@ public enum AppBundleInfo {
         <dict>
             <key>CFBundleIdentifier</key><string>\(bundleIdentifier)</string>
             <key>CFBundleName</key><string>MacDown</string>
+            <key>CFBundleIconFile</key><string>AppIcon</string>
             <key>CFBundleExecutable</key><string>MacDown</string>
             <key>CFBundlePackageType</key><string>APPL</string>
             <key>CFBundleShortVersionString</key><string>\(version)</string>

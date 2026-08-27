@@ -10,6 +10,7 @@ app: plist
 	swift build -c release
 	mkdir -p $(CONTENTS)/MacOS $(CONTENTS)/Resources
 	cp $(BUILD_DIR)/$(APP_NAME) $(CONTENTS)/MacOS/$(APP_NAME)
+	cp Resources/AppIcon.icns $(CONTENTS)/Resources/AppIcon.icns
 	@# binário novo dentro de bundle já assinado → killed pelo macOS; limpar attrs + re-assinar sempre
 	xattr -cr $(APP_DIR) 2>/dev/null || true
 	codesign --force --deep -s - $(APP_DIR) 2>/dev/null || true
