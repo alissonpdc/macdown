@@ -13,15 +13,15 @@ final class FrontmatterTests: XCTestCase {
         let input = "---\ntitle: Minha Spec\nstatus: draft\n---\n# Conteúdo"
         let result = FrontmatterExtractor.extract(from: input)
         let fm = try XCTUnwrap(result.frontmatter)
-        XCTAssertEqual(fm.fields["title"], .string("Minha Spec"))
-        XCTAssertEqual(fm.fields["status"], .string("draft"))
+        XCTAssertEqual(fm["title"], .string("Minha Spec"))
+        XCTAssertEqual(fm["status"], .string("draft"))
         XCTAssertEqual(result.markdown, "# Conteúdo")
     }
 
     func testExtractsListValue() throws {
         let input = "---\ntags:\n  - a\n  - b\n---\nbody"
         let fm = try XCTUnwrap(FrontmatterExtractor.extract(from: input).frontmatter)
-        XCTAssertEqual(fm.fields["tags"], .list(["a", "b"]))
+        XCTAssertEqual(fm["tags"], .list(["a", "b"]))
     }
 
     func testInvalidYAMLProducesError() throws {

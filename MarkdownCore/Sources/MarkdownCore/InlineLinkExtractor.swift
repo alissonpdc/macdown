@@ -10,7 +10,7 @@ public struct InlineLink {
 /// macOS: usa AttributeScopes.AppKitAttributes.
 public enum InlineLinkExtractor {
     public static func links(in markdown: String) -> [InlineLink] {
-        let doc = Markdown.Document(parsing: markdown)
+        let doc = Markdown.Document(parsing: markdown, options: [.disableSmartOpts])
         var result: [InlineLink] = []
         walk(node: doc) { link in
             let label = link.children.compactMap { $0 as? Text }.map(\.string).joined()

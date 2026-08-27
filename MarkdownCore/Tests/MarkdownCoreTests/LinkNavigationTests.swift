@@ -70,4 +70,34 @@ final class LinkNavigationTests: XCTestCase {
         try store.open(url: a)
         XCTAssertEqual(store.currentHistoryEntry(in: store.activeTabID!)?.lastPathComponent, "a.md")
     }
+
+    // MARK: - HTML link href generation
+
+    func testRelativeLinkPreservedInHTML() {
+        let input = "Veja [outro](sub/outro.md) aqui."
+        let doc = MarkdownParser().parse(input)
+        let html = MarkdownHTMLConverter().convert(doc)
+        XCTAssertTrue(html.contains("href=\"sub/outro.md\""), "Relative href should be preserved in HTML")
+    }
+
+    func testSiblingLinkPreservedInHTML() {
+        let input = "Veja [arquivo](b.md) aqui."
+        let doc = MarkdownParser().parse(input)
+        let html = MarkdownHTMLConverter().convert(doc)
+        XCTAssertTrue(html.contains("href=\"b.md\""), "Sibling link href should be preserved")
+    }
+
+    func testAnchorLinkPreservedInHTML() {
+        let input = "Veja [seção](#minha-seção) aqui."
+        let doc = MarkdownParser().parse(input)
+        let html = MarkdownHTMLConverter().convert(doc)
+        XCTAssertTrue(html.contains("href=\"#minha-seção\""), "Anchor link should be preserved")
+    }
+
+    func testExternalLinkPreservedInHTML() {
+        let input = "Veja [site](https://example.com) aqui."
+        let doc = MarkdownParser().parse(input)
+        let html = MarkdownHTMLConverter().convert(doc)
+        XCTAssertTrue(html.contains("href=\"https://example.com\""), "External link should be preserved")
+    }
 }
