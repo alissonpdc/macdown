@@ -331,20 +331,18 @@ public struct MarkdownHTMLConverter {
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
         font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans", Helvetica, Arial, sans-serif;
-        font-size: var(--reading-font-size, 16px);
+        font-size: 16px;
         line-height: 1.6;
         color: var(--fg);
         background: var(--bg);
         padding: 16px 24px;
         word-wrap: break-word;
         overflow-wrap: break-word;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
+        max-width: var(--reading-width, 70ch);
+        margin: 0 auto;
     }
     body > * {
-        max-width: var(--reading-width, 70ch);
-        width: 100%;
+        font-size: var(--reading-font-size, 16px);
     }
     h1 { font-size: 2em; font-weight: 600; margin: 0.67em 0 0.43em; padding-bottom: 0.3em; border-bottom: 1px solid var(--border); }
     h2 { font-size: 1.5em; font-weight: 600; margin: 1em 0 0.43em; padding-bottom: 0.3em; border-bottom: 1px solid var(--border); }
