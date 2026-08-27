@@ -4,11 +4,17 @@ import MarkdownCore
 struct ContentView: View {
     let initialURL: URL?
     @StateObject private var tabStore = TabStore()
+    @EnvironmentObject var readingPrefs: ReadingPrefs
     @State private var loadError: String?
     @State private var folderTree: FolderNode?
     @State private var expandedFolders: Set<String> = []
     /// Fase 6 — watch da pasta aberta + arquivos soltos (R4.1/R4.3/R4.4).
     @State private var watcher: FileWatcher?
+    /// Fase 7 — busca no documento (R5.1).
+    @State private var showSearch = false
+    @FocusState private var searchFieldFocused: Bool
+    /// Fase 7 — busca global na pasta (R5.2).
+    @State private var showGlobalSearch = false
 
     var body: some View {
         NavigationSplitView {
@@ -26,15 +32,23 @@ struct ContentView: View {
             VStack(spacing: 0) {
                 if let tab = tabStore.activeTab {
                     TabBarView(store: tabStore, onOpenFile: openViaPanel, recordVisit: recordVisitIfNeeded)
+                    if showSearch {
+                        SearchBarView(store: tabStore, isFocused: $searchFieldFocused) {
+                            showSearch = false
+                            if let id = tabStore.activeTabID { tabStore.setSearchActive(false, in: id) }
+                        }
+                    }
                     ReaderTabView(
                         tabID: tab.id,
                         store: tabStore,
+                        readingPrefs: readingPrefs,
                         onOpenLink: { target in
                             // R6.2 — link interno abre em nova aba
                             try? tabStore.open(url: target)
                             recordVisitIfNeeded(target)
                             refreshWatchers()
-                        }
+                        },
+                        folderRoot: folderTree?.url
                     )
                 } else if let error = loadError {
                     ContentUnavailableView("Couldn't open file",
@@ -78,6 +92,24 @@ struct ContentView: View {
         .onReceive(NotificationCenter.default.publisher(for: .macDownToggleDiff)) { _ in
             // R13.3 — Cmd+D alterna a visão da aba ativa
             if let id = tabStore.activeTabID { tabStore.toggleDiffView(in: id) }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .macDownFind)) { _ in
+            // R5.1 — Cmd+F abre a busca no documento
+            showSearch = true
+            if let id = tabStore.activeTabID { tabStore.setSearchActive(true, in: id) }
+            DispatchQueue.main.async { searchFieldFocused = true }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .macDownFindNext)) { _ in
+            if let id = tabStore.activeTabID { tabStore.nextMatch(in: id) }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .macDownFindPrevious)) { _ in
+            if let id = tabStore.activeTabID { tabStore.previousMatch(in: id) }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .macDownFindGlobal)) { _ in
+            showGlobalSearch = true
+        }
+        .sheet(isPresented: $showGlobalSearch) {
+            GlobalSearchView(store: tabStore, isPresented: $showGlobalSearch, allURLs: collectSearchURLs())
         }
     }
 
@@ -176,5 +208,151 @@ struct ContentView: View {
         panel.canChooseFiles = false
         guard panel.runModal() == .OK, let url = panel.url else { return }
         loadFolder(url)
+    }
+
+    /// R5.2 — reúne todos os .md da pasta aberta (recursivo) + abas avulsas.
+    private func collectSearchURLs() -> [URL] {
+        var urls: [URL] = []
+        if let tree = folderTree {
+            func walk(_ node: FolderNode) {
+                urls.append(contentsOf: node.files)
+                node.children.forEach(walk)
+            }
+            walk(tree)
+        }
+        let known = urls.map { $0.standardizedFileURL.path }
+        for tab in tabStore.tabs {
+            let path = tab.document.url.standardizedFileURL.path
+            if !known.contains(path) { urls.append(tab.document.url) }
+        }
+        return urls
+    }
+}
+
+// MARK: Fase 7 — Busca no documento (R5.1)
+
+/// Barra de busca sobreposta ao leitor; ligada ao estado de busca da aba ativa.
+struct SearchBarView: View {
+    @ObservedObject var store: TabStore
+    var isFocused: FocusState<Bool>.Binding
+    var onClose: () -> Void
+
+    private var tab: ReaderTab? { store.activeTab }
+
+    private var binding: Binding<String> {
+        Binding(get: { store.activeTab?.search.query ?? "" },
+                set: { if let id = store.activeTabID { store.updateSearch(query: $0, in: id) } })
+    }
+
+    var body: some View {
+        HStack(spacing: 8) {
+            Image(systemName: "magnifyingglass").foregroundStyle(.secondary)
+            TextField("Search", text: binding)
+                .focused(isFocused)
+                .textFieldStyle(.plain)
+                .onSubmit { if let id = store.activeTabID { store.nextMatch(in: id) } }
+            if let tab, tab.search.isActive {
+                let total = tab.search.count
+                let pos = total == 0 ? 0 : tab.search.current + 1
+                Text("\(pos)/\(total)")
+                    .foregroundStyle(.secondary)
+                    .frame(minWidth: 44, alignment: .trailing)
+                    .monospacedDigit()
+            }
+            Button { if let id = store.activeTabID { store.previousMatch(in: id) } } label: {
+                Image(systemName: "chevron.up")
+            }.help("Previous (Shift+⌘G)")
+            Button { if let id = store.activeTabID { store.nextMatch(in: id) } } label: {
+                Image(systemName: "chevron.down")
+            }.help("Next (⌘G)")
+            Button { onClose() } label: { Image(systemName: "xmark") }.help("Close (Esc)")
+        }
+        .padding(8)
+        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 8))
+        .onAppear { isFocused.wrappedValue = true }
+        .onExitCommand { onClose() }
+    }
+}
+
+// MARK: Fase 7 — Busca global na pasta (R5.2)
+
+/// Busca em todos os markdown da pasta aberta; clicar num resultado abre o arquivo.
+struct GlobalSearchView: View {
+    @ObservedObject var store: TabStore
+    @Binding var isPresented: Bool
+    let allURLs: [URL]
+
+    @State private var query = ""
+    @State private var caseSensitive = false
+    @State private var wholeWord = false
+    @State private var results: [FileSearchResult] = []
+
+    private var options: SearchOptions {
+        SearchOptions(rawValue: (caseSensitive ? SearchOptions.caseSensitive.rawValue : 0)
+                            | (wholeWord ? SearchOptions.wholeWord.rawValue : 0))
+    }
+
+    var body: some View {
+        VStack(spacing: 0) {
+            HStack(spacing: 8) {
+                Image(systemName: "magnifyingglass").foregroundStyle(.secondary)
+                TextField("Search in folder", text: $query)
+                    .textFieldStyle(.roundedBorder)
+                    .onSubmit(run)
+                Toggle("Aa", isOn: $caseSensitive).help("Case sensitive")
+                Toggle("Word", isOn: $wholeWord).help("Whole word")
+                Button("Search") { run() }
+                Button("Done") { isPresented = false }
+            }
+            .padding()
+            Divider()
+            List {
+                ForEach(results) { file in
+                    Section {
+                        ForEach(file.matches) { m in
+                            Button { open(file.url) } label: {
+                                Text(Self.highlightedSnippet(m.snippet,
+                                                            start: m.snippetMatchStart,
+                                                            length: query.utf16.count))
+                                    .lineLimit(2)
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                            }
+                            .buttonStyle(.plain)
+                        }
+                    } header: {
+                        Text(DisplayName.file(file.url)).font(.headline)
+                    }
+                }
+            }
+        }
+        .frame(minWidth: 640, minHeight: 520)
+    }
+
+    private func run() {
+        guard !query.isEmpty else { results = []; return }
+        let inputs = allURLs.compactMap { url -> (URL, CoreDocument)? in
+            guard let doc = try? OpenDocument(url: url) else { return nil }
+            return (url, doc.document)
+        }
+        results = SearchEngine.findInFiles(inputs, query: query, options: options)
+    }
+
+    private func open(_ url: URL) {
+        try? store.open(url: url)
+        isPresented = false
+    }
+
+    static func highlightedSnippet(_ snippet: String, start: Int, length: Int) -> AttributedString {
+        let ns = snippet as NSString
+        let s = max(0, min(start, ns.length))
+        let e = max(s, min(start + length, ns.length))
+        let before = ns.substring(with: NSRange(location: 0, length: s))
+        let mid = ns.substring(with: NSRange(location: s, length: e - s))
+        let after = ns.substring(with: NSRange(location: e, length: ns.length - e))
+        let a = AttributedString(before)
+        var m = AttributedString(mid)
+        m.backgroundColor = Color.yellow
+        let af = AttributedString(after)
+        return a + m + af
     }
 }
