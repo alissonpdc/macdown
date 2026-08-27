@@ -5,7 +5,6 @@ import MarkdownCore
 /// R3.7 — estado de UI persistido em UserDefaults (mesmo padrão de ReadingPrefs).
 final class UIPrefs: ObservableObject {
     static let showTOCKey = "showTableOfContents"
-    static let tocWidthKey = "tocPanelWidth"
 
     private let defaults: UserDefaults
 
@@ -13,26 +12,12 @@ final class UIPrefs: ObservableObject {
         didSet { defaults.set(showTOC, forKey: Self.showTOCKey) }
     }
 
-    /// Largura base da coluna TOC (0 = nunca definida → usa ideal calculado).
-    /// Referência única de verdade: escritas síncronas aqui sobrevivem ao encerramento,
-    /// ao contrário de assigns via closure sobre cópias struct (@AppStorage).
-    @Published var tocWidth: Double {
-        didSet { defaults.set(tocWidth, forKey: Self.tocWidthKey) }
-    }
-
     init(defaults: UserDefaults = .standard) {
         self.defaults = defaults
         showTOC = defaults.object(forKey: Self.showTOCKey) as? Bool ?? true
-        let stored = defaults.double(forKey: Self.tocWidthKey)
-        tocWidth = (stored > 0 && stored <= 10_000) ? stored : 0
     }
 
     func toggleTOC() { showTOC.toggle() }
-
-    /// Persiste como novo base, já com clamp de limites sensatos.
-    func setTocWidth(_ width: CGFloat) {
-        tocWidth = Double(TocPanelView.clamp(width))
-    }
 }
 
 /// Requisição de navegação do TOC para o WebView. O token crescente garante que
@@ -46,21 +31,18 @@ struct TocNavigateRequest: Equatable {
 /// suave até a seção ficar no topo da área de leitura.
 ///
 /// Coluna redimensionável pelo divider. Performance do drag: a largura vive em
-/// @State LOCAL deste view — o pai nunca re-renderiza durante o arrasto e não há
-/// escrita em UserDefaults por frame (só no fim do drag ou na expansão automática).
+/// @State LOCAL deste view — o pai nunca re-renderiza durante o arrasto.
 ///
-/// Crescimento grow-only: se um documento aberto exige mais largura que a atual,
-/// expande (+ respiro) e persiste o novo base; documentos com títulos menores
-/// NUNCA encolhem a coluna.
+/// Crescimento grow-only dentro da SESSÃO: se um documento aberto exige mais
+/// largura que a atual, expande; documentos com títulos menores NUNCA encolhem
+/// a coluna. Nada é persistido: ao reiniciar o app, volta ao default (ideal).
 struct TocPanelView: View {
     let outline: DocumentOutline
     let onSelect: (_ slug: String) -> Void
     /// Menor largura que exibe o título mais largo do documento atual sem quebra.
     let requiredWidth: CGFloat
-    /// Largura inicial (valor persistido, ou ideal na primeira execução).
+    /// Largura inicial da sessão (largura ideal do primeiro documento aberto).
     let initialWidth: CGFloat
-    /// Persiste a largura como novo base (fim de drag ou expansão automática).
-    let onPersistWidth: (_ newWidth: CGFloat) -> Void
 
     static let minWidth: CGFloat = 150
     static let maxWidth: CGFloat = 420
@@ -78,15 +60,12 @@ struct TocPanelView: View {
     init(outline: DocumentOutline,
          onSelect: @escaping (_ slug: String) -> Void,
          requiredWidth: CGFloat,
-         initialWidth: CGFloat,
-         onPersistWidth: @escaping (_ newWidth: CGFloat) -> Void) {
+         initialWidth: CGFloat) {
         self.outline = outline
         self.onSelect = onSelect
         self.requiredWidth = requiredWidth
         self.initialWidth = initialWidth
-        self.onPersistWidth = onPersistWidth
-        let base = Self.clamp(initialWidth)
-        _width = State(initialValue: base)
+        _width = State(initialValue: Self.clamp(initialWidth))
     }
 
     static func clamp(_ value: CGFloat) -> CGFloat {
@@ -132,9 +111,6 @@ struct TocPanelView: View {
         .onChange(of: requiredWidth) { _, newRequired in
             growOnlyToFit(target: newRequired)
         }
-        // Rede de segurança: qualquer remoção do painel (troca de estado, fechar
-        // janela, Cmd+Q) persiste a largura corrente ANTES de sumir da hierarquia.
-        .onDisappear { onPersistWidth(Self.clamp(width)) }
     }
 
     // MARK: - Estados vazios
@@ -151,12 +127,11 @@ struct TocPanelView: View {
 
     // MARK: - Grow-only (R3.7)
 
-    /// Só CRESCER até caber o conteúdo; nunca encolhe. Expansão vira novo base persistido.
+    /// Só CRESCER até caber o conteúdo; nunca encolhe. Válido apenas na sessão.
     private func growOnlyToFit(target: CGFloat? = nil) {
         let required = Self.clamp(target ?? requiredWidth)
         guard required > width else { return }
         width = required
-        onPersistWidth(width)
     }
 
     // MARK: - Divider arrastável
@@ -188,7 +163,6 @@ struct TocPanelView: View {
                 }
                 .onEnded { _ in
                     dragBaseWidth = nil
-                    onPersistWidth(Self.clamp(width)) // persiste UMA vez ao soltar
                 }
         )
         .accessibilityLabel("Resize table of contents")
