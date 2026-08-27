@@ -46,11 +46,19 @@ struct ReaderTabView: View {
                 }
                 if uiPrefs.showTOC {
                     if let outline = tocOutline {
-                        TocPanelView(outline: outline,
-                                     onSelect: { slug in
-                                         tocRequest = TocNavigateRequest(token: (tocRequest?.token ?? 0) + 1, slug: slug)
-                                     },
-                                     width: tocWidthBinding(for: outline))
+                        TocPanelView(
+                            outline: outline,
+                            onSelect: { slug in
+                                tocRequest = TocNavigateRequest(token: (tocRequest?.token ?? 0) + 1, slug: slug)
+                            },
+                            requiredWidth: TocPanelView.idealWidth(for: outline),
+                            initialWidth: tocPanelWidthStored > 0
+                                ? CGFloat(tocPanelWidthStored)
+                                : TocPanelView.idealWidth(for: outline),
+                            onPersistWidth: { newWidth in
+                                tocPanelWidthStored = Double(newWidth)
+                            }
+                        )
                     }
                 }
             }
@@ -62,19 +70,6 @@ struct ReaderTabView: View {
     }
 
     // MARK: - HTML generation
-
-    /// R3.7 — largura do TOC: ideal medida pelos títulos até o primeiro ajuste manual.
-    private func tocWidthBinding(for outline: DocumentOutline) -> Binding<CGFloat> {
-        Binding(
-            get: {
-                tocPanelWidthStored > 0 ? CGFloat(tocPanelWidthStored) : TocPanelView.idealWidth(for: outline)
-            },
-            set: { newValue in
-                let clamped = max(TocPanelView.minWidth, min(TocPanelView.maxWidth, newValue))
-                tocPanelWidthStored = Double(clamped)
-            }
-        )
-    }
 
     private func buildHTML(doc: OpenDocument, statuses: [BlockDiffer.Status]?) -> String {
         let converter = MarkdownHTMLConverter()
