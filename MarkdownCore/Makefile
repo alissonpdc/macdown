@@ -2,8 +2,9 @@ APP_NAME := MacDown
 BUILD_DIR := .build/release
 APP_DIR := ../$(APP_NAME).app
 CONTENTS := $(APP_DIR)/Contents
+INSTALL_DIR := /Applications
 
-.PHONY: app plist test clean
+.PHONY: app plist test install clean
 
 ## Empacota o .app em release (janela na frente, ícone próprio, handler de .md)
 app: plist
@@ -20,6 +21,15 @@ plist:
 	mkdir -p $(APP_DIR)/Contents
 	.build/release/plistgen $(CURDIR)/../MacDown.app/Contents/Info.plist || \
 	(swift build -c release --product plistgen && .build/release/plistgen $(CURDIR)/../MacDown.app/Contents/Info.plist)
+
+## Instala o .app em /Applications (build completo + substituição do existente)
+install: app
+	@# rm antes do ditto garante que não restem arquivos órfãos de versões anteriores
+	rm -rf $(INSTALL_DIR)/$(APP_NAME).app
+	ditto $(APP_DIR) $(INSTALL_DIR)/$(APP_NAME).app
+	xattr -cr $(INSTALL_DIR)/$(APP_NAME).app 2>/dev/null || true
+	codesign --force --deep -s - $(INSTALL_DIR)/$(APP_NAME).app 2>/dev/null || true
+	@echo "Instalado em $(INSTALL_DIR)/$(APP_NAME).app"
 
 test:
 	swift test
