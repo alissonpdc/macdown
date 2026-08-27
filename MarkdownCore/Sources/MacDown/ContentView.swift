@@ -62,7 +62,10 @@ struct ContentView: View {
             }
         }
         .frame(minWidth: 800, minHeight: 500)
-        .onAppear(perform: openInitial)
+        .onAppear {
+            openInitial()
+            drainPendingOpenURLs()
+        }
         .onReceive(NotificationCenter.default.publisher(for: .macDownCloseActiveTab)) { _ in
             if let id = tabStore.activeTabID { tabStore.close(id: id) }
         }
@@ -79,6 +82,10 @@ struct ContentView: View {
         }
         .onReceive(NotificationCenter.default.publisher(for: .macDownOpenFile)) { _ in
             openViaPanel()
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .macDownOpenURLs)) { note in
+            guard let urls = note.object as? [URL] else { return }
+            open(urls)
         }
         .onReceive(NotificationCenter.default.publisher(for: .macDownOpenFolderPanel)) { _ in
             openFolderViaPanel()
@@ -115,19 +122,35 @@ struct ContentView: View {
 
     private func openInitial() {
         guard let url = initialURL else { return }
-        if url.hasDirectoryPath {
-            loadFolder(url)
-        } else {
+        open([url])
+    }
+
+    /// Abre arquivos em abas e pastas na sidebar (Finder, CLI, painéis).
+    private func open(_ urls: [URL]) {
+        for url in urls {
+            if url.hasDirectoryPath {
+                loadFolder(url)
+                continue
+            }
             do {
                 try tabStore.open(url: url)
                 loadError = nil
-                refreshWatchers()
+                recordVisitIfNeeded(url)
             } catch OpenDocumentError.readFailed {
                 loadError = "File not found or unreadable: \(url.path)"
             } catch {
                 loadError = error.localizedDescription
             }
         }
+        refreshWatchers()
+    }
+
+    /// Drena URLs entregues antes de a view instalar o handler de abertura.
+    private func drainPendingOpenURLs() {
+        guard !PendingOpenURLs.buffer.isEmpty else { return }
+        let urls = PendingOpenURLs.buffer
+        PendingOpenURLs.buffer = []
+        open(urls)
     }
 
     /// R2.1 — carrega pasta raiz da sidebar.

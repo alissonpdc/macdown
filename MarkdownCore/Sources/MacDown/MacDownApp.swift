@@ -151,6 +151,7 @@ extension Notification.Name {
     static let macDownGoForward = Notification.Name("macDownGoForward")
     static let macDownOpenFolder = Notification.Name("macDownOpenFolder")
     static let macDownOpenFile = Notification.Name("macDownOpenFile")
+    static let macDownOpenURLs = Notification.Name("macDownOpenURLs")
     static let macDownOpenFolderPanel = Notification.Name("macDownOpenFolderPanel")
     static let macDownNextTab = Notification.Name("macDownNextTab")
     static let macDownPreviousTab = Notification.Name("macDownPreviousTab")
@@ -161,12 +162,26 @@ extension Notification.Name {
     static let macDownFindGlobal = Notification.Name("macDownFindGlobal")
 }
 
+/// Buffer de URLs entregues ao app antes de a view instalar o handler.
+enum PendingOpenURLs {
+    static var buffer: [URL] = []
+}
+
 /// Ativa o app como .regular e aplica a aparência no nível AppKit.
 final class AppearanceAppDelegate: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.setActivationPolicy(.regular)
         NSApp.activate(ignoringOtherApps: true)
         TabShortcutMonitor.install()
+    }
+
+    /// Arquivos/pastas abertos pelo Finder ("Abrir com") ou via `open`.
+    /// O evento pode chegar antes da view instalar o handler, então as URLs
+    /// ficam em buffer e a view drena em onAppear.
+    func application(_ application: NSApplication, open urls: [URL]) {
+        guard !urls.isEmpty else { return }
+        PendingOpenURLs.buffer.append(contentsOf: urls)
+        NotificationCenter.default.post(name: .macDownOpenURLs, object: urls)
     }
 
     /// Light = aqua, Dark = darkAqua, System = nil (segue o macOS).
