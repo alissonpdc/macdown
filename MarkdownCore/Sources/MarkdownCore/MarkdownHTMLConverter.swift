@@ -50,11 +50,11 @@ public final class MarkdownHTMLConverter {
             let lines = Self.lineCount(of: c.code)
             if lines > Self.foldLineThreshold {
                 return """
-                <div class="code-block folded"><div class="code-header"><span class="lang">\(Self.escapeHTML(lang))</span><span class="header-actions"><button class="fold-btn" onclick="toggleFold(this)">Mostrar tudo (\(lines) linhas)</button><button class="copy-btn" onclick="copyCode(this)">Copiar</button></span></div><pre><code class="language-\(lang)">\(highlighted)</code></pre></div>\n
+                <div class="code-block folded"><div class="code-header"><span class="lang">\(Self.escapeHTML(lang))</span><span class="header-actions"><button class="fold-btn" onclick="toggleFold(this)" title="Mostrar tudo (\(lines) linhas)" aria-label="Mostrar tudo (\(lines) linhas)">\(Self.chevronDownIcon)</button><button class="copy-btn" onclick="copyCode(this)" title="Copiar" aria-label="Copiar">\(Self.copyIcon)</button></span></div><pre><code class="language-\(lang)">\(highlighted)</code></pre></div>\n
                 """
             }
             return """
-            <div class="code-block"><div class="code-header"><span class="lang">\(Self.escapeHTML(lang))</span><button class="copy-btn" onclick="copyCode(this)">Copiar</button></div><pre><code class="language-\(lang)">\(highlighted)</code></pre></div>\n
+            <div class="code-block"><div class="code-header"><span class="lang">\(Self.escapeHTML(lang))</span><button class="copy-btn" onclick="copyCode(this)" title="Copiar" aria-label="Copiar">\(Self.copyIcon)</button></div><pre><code class="language-\(lang)">\(highlighted)</code></pre></div>\n
             """
         case let q as QuoteNode:
             return "<blockquote><p>\(Self.escapeHTML(q.plainText))</p></blockquote>\n"
@@ -272,6 +272,22 @@ public final class MarkdownHTMLConverter {
 
     static let foldLineThreshold = 30
 
+    static let copyIcon = """
+    <svg width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><rect x="5.5" y="5.5" width="8" height="8" rx="1.5" stroke="currentColor" stroke-width="1.5"/><path d="M10.5 3.5v-1A1.5 1.5 0 0 0 9 1H3A1.5 1.5 0 0 0 1.5 2.5v6A1.5 1.5 0 0 0 3 10h1.5" stroke="currentColor" stroke-width="1.5"/></svg>
+    """
+
+    static let checkIcon = """
+    <svg width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M3 8.5l3.5 3.5L13 4.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    """
+
+    static let chevronDownIcon = """
+    <svg width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    """
+
+    static let chevronUpIcon = """
+    <svg width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M4 10l4-4 4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    """
+
     static func lineCount(of code: String) -> Int {
         var lines = code.components(separatedBy: "\n")
         if lines.count > 1, lines.last?.isEmpty == true {
@@ -434,25 +450,31 @@ public final class MarkdownHTMLConverter {
     }
     .fold-btn {
         background: none;
-        border: 1px solid var(--border);
+        border: none;
         color: var(--fg-secondary);
-        padding: 2px 8px;
+        padding: 2px 4px;
         border-radius: 4px;
         cursor: pointer;
-        font-size: 12px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        line-height: 0;
     }
-    .fold-btn:hover { color: var(--fg); border-color: var(--fg-secondary); }
+    .fold-btn:hover { color: var(--fg); background: rgba(128, 128, 128, 0.15); }
     .lang { color: var(--fg-secondary); text-transform: uppercase; font-weight: 500; letter-spacing: 0.5px; }
     .copy-btn {
         background: none;
-        border: 1px solid var(--border);
+        border: none;
         color: var(--fg-secondary);
-        padding: 2px 8px;
+        padding: 2px 4px;
         border-radius: 4px;
         cursor: pointer;
-        font-size: 12px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        line-height: 0;
     }
-    .copy-btn:hover { color: var(--fg); border-color: var(--fg-secondary); }
+    .copy-btn:hover { color: var(--fg); background: rgba(128, 128, 128, 0.15); }
     .kw { color: var(--code-keyword); }
     .st { color: var(--code-string); }
     .cm { color: var(--code-comment); font-style: italic; }
@@ -536,19 +558,26 @@ public final class MarkdownHTMLConverter {
 
     public static let htmlFooter = """
     <script>
+    var COPY_ICON = '<svg width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><rect x="5.5" y="5.5" width="8" height="8" rx="1.5" stroke="currentColor" stroke-width="1.5"/><path d="M10.5 3.5v-1A1.5 1.5 0 0 0 9 1H3A1.5 1.5 0 0 0 1.5 2.5v6A1.5 1.5 0 0 0 3 10h1.5" stroke="currentColor" stroke-width="1.5"/></svg>';
+    var CHECK_ICON = '<svg width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M3 8.5l3.5 3.5L13 4.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+    var CHEVRON_DOWN = '<svg width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+    var CHEVRON_UP = '<svg width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M4 10l4-4 4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>';
     function copyCode(btn) {
         var code = btn.closest('.code-block').querySelector('code');
         navigator.clipboard.writeText(code.textContent);
-        btn.textContent = 'Copiado!';
-        setTimeout(function() { btn.textContent = 'Copiar'; }, 1500);
+        btn.innerHTML = CHECK_ICON;
+        btn.setAttribute('aria-label', 'Copiado!');
+        setTimeout(function() {
+            btn.innerHTML = COPY_ICON;
+            btn.setAttribute('aria-label', 'Copiar');
+        }, 1500);
     }
     function toggleFold(btn) {
         var block = btn.closest('.code-block');
         var folded = block.classList.toggle('folded');
-        var lines = block.querySelectorAll('code')[0].textContent.split('\\n').length;
-        var m = btn.textContent.match(/\\((\\d+) linhas\\)/);
-        var n = m ? m[1] : lines;
-        btn.textContent = folded ? 'Mostrar tudo (' + n + ' linhas)' : 'Recolher';
+        btn.innerHTML = folded ? CHEVRON_DOWN : CHEVRON_UP;
+        btn.setAttribute('aria-label', folded ? 'Mostrar tudo' : 'Recolher');
+        btn.setAttribute('title', folded ? 'Mostrar tudo' : 'Recolher');
     }
     </script>
     </body>

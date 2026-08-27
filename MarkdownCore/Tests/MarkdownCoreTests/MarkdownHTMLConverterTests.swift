@@ -28,7 +28,8 @@ final class MarkdownHTMLConverterTests: XCTestCase {
         ])
         let html = converter.convert(doc)
         XCTAssertTrue(html.contains("<code class=\"language-swift\">"))
-        XCTAssertTrue(html.contains("Copiar"))
+        XCTAssertTrue(html.contains("aria-label=\"Copiar\""), "copy button should be labeled")
+        XCTAssertTrue(html.contains("<svg"), "copy button should use an icon")
         XCTAssertTrue(html.contains("code-block"))
         XCTAssertTrue(html.contains("code-header"))
     }
@@ -47,7 +48,8 @@ final class MarkdownHTMLConverterTests: XCTestCase {
         let html = converter.convert(doc)
         XCTAssertTrue(html.contains("code-block folded"), "31-line block should be folded")
         XCTAssertTrue(html.contains("fold-btn"), "fold button should be present")
-        XCTAssertTrue(html.contains("31 linhas"), "fold button should show line count")
+        XCTAssertTrue(html.contains("aria-label=\"Mostrar tudo (31 linhas)\""), "fold button should show line count")
+        XCTAssertTrue(html.contains("title=\"Mostrar tudo (31 linhas)\""), "fold button should have tooltip")
     }
 
     func testCodeBlockNotFoldedAt30LinesOrLess() {
