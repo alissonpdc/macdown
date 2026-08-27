@@ -1,8 +1,12 @@
 import Foundation
 import Markdown
 
-public struct MarkdownHTMLConverter {
+/// Classe (não struct) porque o contador de slugs duplicados precisa sobreviver
+/// entre chamadas de convertBlock durante a conversão de um mesmo documento.
+public final class MarkdownHTMLConverter {
     public init() {}
+
+    private var headingSlugCounts: [String: Int] = [:]
 
     public func convert(_ document: CoreDocument, frontmatter: Frontmatter? = nil,
                         frontmatterError: String? = nil, baseFileURL: URL? = nil,
@@ -36,7 +40,7 @@ public struct MarkdownHTMLConverter {
         switch block {
         case let h as HeadingNode:
             let tag = "h\(min(h.level, 6))"
-            let id = Self.slugify(h.inlineText)
+            let id = uniqueSlug(Self.slugify(h.inlineText))
             return "<\(tag) id=\"\(id)\">\(Self.escapeHTML(h.inlineText))</\(tag)>\n"
         case let p as ParagraphNode:
             return "<p>\(Self.inlineMarkdown(p.rawMarkdown))</p>\n"
@@ -259,6 +263,14 @@ public struct MarkdownHTMLConverter {
     }
 
     // MARK: - Helpers
+
+    /// Mesma regra de dedup de DocumentOutline — ids do HTML precisam casar
+    /// com os slugs do outline (TOC R3.7 e âncoras R3.8).
+    private func uniqueSlug(_ slug: String) -> String {
+        let n = headingSlugCounts[slug] ?? 0
+        headingSlugCounts[slug] = n + 1
+        return n == 0 ? slug : "\(slug)-\(n)"
+    }
 
     static func slugify(_ text: String) -> String {
         let lowered = text.lowercased()

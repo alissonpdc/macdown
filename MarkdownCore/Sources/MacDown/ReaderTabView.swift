@@ -1,41 +1,137 @@
 import SwiftUI
 import MarkdownCore
 
-/// Conteúdo de uma aba com persistência da posição de scroll (R2.5) e links clicáveis (R6.2).
+/// Conteúdo de uma aba com renderização via WKWebView.
 struct ReaderTabView: View {
     let tabID: ReaderTab.ID
     @ObservedObject var store: TabStore
+    @ObservedObject var readingPrefs: ReadingPrefs
     var onOpenLink: (URL) -> Void = { _ in }
+    var folderRoot: URL?
+    @EnvironmentObject private var uiPrefs: UIPrefs
+    @State private var scrollOffset: CGFloat = 0
+    /// R3.7 — último pedido de navegação do TOC (token crescente).
+    @State private var tocRequest: TocNavigateRequest?
 
     var body: some View {
         let tab = store.tabs.first(where: { $0.id == tabID })
-        ScrollView([.vertical]) {
-            VStack(alignment: .leading, spacing: 12) {
-                if let tab, tab.diffResult != nil && tab.hasExternalUpdate {
-                    diffHeader(tab)
-                }
+        let search = tab?.search
+        let tabScrollOffset = tab?.scrollOffset ?? 0
+        let tabShowsDiff = tab?.showsDiff == true
+        let tabDiffStatuses = tabShowsDiff ? tab?.diffResult?.statuses : nil
+        let isActiveSearch = search?.isActive == true
+        let searchQuery = isActiveSearch ? (search?.query ?? "") : ""
+        let searchCurrent = search?.current ?? 0
+        let searchCount = search?.count ?? 0
+        VStack(spacing: 0) {
+            if let tab, tab.diffResult != nil && tab.hasExternalUpdate {
+                diffHeader(tab)
+            }
+            HStack(spacing: 0) {
                 if let doc = tab?.document {
-                    documentBody(doc,
-                                 statuses: tab?.showsDiff == true ? tab?.diffResult?.statuses : nil)
+                    let html = buildHTML(doc: doc, statuses: tabDiffStatuses)
+                    MarkdownWebView(
+                        html: html,
+                        scrollPosition: tabScrollOffset,
+                        searchQuery: searchQuery,
+                        searchMatches: searchCount,
+                        searchCurrent: searchCurrent,
+                        baseURL: doc.url.deletingLastPathComponent(),
+                        scrollToHeading: tocRequest,
+                        onOpenLink: onOpenLink
+                    )
+                }
+                if uiPrefs.showTOC {
+                    Divider()
+                    if let doc = tab?.document {
+                        TocPanelView(outline: DocumentOutline(doc.document)) { slug in
+                            tocRequest = TocNavigateRequest(token: (tocRequest?.token ?? 0) + 1, slug: slug)
+                        }
+                    }
                 }
             }
-            .padding(24)
-            .frame(maxWidth: 720, alignment: .center)
-            .frame(maxWidth: .infinity)
-            .background(GeometryReader { geo in
-                Color.clear.preference(
-                    key: ScrollOffsetKey.self,
-                    value: geo.frame(in: .named("reader")).origin.y
-                )
-            })
-        }
-        .coordinateSpace(name: "reader")
-        .onPreferenceChange(ScrollOffsetKey.self) { offset in
-            store.setScrollOffset(-offset, for: tabID)
+            Divider()
+            if let doc = tab?.document {
+                FooterView(info: FooterInfo(document: doc, folderRoot: folderRoot))
+            }
         }
     }
 
-    /// R13.3 — alterna visão "Nova"/"Diff" e mostra o resumo do round atual.
+    // MARK: - HTML generation
+
+    private func buildHTML(doc: OpenDocument, statuses: [BlockDiffer.Status]?) -> String {
+        let converter = MarkdownHTMLConverter()
+
+        if let statuses = statuses {
+            return buildDiffHTML(doc: doc, statuses: statuses, converter: converter)
+        }
+
+        return converter.convert(doc.document,
+                                 frontmatter: doc.frontmatter,
+                                 frontmatterError: doc.frontmatterError,
+                                 baseFileURL: doc.url,
+                                 readingPrefs: readingPrefs)
+    }
+
+    private func buildDiffHTML(doc: OpenDocument, statuses: [BlockDiffer.Status],
+                               converter: MarkdownHTMLConverter) -> String {
+        let fm = buildFrontmatterHTML(doc: doc)
+        var body = ""
+
+        let blocks = doc.document.blocks
+        let removals = store.tabs.first { $0.id == tabID }?.diffResult?.removals ?? []
+        var nextRemoval = 0
+
+        for (index, block) in blocks.enumerated() {
+            while nextRemoval < removals.count && removals[nextRemoval].insertAt <= index {
+                let r = removals[nextRemoval]
+                let text = r.texts.joined(separator: "\n")
+                body += "<div class=\"diff-removed\">\(MarkdownHTMLConverter.escapeHTML(text))</div>\n"
+                nextRemoval += 1
+            }
+
+            let blockHTML = converter.convertBlock(block, baseFileURL: doc.url)
+            let status = statuses.indices.contains(index) ? statuses[index] : .unchanged
+            switch status {
+            case .strong:
+                body += "<div class=\"diff-added-strong\">\(blockHTML)</div>\n"
+            case .weak:
+                body += "<div class=\"diff-added\">\(blockHTML)</div>\n"
+            default:
+                body += blockHTML
+            }
+        }
+        while nextRemoval < removals.count {
+            let r = removals[nextRemoval]
+            let text = r.texts.joined(separator: "\n")
+            body += "<div class=\"diff-removed\">\(MarkdownHTMLConverter.escapeHTML(text))</div>\n"
+            nextRemoval += 1
+        }
+
+        return MarkdownHTMLConverter.htmlHeader(readingPrefs: readingPrefs) + fm + body + MarkdownHTMLConverter.htmlFooter
+    }
+
+    private func buildFrontmatterHTML(doc: OpenDocument) -> String {
+        if let error = doc.frontmatterError {
+            return "<div class=\"frontmatter-error\">\(MarkdownHTMLConverter.escapeHTML(error))</div>\n"
+        }
+        guard let fm = doc.frontmatter, !fm.isEmpty else { return "" }
+        var html = "<div class=\"frontmatter\"><table>"
+        for field in fm.orderedFields {
+            let value: String
+            switch field.value {
+            case .string(let s): value = s
+            case .list(let items): value = items.joined(separator: ", ")
+            }
+            html += "<tr><td class=\"fm-key\">\(MarkdownHTMLConverter.escapeHTML(field.key))</td>"
+            html += "<td class=\"fm-value\">\(MarkdownHTMLConverter.escapeHTML(value))</td></tr>"
+        }
+        html += "</table></div>\n"
+        return html
+    }
+
+    // MARK: - Diff header
+
     @ViewBuilder
     private func diffHeader(_ tab: ReaderTab) -> some View {
         HStack(spacing: 10) {
@@ -50,7 +146,6 @@ struct ReaderTabView: View {
             .frame(width: 140)
             Spacer()
             if tab.showsDiff, let result = tab.diffResult {
-                // R13.1 — resumo do indicador
                 Text(result.summary)
                     .font(.callout.monospacedDigit())
                     .foregroundStyle(.secondary)
@@ -60,103 +155,8 @@ struct ReaderTabView: View {
             }
             .buttonStyle(.link)
         }
-    }
-
-    @ViewBuilder
-    private func documentBody(_ doc: OpenDocument, statuses: [BlockDiffer.Status]?) -> some View {
-        if let error = doc.frontmatterError {
-            Label(error, systemImage: "exclamationmark.triangle")
-                .foregroundStyle(.orange)
-        } else if let fm = doc.frontmatter, !fm.fields.isEmpty {
-            FrontmatterCard(fields: fm.fields)
-        }
-        let rows = displayRows(doc, statuses: statuses)
-        ForEach(rows) { row in
-            switch row.content {
-            case .block(let block):
-                // R13.1 — blocos adicionados/modificados: gutter "+" verde estilo GitHub
-                if let status = row.status, status != .unchanged {
-                    diffRow(sign: "+", color: .green, strong: status == .strong) {
-                        BlockView(block: block, onOpenLink: onOpenLink, linkBaseURL: doc.url)
-                    }
-                } else {
-                    BlockView(block: block, onOpenLink: onOpenLink, linkBaseURL: doc.url)
-                }
-            case .removed(let texts):
-                // R13.1 — blocos removidos do baseline: gutter "−" vermelho estilo GitHub
-                diffRow(sign: "-", color: .red, strong: true) {
-                    VStack(alignment: .leading, spacing: 2) {
-                        ForEach(texts, id: \.self) { text in
-                            Text(text)
-                                .strikethrough()
-                                .font(.callout)
-                        }
-                    }
-                }
-                .foregroundStyle(.secondary)
-            }
-        }
-    }
-
-    /// Linha estilo "compare" do GitHub web: gutter com sinal (+/−) e fundo colorido.
-    @ViewBuilder
-    private func diffRow<Content: View>(sign: String, color: Color, strong: Bool,
-                                        @ViewBuilder content: () -> Content) -> some View {
-        HStack(alignment: .top, spacing: 6) {
-            Text(sign)
-                .font(.callout.bold())
-                .foregroundStyle(color)
-                .frame(width: 12, alignment: .leading)
-            content()
-        }
-        .padding(8)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(
-            color.opacity(strong ? 0.28 : 0.12),
-            in: RoundedRectangle(cornerRadius: 6)
-        )
-    }
-
-    /// Intercala os blocos atuais com as remoções nas posições corretas.
-    private func displayRows(_ doc: OpenDocument,
-                             statuses: [BlockDiffer.Status]?) -> [DisplayRow] {
-        var rows: [DisplayRow] = []
-        var nextRemoval = 0
-        let removals = statuses != nil ? (store.tabs.first { $0.id == tabID }?.diffResult?.removals ?? []) : []
-
-        func appendRemoved(_ r: BlockDiffer.Removal) {
-            rows.append(DisplayRow(content: .removed(r.texts), status: nil))
-            nextRemoval += 1
-        }
-
-        for (index, block) in doc.document.blocks.enumerated() {
-            while nextRemoval < removals.count && removals[nextRemoval].insertAt <= index {
-                appendRemoved(removals[nextRemoval])
-            }
-            rows.append(DisplayRow(content: .block(block),
-                                   status: statuses?[index]))
-        }
-        while nextRemoval < removals.count {
-            appendRemoved(removals[nextRemoval])
-        }
-        return rows
-    }
-}
-
-/// Linha de renderização: bloco atual ou conteúdo removido do baseline (visão Diff).
-private struct DisplayRow: Identifiable {
-    enum Content {
-        case block(any BlockNode)
-        case removed([String])
-    }
-
-    let content: Content
-    let status: BlockDiffer.Status?
-    var id: String {
-        switch content {
-        case .block(let b): return "b-\(ObjectIdentifier(b as AnyObject).hashValue)-\(String(describing: type(of: b)))"
-        case .removed(let t): return "r-" + t.joined(separator: "|")
-        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 8)
     }
 }
 
@@ -164,102 +164,5 @@ struct ScrollOffsetKey: PreferenceKey {
     static var defaultValue: CGFloat = 0
     static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
         value += nextValue()
-    }
-}
-
-struct FrontmatterCard: View {
-    let fields: [String: YAMLValue]
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            ForEach(fields.keys.sorted(), id: \.self) { key in
-                HStack(alignment: .top, spacing: 8) {
-                    Text(key).bold()
-                    Text(valueText(fields[key]!))
-                        .foregroundStyle(.secondary)
-                }
-            }
-        }
-        .padding(12)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(.quaternary.opacity(0.3), in: RoundedRectangle(cornerRadius: 8))
-    }
-
-    func valueText(_ value: YAMLValue) -> String {
-        switch value {
-        case .string(let s): return s
-        case .list(let items): return items.joined(separator: ", ")
-        }
-    }
-}
-
-struct BlockView: View {
-    let block: any BlockNode
-    var onOpenLink: (URL) -> Void = { _ in }
-    var linkBaseURL: URL = URL(fileURLWithPath: "/")
-
-    var body: some View {
-        switch block {
-        case let h as HeadingNode:
-            heading(h)
-        case let p as ParagraphNode:
-            // R6.2 — links inline clicáveis; clique é interceptado pelo EnvironmentValues openURL da ReaderTabView
-            Text(InlineLinkExtractor.attributed(markdown: p.rawMarkdown, baseURL: linkBaseURL))
-                .environment(\.openURL, OpenURLAction { url in
-                    onOpenLink(URL(fileURLWithPath: url.path))
-                    return .handled
-                })
-        case let c as CodeBlockNode:
-            Text(c.code)
-                .font(.system(.body, design: .monospaced))
-                .padding(10)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .background(.quaternary.opacity(0.3), in: RoundedRectangle(cornerRadius: 6))
-        case let q as QuoteNode:
-            Text(q.plainText).italic().padding(.leading, 12)
-        case let l as ListNode:
-            VStack(alignment: .leading) { ForEach(l.items, id: \.self) { Text("• " + $0) } }
-        case let t as TaskListItemsNode:
-            VStack(alignment: .leading) {
-                ForEach(t.items.indices, id: \.hashValue) { i in
-                    HStack {
-                        Image(systemName: t.items[i].isChecked ? "checkmark.square" : "square")
-                        Text(t.items[i].text)
-                    }
-                }
-            }
-        case let t as TableNode:
-            TableView(node: t)
-        default:
-            EmptyView()
-        }
-    }
-
-    @ViewBuilder
-    private func heading(_ h: HeadingNode) -> some View {
-        switch h.level {
-        case 1: Text(h.inlineText).font(.largeTitle.bold())
-        case 2: Text(h.inlineText).font(.title.bold())
-        case 3: Text(h.inlineText).font(.title2.bold())
-        default: Text(h.inlineText).font(.title3.bold())
-        }
-    }
-}
-
-struct TableView: View {
-    let node: TableNode
-
-    var body: some View {
-        Grid(horizontalSpacing: 16, verticalSpacing: 6) {
-            GridRow {
-                ForEach(node.headerCells, id: \.self) { Text($0).bold() }
-            }
-            Divider()
-            ForEach(node.rows.indices, id: \.self) { r in
-                GridRow {
-                    ForEach(node.rows[r], id: \.self) { Text($0) }
-                }
-            }
-        }
     }
 }
