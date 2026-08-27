@@ -28,13 +28,24 @@ struct TocNavigateRequest: Equatable {
 }
 
 /// R3.7 — painel TOC lateral direito: headings indentados por nível; 1 clique rola
-/// suave até a seção ficar no topo da área de leitura. Coluna redimensionável pelo
-/// divider (DragGesture), com largura ideal inicial medida a partir dos títulos.
+/// suave até a seção ficar no topo da área de leitura.
+///
+/// Coluna redimensionável pelo divider. Performance do drag: a largura vive em
+/// @State LOCAL deste view — o pai nunca re-renderiza durante o arrasto e não há
+/// escrita em UserDefaults por frame (só no fim do drag ou na expansão automática).
+///
+/// Crescimento grow-only: se um documento aberto exige mais largura que a atual,
+/// expande (+ respiro) e persiste o novo base; documentos com títulos menores
+/// NUNCA encolhem a coluna.
 struct TocPanelView: View {
     let outline: DocumentOutline
     let onSelect: (_ slug: String) -> Void
-    /// Largura atual da coluna (controlada do lado de fora p/ persistência).
-    @Binding var width: CGFloat
+    /// Menor largura que exibe o título mais largo do documento atual sem quebra.
+    let requiredWidth: CGFloat
+    /// Largura inicial (valor persistido, ou ideal na primeira execução).
+    let initialWidth: CGFloat
+    /// Persiste a largura como novo base (fim de drag ou expansão automática).
+    let onPersistWidth: (_ newWidth: CGFloat) -> Void
 
     static let minWidth: CGFloat = 150
     static let maxWidth: CGFloat = 420
@@ -46,66 +57,25 @@ struct TocPanelView: View {
     /// Respiro além do texto mais largo para que nada quebre de linha.
     private let breathingRoom: CGFloat = 16
 
-    @State private var hoveringSlug: String?
+    @State private var width: CGFloat
     @State private var dragBaseWidth: CGFloat?
 
-    var body: some View {
-        HStack(spacing: 0) {
-            resizeHandle
-            panelContent
-                .frame(width: max(Self.minWidth, min(Self.maxWidth, width)))
-        }
-        .background(Color(nsColor: .windowBackgroundColor))
+    init(outline: DocumentOutline,
+         onSelect: @escaping (_ slug: String) -> Void,
+         requiredWidth: CGFloat,
+         initialWidth: CGFloat,
+         onPersistWidth: @escaping (_ newWidth: CGFloat) -> Void) {
+        self.outline = outline
+        self.onSelect = onSelect
+        self.requiredWidth = requiredWidth
+        self.initialWidth = initialWidth
+        self.onPersistWidth = onPersistWidth
+        let base = Self.clamp(initialWidth)
+        _width = State(initialValue: base)
     }
 
-    // MARK: - Conteúdo
-
-    @ViewBuilder
-    private var panelContent: some View {
-        if outline.entries.isEmpty {
-            Text("No headings")
-                .font(.caption)
-                .foregroundStyle(.secondary)
-                .padding(12)
-            Spacer(minLength: 0)
-        } else {
-            ScrollView {
-                VStack(alignment: .leading, spacing: 0) {
-                    ForEach(Array(outline.entries.enumerated()), id: \.offset) { _, entry in
-                        row(entry)
-                    }
-                }
-                .padding(containerPadding)
-            }
-        }
-    }
-
-    /// Divider arrastável (replica o comportamento nativo do split da sidebar).
-    private var resizeHandle: some View {
-        ZStack {
-            Color(nsColor: .separatorColor).frame(width: 1)
-            Rectangle()
-                .fill(.clear)
-                .frame(width: 8)
-        }
-        .contentShape(Rectangle())
-        .onHover { hovering in
-            if hovering {
-                NSCursor.resizeLeftRight.push()
-            } else {
-                NSCursor.pop()
-            }
-        }
-        .gesture(
-            DragGesture(minimumDistance: 1)
-                .onChanged { value in
-                    if dragBaseWidth == nil { dragBaseWidth = width }
-                    width = max(Self.minWidth,
-                                min(Self.maxWidth, (dragBaseWidth ?? width) - value.translation.width))
-                }
-                .onEnded { _ in dragBaseWidth = nil }
-        )
-        .accessibilityLabel("Resize table of contents")
+    static func clamp(_ value: CGFloat) -> CGFloat {
+        max(minWidth, min(maxWidth, value))
     }
 
     // MARK: - Largura ideal
@@ -125,7 +95,111 @@ struct TocPanelView: View {
         return min(maxWidth, max(minWidth, widest + 2 * 4 + 2 * 8 + 16))
     }
 
-    // MARK: - Linhas
+    var body: some View {
+        HStack(spacing: 0) {
+            resizeHandle
+            Group {
+                if outline.entries.isEmpty {
+                    noHeadingsPlaceholder
+                } else {
+                    TocList(outline: outline,
+                            indentStep: indentStep,
+                            rowHorizontalPadding: rowHorizontalPadding,
+                            onSelect: onSelect)
+                }
+            }
+            // Constante única atualizada durante o drag; sem animação implícita.
+            .frame(width: Self.clamp(width))
+            .transaction { $0.animation = nil }
+        }
+        .background(Color(nsColor: .windowBackgroundColor))
+        .onAppear { growOnlyToFit() }
+        .onChange(of: requiredWidth) { _, newRequired in
+            growOnlyToFit(target: newRequired)
+        }
+    }
+
+    // MARK: - Estados vazios
+
+    private var noHeadingsPlaceholder: some View {
+        HStack {
+            Text("No headings")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .padding(12)
+            Spacer(minLength: 0)
+        }
+    }
+
+    // MARK: - Grow-only (R3.7)
+
+    /// Só CRESCER até caber o conteúdo; nunca encolhe. Expansão vira novo base persistido.
+    private func growOnlyToFit(target: CGFloat? = nil) {
+        let required = Self.clamp(target ?? requiredWidth)
+        guard required > width else { return }
+        width = required
+        onPersistWidth(width)
+    }
+
+    // MARK: - Divider arrastável
+
+    private var resizeHandle: some View {
+        ZStack {
+            Color(nsColor: .separatorColor).frame(width: 1)
+            Rectangle()
+                .fill(.clear)
+                .frame(width: 8)
+        }
+        .contentShape(Rectangle())
+        .onHover { hovering in
+            if hovering {
+                NSCursor.resizeLeftRight.push()
+            } else {
+                NSCursor.pop()
+            }
+        }
+        .gesture(
+            DragGesture(minimumDistance: 1)
+                .onChanged { value in
+                    if dragBaseWidth == nil { dragBaseWidth = width }
+                    var tx = Transaction()
+                    tx.disablesAnimations = true
+                    withTransaction(tx) {
+                        width = Self.clamp((dragBaseWidth ?? width) - value.translation.width)
+                    }
+                }
+                .onEnded { _ in
+                    dragBaseWidth = nil
+                    onPersistWidth(Self.clamp(width)) // persiste UMA vez ao soltar
+                }
+        )
+        .accessibilityLabel("Resize table of contents")
+    }
+}
+
+// MARK: - Lista (isolada da largura: drag não re-renderiza as linhas)
+
+/// Subview separada porque não depende de `width`: enquanto o usuário arrasta o
+/// divider, apenas a constante do frame muda — este subtree é preservado pelo diff.
+private struct TocList: View {
+    let outline: DocumentOutline
+    let indentStep: CGFloat
+    let rowHorizontalPadding: CGFloat
+    let onSelect: (_ slug: String) -> Void
+
+    @State private var hoveringSlug: String?
+    private let containerPadding: CGFloat = 8
+
+    var body: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 0) {
+                ForEach(Array(outline.entries.enumerated()), id: \.offset) { _, entry in
+                    row(entry)
+                }
+            }
+            .padding(containerPadding)
+        }
+    }
 
     private func row(_ entry: OutlineEntry) -> some View {
         Button {
