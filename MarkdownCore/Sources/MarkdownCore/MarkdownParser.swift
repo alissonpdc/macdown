@@ -5,7 +5,7 @@ public struct MarkdownParser {
     public init() {}
 
     public func parse(_ markdown: String) -> CoreDocument {
-        let parsed = Markdown.Document(parsing: markdown, options: [.parseBlockDirectives])
+        let parsed = Markdown.Document(parsing: markdown, options: [.parseBlockDirectives, .disableSmartOpts])
         var blocks: [any BlockNode] = []
         for child in parsed.blockChildren {
             blocks.append(blockNode(from: child))
@@ -32,6 +32,9 @@ public struct MarkdownParser {
         if let list = node as? Markdown.OrderedList {
             return listNode(from: list.children)
         }
+        if node is ThematicBreak {
+            return HorizontalRuleNode()
+        }
         if let table = node as? Markdown.Table {
             let header: [String] = table.head.cells.map { $0.plainText }
             let rows: [[String]] = table.body.rows.map { row in row.cells.map { $0.plainText } }
@@ -45,15 +48,15 @@ public struct MarkdownParser {
         var texts: [String] = []
         for item in children {
             guard let listItem = item as? ListItem else { continue }
-            // R3.13 — texto do item sem o marcador de checkbox
-            let text = listItem.children.compactMap { child -> String? in
+            // Preserva raw markdown (bold, code, etc.) em vez de extrair só Text nodes
+            let rawMarkdown = listItem.children.compactMap { child -> String? in
                 guard let para = child as? Paragraph else { return nil }
-                return para.inlineChildren.compactMap { $0 as? Text }.map(\.string).joined()
-            }.joined()
+                return para.format()
+            }.joined().trimmingCharacters(in: .whitespacesAndNewlines)
             if let checkbox = listItem.checkbox {
-                tasks.append(TaskItem(isChecked: checkbox == .checked, text: text))
+                tasks.append(TaskItem(isChecked: checkbox == .checked, text: rawMarkdown))
             } else {
-                texts.append(text)
+                texts.append(rawMarkdown)
             }
         }
         if !tasks.isEmpty { return TaskListItemsNode(items: tasks) }

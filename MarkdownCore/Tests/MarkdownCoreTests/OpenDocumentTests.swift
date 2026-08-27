@@ -30,7 +30,7 @@ final class OpenDocumentTests: XCTestCase {
         try "---\ntitle: Minha Spec\n---\n# Corpo".write(to: fileURL, atomically: true, encoding: .utf8)
         let doc = try OpenDocument(url: fileURL)
         let fm = doc.frontmatter
-        XCTAssertEqual(fm?.fields["title"], .string("Minha Spec"))
+        XCTAssertEqual(fm?["title"], .string("Minha Spec"))
         // frontmatter não vaza para os blocos renderizáveis
         XCTAssertFalse(doc.document.blocks.compactMap { $0 as? ParagraphNode }.contains { $0.text == "title: Minha Spec" })
     }

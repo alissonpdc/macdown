@@ -6,7 +6,7 @@ import Markdown
 final class GFMFixturesTests: XCTestCase {
     let parser = MarkdownParser()
 
-    private func first(_ markdown: String) -> BlockNode? {
+    private func first(_ markdown: String) -> (any BlockNode)? {
         parser.parse(markdown).blocks.first
     }
 

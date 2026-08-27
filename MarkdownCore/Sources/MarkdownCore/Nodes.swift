@@ -15,6 +15,11 @@ public struct HeadingNode: BlockNode, Equatable {
 public struct TableNode: BlockNode, Equatable {
     public let headerCells: [String]
     public let rows: [[String]]
+
+    public init(headerCells: [String], rows: [[String]]) {
+        self.headerCells = headerCells
+        self.rows = rows
+    }
 }
 
 public struct TaskItem: Equatable {
@@ -25,6 +30,14 @@ public struct TaskItem: Equatable {
 
 public struct TaskListItemsNode: BlockNode, Equatable {
     public let items: [TaskItem]
+
+    public init(items: [TaskItem]) {
+        self.items = items
+    }
+}
+
+public struct HorizontalRuleNode: BlockNode, Equatable {
+    public init() {}
 }
 
 public struct GenericBlockNode: BlockNode, Equatable {

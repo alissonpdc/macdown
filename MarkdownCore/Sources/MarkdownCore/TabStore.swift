@@ -72,6 +72,18 @@ extension TabStore {
     }
 }
 
+/// Estado de busca de uma aba (R5.1 / R5.2).
+public struct SearchState: Equatable {
+    public var query: String = ""
+    public var matches: [SearchMatch] = []
+    public var current: Int = 0
+    public var isActive: Bool = false
+    public var options: SearchOptions = []
+    public var count: Int { matches.count }
+
+    public init() {}
+}
+
 /// Uma aba aberta: documento + estado de leitura da sessão (R2.5).
 public struct ReaderTab: Identifiable, Equatable {
     public let id: UUID
@@ -87,13 +99,16 @@ public struct ReaderTab: Identifiable, Equatable {
     public var knownChanges: Set<String>
     /// R13.3 — aba exibindo a visão "Diff" em vez da visão "Nova".
     public var showsDiff: Bool
+    /// R5.1 / R5.2 — estado de busca da aba.
+    public var search: SearchState
 
     public init(document: OpenDocument, id: UUID = UUID(), scrollOffset: CGFloat = 0,
                 hasExternalUpdate: Bool = false,
                 baseline: OpenDocument? = nil,
                 diffResult: BlockDiffer.Result? = nil,
                 knownChanges: Set<String> = [],
-                showsDiff: Bool = false) {
+                showsDiff: Bool = false,
+                search: SearchState = SearchState()) {
         self.id = id
         self.document = document
         self.scrollOffset = scrollOffset
@@ -102,6 +117,7 @@ public struct ReaderTab: Identifiable, Equatable {
         self.diffResult = diffResult
         self.knownChanges = knownChanges
         self.showsDiff = showsDiff
+        self.search = search
     }
 
     public var title: String {
@@ -209,9 +225,62 @@ public final class TabStore: ObservableObject {
     private func navigateToCurrentEntry(in tabID: UUID) -> URL? {
         guard let path = histories[tabID]?.current,
               let index = tabs.firstIndex(where: { $0.id == tabID }),
-              let doc = try? OpenDocument(url: URL(fileURLWithPath: path)) else { return nil }
+               let doc = try? OpenDocument(url: URL(fileURLWithPath: path)) else { return nil }
         tabs[index] = ReaderTab(document: doc, id: tabID)
         activeTabID = tabID
         return tabs[index].document.url
+    }
+}
+
+// MARK: Fase 7 — Busca (R5.1 / R5.2)
+
+extension TabStore {
+    /// Atualiza a busca da aba a partir do termo digitado; recalcula as ocorrências.
+    public func updateSearch(query: String, in tabID: UUID, options: SearchOptions? = nil) {
+        guard let index = tabs.firstIndex(where: { $0.id == tabID }) else { return }
+        var state = tabs[index].search
+        if let options { state.options = options }
+        state.query = query
+        if query.isEmpty {
+            state.matches = []
+            state.current = 0
+            state.isActive = false
+        } else {
+            state.matches = SearchEngine.findMatches(in: tabs[index].document.document,
+                                                     query: query, options: state.options)
+            state.current = 0
+            state.isActive = true
+        }
+        tabs[index].search = state
+        tabs = tabs
+    }
+
+    /// Liga/desliga a barra de busca sem perder o termo (usado por Cmd+F / Esc).
+    public func setSearchActive(_ active: Bool, in tabID: UUID) {
+        guard let index = tabs.firstIndex(where: { $0.id == tabID }) else { return }
+        if !active {
+            tabs[index].search.query = ""
+            tabs[index].search.matches = []
+            tabs[index].search.current = 0
+        }
+        tabs[index].search.isActive = active
+        tabs = tabs
+    }
+
+    /// Avança para a próxima ocorrência (Cmd+G).
+    public func nextMatch(in tabID: UUID) {
+        guard let index = tabs.firstIndex(where: { $0.id == tabID }) else { return }
+        guard !tabs[index].search.matches.isEmpty else { return }
+        tabs[index].search.current = (tabs[index].search.current + 1) % tabs[index].search.matches.count
+        tabs = tabs
+    }
+
+    /// Volta para a ocorrência anterior (Shift+Cmd+G).
+    public func previousMatch(in tabID: UUID) {
+        guard let index = tabs.firstIndex(where: { $0.id == tabID }) else { return }
+        guard !tabs[index].search.matches.isEmpty else { return }
+        let n = tabs[index].search.matches.count
+        tabs[index].search.current = (tabs[index].search.current - 1 + n) % n
+        tabs = tabs
     }
 }
