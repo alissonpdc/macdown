@@ -3,6 +3,7 @@ BUILD_DIR := .build/release
 APP_DIR := ../$(APP_NAME).app
 CONTENTS := $(APP_DIR)/Contents
 INSTALL_DIR := /Applications
+PREFIX ?= /usr/local
 
 .PHONY: app plist test install clean
 
@@ -22,7 +23,7 @@ plist:
 	.build/release/plistgen $(CURDIR)/../MacDown.app/Contents/Info.plist || \
 	(swift build -c release --product plistgen && .build/release/plistgen $(CURDIR)/../MacDown.app/Contents/Info.plist)
 
-## Instala o .app em /Applications (build completo + substituição do existente)
+## Instala o .app em /Applications + a CLI `macdown` em $(PREFIX)/bin
 install: app
 	@# rm antes do ditto garante que não restem arquivos órfãos de versões anteriores
 	rm -rf $(INSTALL_DIR)/$(APP_NAME).app
@@ -30,6 +31,13 @@ install: app
 	xattr -cr $(INSTALL_DIR)/$(APP_NAME).app 2>/dev/null || true
 	codesign --force --deep -s - $(INSTALL_DIR)/$(APP_NAME).app 2>/dev/null || true
 	@echo "Instalado em $(INSTALL_DIR)/$(APP_NAME).app"
+	@mkdir -p $(PREFIX)/bin
+	@if install -m 0755 Scripts/macdown $(PREFIX)/bin/macdown 2>/dev/null; then \
+		echo "CLI instalada em $(PREFIX)/bin/macdown (uso: macdown [arquivo.md|pasta])"; \
+	else \
+		echo "Falha ao escrever em $(PREFIX)/bin/macdown — rode: sudo make install"; \
+		exit 1; \
+	fi
 
 test:
 	swift test
