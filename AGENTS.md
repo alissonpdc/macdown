@@ -7,7 +7,7 @@ Antes de concluir qualquer implementação, TODOS os GATES abaixo devem ser cump
 ### 1. Build sem warnings
 
 ```bash
-cd MarkdownCore && make app
+make build
 ```
 
 - O build deve ser concluído com **zero warnings**.
@@ -16,7 +16,7 @@ cd MarkdownCore && make app
 ### 2. Todos os testes passando
 
 ```bash
-cd MarkdownCore && make test
+make test
 ```
 
 - Todos os testes devem passar.
@@ -50,6 +50,6 @@ feat(sidebar): implementar navegação por setas no estilo Finder
 ## Ordem de Execução
 
 1. Implementar a mudança
-2. Rodar `make app` → verificar zero warnings
+2. Rodar `make build` → verificar zero warnings
 3. Rodar `make test` → verificar todos passando
 4. Realizar commit convencional

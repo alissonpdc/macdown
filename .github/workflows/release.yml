@@ -16,9 +16,6 @@ jobs:
   build-release:
     name: Build, empacotar e publicar release
     runs-on: macos-latest
-    defaults:
-      run:
-        working-directory: MarkdownCore
     steps:
       - uses: actions/checkout@v4
         with:
@@ -38,9 +35,9 @@ jobs:
 
       - name: Empacotar MacDown.app
         run: |
-          make app
+          make build
           rm -f build.log
-          ditto -c -k --sequesterRsrc --keepParent ../MacDown.app MacDown.app.zip
+          ditto -c -k --sequesterRsrc --keepParent MacDown.app MacDown.app.zip
 
       - name: Definir versão (semver automático pelo histórico de commits)
         id: version
@@ -97,12 +94,12 @@ jobs:
           tag_name: ${{ steps.version.outputs.new_tag }}
           name: MacDown ${{ steps.version.outputs.new_tag }}
           body: ${{ steps.notes.outputs.notes }}
-          files: MarkdownCore/MacDown.app.zip
+          files: MacDown.app.zip
           fail_on_unmatched_files: true
 
       - name: Upload do artefato na run
         uses: actions/upload-artifact@v4
         with:
           name: MacDown-${{ steps.version.outputs.new_tag }}.app.zip
-          path: MarkdownCore/MacDown.app.zip
+          path: MacDown.app.zip
           retention-days: 30

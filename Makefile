@@ -1,6 +1,6 @@
 APP_NAME := MacDown
 BUILD_DIR := .build/release
-APP_DIR := ../$(APP_NAME).app
+APP_DIR := $(CURDIR)/$(APP_NAME).app
 CONTENTS := $(APP_DIR)/Contents
 INSTALL_DIR := /Applications
 PREFIX ?= /usr/local
@@ -20,8 +20,8 @@ build: plist
 ## Gera Info.plist dentro do bundle (caminho absoluto: plistgen não aceita relativo com ..)
 plist:
 	mkdir -p $(APP_DIR)/Contents
-	.build/release/plistgen $(CURDIR)/../MacDown.app/Contents/Info.plist || \
-	(swift build -c release --product plistgen && .build/release/plistgen $(CURDIR)/../MacDown.app/Contents/Info.plist)
+	.build/release/plistgen $(APP_DIR)/Contents/Info.plist || \
+	(swift build -c release --product plistgen && .build/release/plistgen $(APP_DIR)/Contents/Info.plist)
 
 ## Instala o .app em /Applications + a CLI `macdown` em $(PREFIX)/bin
 install: build
