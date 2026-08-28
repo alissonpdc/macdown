@@ -23,11 +23,24 @@ public struct CodeBlockNode: BlockNode, Equatable {
 }
 
 public struct ListNode: BlockNode, Equatable {
-    public let items: [String]
+    public struct Item: Equatable {
+        public let text: String
+        /// Listas aninhadas dentro do item (preserva ordered/unordered).
+        public let children: [ListNode]
+
+        public init(text: String, children: [ListNode] = []) {
+            self.text = text
+            self.children = children
+        }
+    }
+
+    public let items: [Item]
+    public let isOrdered: Bool
     public let isTaskList: Bool
 
-    public init(items: [String], isTaskList: Bool = false) {
+    public init(items: [Item], isOrdered: Bool = false, isTaskList: Bool = false) {
         self.items = items
+        self.isOrdered = isOrdered
         self.isTaskList = isTaskList
     }
 }

@@ -58,7 +58,7 @@ public enum BlockDiffer {
         case let p as ParagraphNode: return "p:\(p.text)"
         case let c as CodeBlockNode: return "c:\(c.language ?? ""):\(c.code)"
         case let q as QuoteNode: return "q:\(q.plainText)"
-        case let l as ListNode: return "l:\(l.items.joined(separator: "\n"))"
+        case let l as ListNode: return "l:\(l.items.map(\.text).joined(separator: "\n"))"
         case let t as TaskListItemsNode:
             return "t:" + t.items.map { "\($0.isChecked ? "[x]" : "[ ]")\($0.text)" }.joined(separator: "\n")
         case let t as TableNode:
@@ -78,7 +78,7 @@ public enum BlockDiffer {
         case let c as CodeBlockNode: return c.code
         case let q as QuoteNode: return q.plainText
         case let l as ListNode:
-            return l.items.map { "- \($0)" }.joined(separator: "\n")
+            return l.items.map { "- \($0.text)" }.joined(separator: "\n")
         case let t as TaskListItemsNode:
             return t.items.map { "\($0.isChecked ? "[x]" : "[ ]") \($0.text)" }.joined(separator: "\n")
         case let t as TableNode:

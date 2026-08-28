@@ -62,7 +62,7 @@ public enum SearchEngine {
         case let q as QuoteNode:
             return q.plainText
         case let l as ListNode:
-            return l.items.joined(separator: "\n")
+            return l.items.map(\.text).joined(separator: "\n")
         case let t as TaskListItemsNode:
             return t.items.map { ($0.isChecked ? "[x] " : "[ ] ") + $0.text }
                 .joined(separator: "\n")
