@@ -79,7 +79,7 @@
 - [x] Footer: breadcrumb + palavras/caracteres + tasks (R8.1, R3.13) — FooterInfo + FooterView
 - [ ] Validação: links quebrados, mermaid erro (R10.1) — **não implementado**
 - [ ] Mermaid inline (R3.3) — **não implementado**: sem integração mermaid.js
-- [ ] Imagens locais relativas (R3.12) — **não implementado**: conversor HTML não resolve caminhos de imagem
+- [x] Imagens locais relativas (R3.12) — `inlineMarkdown` converte `![alt](url)` para `<img>` (antes do regex de links); `imageURLSource` mantém URLs com scheme e resolve caminhos relativos contra a pasta do documento (`baseFileURL`, com `../` e %20); sem base mantém caminho relativo; CSS `img { max-width: 100% }`
 - [x] Largura de leitura ajustável persistida (R3.11) — ReadingPrefs + menu "Reading Width" (Cmd+Opt+/-)
 - [x] Zoom de texto Cmd+=/- persistido (R11.1) — ReadingPrefs + menu "Text Zoom" (Cmd+/-, Cmd+0 reset)
 - [ ] Copiar como Contexto (R11.3) — **não implementado**
