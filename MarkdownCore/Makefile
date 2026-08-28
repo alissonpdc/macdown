@@ -31,13 +31,6 @@ install: app
 	xattr -cr $(INSTALL_DIR)/$(APP_NAME).app 2>/dev/null || true
 	codesign --force --deep -s - $(INSTALL_DIR)/$(APP_NAME).app 2>/dev/null || true
 	@echo "Instalado em $(INSTALL_DIR)/$(APP_NAME).app"
-	@mkdir -p $(PREFIX)/bin
-	@if install -m 0755 Scripts/macdown $(PREFIX)/bin/macdown 2>/dev/null; then \
-		echo "CLI instalada em $(PREFIX)/bin/macdown (uso: macdown [arquivo.md|pasta])"; \
-	else \
-		echo "Falha ao escrever em $(PREFIX)/bin/macdown — rode: sudo make install"; \
-		exit 1; \
-	fi
 
 test:
 	swift test
