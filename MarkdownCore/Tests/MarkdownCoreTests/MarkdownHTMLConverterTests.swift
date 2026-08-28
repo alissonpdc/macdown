@@ -66,6 +66,19 @@ final class MarkdownHTMLConverterTests: XCTestCase {
         XCTAssertTrue(html.contains("function toggleFold"))
     }
 
+    // R3.10 — bloco contraído permanece rolável (vertical e horizontal)
+    func testFoldedPreKeepsScrollingEnabled() {
+        let html = converter.convert(CoreDocument(blocks: []))
+        guard let range = html.range(of: ".code-block.folded pre {"),
+              let end = html.range(of: "}", range: range.upperBound..<html.endIndex) else {
+            return XCTFail("folded pre CSS rule not found")
+        }
+        let rule = html[range.lowerBound..<end.upperBound]
+        XCTAssertTrue(rule.contains("overflow-y: auto"), "folded pre must scroll vertically")
+        XCTAssertTrue(rule.contains("overflow-x: auto"), "folded pre must scroll horizontally")
+        XCTAssertFalse(rule.contains("overflow: hidden"), "folded pre must not clip content")
+    }
+
     func testBlockquote() {
         let doc = CoreDocument(blocks: [
             QuoteNode(plainText: "Important quote"),
