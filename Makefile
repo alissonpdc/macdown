@@ -5,10 +5,10 @@ CONTENTS := $(APP_DIR)/Contents
 INSTALL_DIR := /Applications
 PREFIX ?= /usr/local
 
-.PHONY: app plist test install clean
+.PHONY: build plist test install clean
 
 ## Empacota o .app em release (janela na frente, ícone próprio, handler de .md)
-app: plist
+build: plist
 	swift build -c release
 	mkdir -p $(CONTENTS)/MacOS $(CONTENTS)/Resources
 	cp $(BUILD_DIR)/$(APP_NAME) $(CONTENTS)/MacOS/$(APP_NAME)
@@ -24,7 +24,7 @@ plist:
 	(swift build -c release --product plistgen && .build/release/plistgen $(CURDIR)/../MacDown.app/Contents/Info.plist)
 
 ## Instala o .app em /Applications + a CLI `macdown` em $(PREFIX)/bin
-install: app
+install: build
 	@# rm antes do ditto garante que não restem arquivos órfãos de versões anteriores
 	rm -rf $(INSTALL_DIR)/$(APP_NAME).app
 	ditto $(APP_DIR) $(INSTALL_DIR)/$(APP_NAME).app
