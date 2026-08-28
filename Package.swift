@@ -8,19 +8,19 @@ let package = Package(
         .package(url: "https://github.com/swiftlang/swift-markdown.git", from: "0.5.0"),
     ],
     targets: [
-        .target(name: "MarkdownCore", dependencies: [
+        .target(name: "MacDownCore", dependencies: [
             .product(name: "Markdown", package: "swift-markdown"),
         ]),
         .executableTarget(
             name: "MacDown",
-            dependencies: ["MarkdownCore"],
+            dependencies: ["MacDownCore"],
             path: "Sources/MacDown"
         ),
         .executableTarget(
             name: "plistgen",
-            dependencies: ["MarkdownCore"],
+            dependencies: ["MacDownCore"],
             path: "Sources/plistgen"
         ),
-        .testTarget(name: "MarkdownCoreTests", dependencies: ["MarkdownCore"]),
+        .testTarget(name: "MacDownCoreTests", dependencies: ["MacDownCore"]),
     ]
 )

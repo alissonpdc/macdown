@@ -1,5 +1,5 @@
 import SwiftUI
-import MarkdownCore
+import MacDownCore
 
 /// Canal de comandos de aba do menu para a view (o menu não enxerga o TabStore).
 final class TabCommandBus: ObservableObject {

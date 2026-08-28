@@ -1,5 +1,5 @@
 import SwiftUI
-import MarkdownCore
+import MacDownCore
 
 /// R8.1 — Rodapé fixo: breadcrumb + contagem palavras/caracteres + tasks agregadas.
 /// R10.1 — badge de links quebrados abre popover com a lista; clicar num item

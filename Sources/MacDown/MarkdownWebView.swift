@@ -1,6 +1,6 @@
 import SwiftUI
 import WebKit
-import MarkdownCore
+import MacDownCore
 
 /// R10.1 — pedido de rolagem até um link quebrado (token crescente evita re-trigger).
 struct BrokenLinkNavigateRequest: Equatable {
