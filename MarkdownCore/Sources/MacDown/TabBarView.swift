@@ -7,6 +7,9 @@ import MarkdownCore
 /// horizontal quando excede a largura.
 struct TabBarView: View {
     @ObservedObject var store: TabStore
+    /// Largura atual da coluna TOC (0 = TOC oculto): as abas se centralizam
+    /// sobre a coluna de render (largura total − TOC), não sobre o detalhe inteiro.
+    @ObservedObject var tocWidth: TOCWidthStore
     var onOpenFile: () -> Void
     var recordVisit: (URL) -> Void
 
@@ -36,10 +39,11 @@ struct TabBarView: View {
                     .accessibilityLabel("New tab")
                     .padding(.leading, 4)
                 }
-                // minWidth = largura da coluna: conteúdo menor que a viewport
-                // fica CENTRALIZADO; maior, habilita o scroll horizontal.
+                // minWidth = largura da coluna de RENDER (exclui o TOC): conteúdo
+                // menor que a viewport fica CENTRALIZADO sobre ela; maior, habilita
+                // o scroll horizontal.
                 .padding(.horizontal, 8)
-                .frame(minWidth: geo.size.width, alignment: .center)
+                .frame(minWidth: max(0, geo.size.width - tocWidth.width), alignment: .center)
             }
         }
         .frame(height: 32)

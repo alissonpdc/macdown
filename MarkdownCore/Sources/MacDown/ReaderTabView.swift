@@ -8,6 +8,8 @@ struct ReaderTabView: View {
     @ObservedObject var readingPrefs: ReadingPrefs
     var onOpenLink: (URL) -> Void = { _ in }
     var folderRoot: URL?
+    /// Publica a largura do TOC para a barra de abas se centralizar só no render.
+    let tocWidthStore: TOCWidthStore
     @EnvironmentObject private var uiPrefs: UIPrefs
     @State private var scrollOffset: CGFloat = 0
     /// R3.7 — último pedido de navegação do TOC (token crescente).
@@ -57,7 +59,8 @@ struct ReaderTabView: View {
                             requiredWidth: TocPanelView.idealWidth(for: outline),
                             // Largura da SESSÃO: default (ideal do 1º doc) a cada launch
                             initialWidth: TocPanelView.idealWidth(for: outline),
-                            activeSlug: activeHeadingSlug
+                            activeSlug: activeHeadingSlug,
+                            widthStore: tocWidthStore
                         )
                     }
                 }

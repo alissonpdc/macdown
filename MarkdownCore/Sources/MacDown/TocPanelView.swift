@@ -20,6 +20,14 @@ final class UIPrefs: ObservableObject {
     func toggleTOC() { showTOC.toggle() }
 }
 
+/// Largura atual da coluna TOC, publicada para quem precisa alinhar com a
+/// coluna de render (ex.: centralização das abas). Quem escreve é o painel;
+/// quem observa é levinho (TabBarView) — o painel NÃO observa, então o drag
+/// não o re-renderiza.
+final class TOCWidthStore: ObservableObject {
+    @Published var width: CGFloat = 0
+}
+
 /// Requisição de navegação do TOC para o WebView. O token crescente garante que
 /// clicar de novo no mesmo heading re-navegue.
 struct TocNavigateRequest: Equatable {
@@ -45,6 +53,8 @@ struct TocPanelView: View {
     let initialWidth: CGFloat
     /// R3.7 sync inversa — seção ativa conforme o scroll do conteúdo.
     let activeSlug: String?
+    /// Saída da largura atual (inclui o handle) — referência crua, sem observação.
+    let widthStore: TOCWidthStore
 
     static let minWidth: CGFloat = 150
     static let maxWidth: CGFloat = 420
@@ -63,12 +73,14 @@ struct TocPanelView: View {
          onSelect: @escaping (_ slug: String) -> Void,
          requiredWidth: CGFloat,
          initialWidth: CGFloat,
-         activeSlug: String?) {
+         activeSlug: String?,
+         widthStore: TOCWidthStore) {
         self.outline = outline
         self.onSelect = onSelect
         self.requiredWidth = requiredWidth
         self.initialWidth = initialWidth
         self.activeSlug = activeSlug
+        self.widthStore = widthStore
         _width = State(initialValue: Self.clamp(initialWidth))
     }
 
@@ -112,10 +124,24 @@ struct TocPanelView: View {
             .transaction { $0.animation = nil }
         }
         .background(MDTheme.tocBackground)
-        .onAppear { growOnlyToFit() }
+        .onAppear {
+            growOnlyToFit()
+            reportWidth()
+        }
+        .onDisappear {
+            // painel fora da hierarquia (TOC oculto, doc sem outline, troca de aba):
+            // alvo de centralização das abas volta a ser a coluna inteira
+            widthStore.width = 0
+        }
         .onChange(of: requiredWidth) { _, newRequired in
             growOnlyToFit(target: newRequired)
+            reportWidth()
         }
+    }
+
+    /// Largura total da coluna (lista + handle de 1pt) para alinhamento externo.
+    private func reportWidth() {
+        widthStore.width = Self.clamp(width) + 1
     }
 
     // MARK: - Estados vazios
@@ -137,6 +163,7 @@ struct TocPanelView: View {
         let required = Self.clamp(target ?? requiredWidth)
         guard required > width else { return }
         width = required
+        reportWidth()
     }
 
     // MARK: - Divider arrastável
@@ -165,6 +192,7 @@ struct TocPanelView: View {
                     withTransaction(tx) {
                         width = Self.clamp((dragBaseWidth ?? width) - value.translation.width)
                     }
+                    reportWidth()
                 }
                 .onEnded { _ in
                     dragBaseWidth = nil
