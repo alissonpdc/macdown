@@ -99,7 +99,7 @@ public final class MarkdownHTMLConverter {
         var html = "<ul class=\"task-list\">\n"
         for item in taskList.items {
             let checked = item.isChecked ? " checked" : ""
-            html += "  <li class=\"task-item\"><input type=\"checkbox\"\(checked) disabled>\(inlineMarkdown(item.text, baseURL: baseURL))</li>\n"
+            html += "  <li class=\"task-item\"><input type=\"checkbox\"\(checked) disabled><span class=\"task-text\">\(inlineMarkdown(item.text, baseURL: baseURL))</span></li>\n"
         }
         html += "</ul>\n"
         return html
@@ -478,8 +478,9 @@ public final class MarkdownHTMLConverter {
     li { margin: 0.25em 0; }
     li + li { margin-top: 0.25em; }
     .task-list { list-style: none; padding-left: 0; }
-    .task-item { display: flex; align-items: center; gap: 8px; }
-    .task-item input[type="checkbox"] { margin: 0; }
+    .task-item { display: flex; align-items: baseline; gap: 8px; }
+    .task-item input[type="checkbox"] { margin: 0; flex-shrink: 0; align-self: center; }
+    .task-text { flex: 1; min-width: 0; }
     hr {
         height: 0.25em;
         padding: 0;
