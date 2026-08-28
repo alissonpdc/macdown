@@ -95,9 +95,9 @@ final class RenderBugTests: XCTestCase {
         XCTAssertTrue(html.contains("<li class=\"task-item\">"), "Should have task-item li")
         XCTAssertTrue(html.contains("<input type=\"checkbox\" checked disabled>"), "Checked item: checkbox checked disabled")
         XCTAssertTrue(html.contains("<input type=\"checkbox\" disabled>"), "Unchecked item: checkbox disabled only")
-        // Make sure text comes after checkbox
-        XCTAssertTrue(html.contains("checked disabled>Done item</li>"), "Done item text after checkbox")
-        XCTAssertTrue(html.contains("disabled>Todo item</li>"), "Todo item text after checkbox")
+        // Make sure text comes after checkbox, wrapped in a single task-text span
+        XCTAssertTrue(html.contains("checked disabled><span class=\"task-text\">Done item</span></li>"), "Done item text after checkbox")
+        XCTAssertTrue(html.contains("disabled><span class=\"task-text\">Todo item</span></li>"), "Todo item text after checkbox")
     }
 
     // MARK: - Bug: Heading rendering
