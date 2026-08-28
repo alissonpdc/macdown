@@ -4,6 +4,8 @@ import MarkdownCore
 struct ContentView: View {
     let initialURL: URL?
     @StateObject private var tabStore = TabStore()
+    /// Largura da coluna TOC — usada pela barra de abas para centralizar sobre o render.
+    @StateObject private var tocWidthStore = TOCWidthStore()
     @EnvironmentObject var readingPrefs: ReadingPrefs
     @State private var loadError: String?
     @State private var folderTree: FolderNode?
@@ -31,7 +33,7 @@ struct ContentView: View {
         } detail: {
             VStack(spacing: 0) {
                 if let tab = tabStore.activeTab {
-                    TabBarView(store: tabStore, onOpenFile: openViaPanel, recordVisit: recordVisitIfNeeded)
+                    TabBarView(store: tabStore, tocWidth: tocWidthStore, onOpenFile: openViaPanel, recordVisit: recordVisitIfNeeded)
                     if showSearch {
                         SearchBarView(store: tabStore, isFocused: $searchFieldFocused) {
                             showSearch = false
@@ -48,7 +50,8 @@ struct ContentView: View {
                             recordVisitIfNeeded(target)
                             refreshWatchers()
                         },
-                        folderRoot: folderTree?.url
+                        folderRoot: folderTree?.url,
+                        tocWidthStore: tocWidthStore
                     )
                 } else if let error = loadError {
                     ContentUnavailableView("Couldn't open file",
