@@ -4,17 +4,12 @@ import MarkdownCore
 struct ContentView: View {
     let initialURL: URL?
     @StateObject private var tabStore = TabStore()
-    /// Largura da coluna TOC — usada pela barra de abas para centralizar sobre o render.
-    @StateObject private var tocWidthStore = TOCWidthStore()
     @EnvironmentObject var readingPrefs: ReadingPrefs
     @State private var loadError: String?
     @State private var folderTree: FolderNode?
     @State private var expandedFolders: Set<String> = []
     /// Fase 6 — watch da pasta aberta + arquivos soltos (R4.1/R4.3/R4.4).
     @State private var watcher: FileWatcher?
-    /// Fase 7 — busca no documento (R5.1).
-    @State private var showSearch = false
-    @FocusState private var searchFieldFocused: Bool
     /// Fase 7 — busca global na pasta (R5.2).
     @State private var showGlobalSearch = false
 
@@ -33,13 +28,6 @@ struct ContentView: View {
         } detail: {
             VStack(spacing: 0) {
                 if let tab = tabStore.activeTab {
-                    TabBarView(store: tabStore, tocWidth: tocWidthStore, onOpenFile: openViaPanel, recordVisit: recordVisitIfNeeded)
-                    if showSearch {
-                        SearchBarView(store: tabStore, isFocused: $searchFieldFocused) {
-                            showSearch = false
-                            if let id = tabStore.activeTabID { tabStore.setSearchActive(false, in: id) }
-                        }
-                    }
                     ReaderTabView(
                         tabID: tab.id,
                         store: tabStore,
@@ -51,7 +39,7 @@ struct ContentView: View {
                             refreshWatchers()
                         },
                         folderRoot: folderTree?.url,
-                        tocWidthStore: tocWidthStore
+                        onOpenFile: openViaPanel
                     )
                 } else if let error = loadError {
                     ContentUnavailableView("Couldn't open file",
@@ -102,12 +90,6 @@ struct ContentView: View {
         .onReceive(NotificationCenter.default.publisher(for: .macDownToggleDiff)) { _ in
             // R13.3 — Cmd+D alterna a visão da aba ativa
             if let id = tabStore.activeTabID { tabStore.toggleDiffView(in: id) }
-        }
-        .onReceive(NotificationCenter.default.publisher(for: .macDownFind)) { _ in
-            // R5.1 — Cmd+F abre a busca no documento
-            showSearch = true
-            if let id = tabStore.activeTabID { tabStore.setSearchActive(true, in: id) }
-            DispatchQueue.main.async { searchFieldFocused = true }
         }
         .onReceive(NotificationCenter.default.publisher(for: .macDownFindNext)) { _ in
             if let id = tabStore.activeTabID { tabStore.nextMatch(in: id) }
