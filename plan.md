@@ -74,7 +74,7 @@
 - [ ] Copiar Comando shell: limpar prompts/comentários/continuações (R3.2) — **não implementado**: botão "Copiar" copia código bruto. Sem opção "Copiar Comando".
 - [x] Fold de código >30 linhas (R3.10) — blocos com >30 linhas rendem colapsados (`.code-block.folded`, max-height 500px + fade), botões com ícones SVG no code-header via `toggleFold()`; contraído permanece rolável vertical/horizontal (R3.10); threshold 30 em `MarkdownHTMLConverter.foldLineThreshold`
 - [x] Outline/TOC bidirecional (R3.7) — TocPanelView lateral direito (Cmd+Shift+T, coluna redimensionável grow-only) + navegação por clique via âncoras + destaque da seção ativa ao rolar (scroll listener JS → WKScriptMessageHandler)
-- [ ] Âncoras com hover `#` (R3.8) — **parcial**: headings recebem `id` (slug), mas sem ícone hover para copiar link
+- [x] Âncoras com hover `#` (R3.8) — headings rendem `<a class="anchor" href="#slug">` visível no hover (`.anchor { opacity: 0 }` + `:hover`), clique executa `copyAnchor()` que copia `BASE_URL#slug` (BASE_URL injetado quando `baseFileURL` presente, senão `#slug`) com feedback `✓`
 - [x] Tabelas largas rolam horizontal (R3.9) — **implementado**: CSS `.table-wrapper { overflow-x: auto; }` + `table { display: block; width: max-content; }`
 - [x] Footer: breadcrumb + palavras/caracteres + tasks (R8.1, R3.13) — FooterInfo + FooterView
 - [ ] Validação: links quebrados, mermaid erro (R10.1) — **não implementado**
