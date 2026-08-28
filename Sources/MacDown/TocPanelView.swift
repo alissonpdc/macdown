@@ -1,6 +1,6 @@
 import SwiftUI
 import AppKit
-import MarkdownCore
+import MacDownCore
 
 /// R3.7 — estado de UI persistido em UserDefaults (mesmo padrão de ReadingPrefs).
 final class UIPrefs: ObservableObject {

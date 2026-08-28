@@ -1,5 +1,5 @@
 import SwiftUI
-import MarkdownCore
+import MacDownCore
 
 /// Conteúdo de uma aba com renderização via WKWebView.
 ///

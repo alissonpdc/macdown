@@ -20,7 +20,7 @@ The project is a Swift package with three targets:
 | Target | Description |
 |---|---|
 | `MacDown` | The app executable (SwiftUI) |
-| `MarkdownCore` | Markdown parsing/rendering library (built on [swift-markdown](https://github.com/swiftlang/swift-markdown)) |
+| `MacDownCore` | Markdown parsing/rendering library (built on [swift-markdown](https://github.com/swiftlang/swift-markdown)) |
 | `plistgen` | Helper that generates the app bundle's `Info.plist` |
 
 ## Build
@@ -47,7 +47,7 @@ make test
 
 Runs the full test suite (`swift test`). **All tests must pass** — failing tests block approval.
 
-When adding features or fixing bugs, add or update tests in `Tests/MarkdownCoreTests`.
+When adding features or fixing bugs, add or update tests in `Tests/MacDownCoreTests`.
 
 ## Pull Requests
 

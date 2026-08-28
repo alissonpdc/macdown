@@ -1,5 +1,5 @@
 import SwiftUI
-import MarkdownCore
+import MacDownCore
 
 /// R2.2/R2.3 — sidebar em árvore com linhas customizadas (sem DisclosureGroup:
 /// o chevron nativo fica preso à margem e os insets variam).

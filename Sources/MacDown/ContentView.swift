@@ -1,5 +1,5 @@
 import SwiftUI
-import MarkdownCore
+import MacDownCore
 
 struct ContentView: View {
     let initialURL: URL?

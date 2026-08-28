@@ -5,7 +5,7 @@
 
 ## Decisões técnicas
 
-- Targets: `MacDown` (App SwiftUI) + `MarkdownCore` (package local, lógica pura)
+- Targets: `MacDown` (App SwiftUI) + `MacDownCore` (package local, lógica pura)
 - Motor markdown: cmark-gfm (SwiftMarkdown) — AST testável
 - Frontmatter: parser YAML mínimo próprio (chaves/listas); malformado → erro estruturado (R10.2)
 - Arquitetura: MVVM; regra de ouro — toda lógica no Core, SwiftUI só desenha estado
@@ -25,13 +25,13 @@
 ## Checklist
 
 ### Fase 0 — Esqueleto + CI
-- [x] MarkdownCore package local (SPM, macOS 14+) com test target
+- [x] MacDownCore package local (SPM, macOS 14+) com test target
 - [x] App target MacDown (SwiftUI) — MacDownApp.swift, ContentView.swift, SidebarView, TabBarView, ReaderTabView
 - [x] Suite rodando verde (`swift test`)
 - [x] Gate de teste documentado neste arquivo
 - [x] CI GitHub Actions — `ci.yml` (build release falha com warning + `swift test` em branches/PRs) e `release.yml` (push main: build/test, `make app`, release automática com versionamento semver baseado em conventional commits + release notes)
 
-### Fase 1 — MarkdownCore (parse)
+### Fase 1 — MacDownCore (parse)
 - [x] Parser swift-markdown (cmark-gfm) integrado ao Core
 - [x] Modelo de blocos inicial (HeadingNode, TableNode, TaskListItemsNode, GenericBlockNode)
 - [x] Fixtures GFM: tabelas, task lists, strikethrough, autolinks, footnotes (R3.1)
