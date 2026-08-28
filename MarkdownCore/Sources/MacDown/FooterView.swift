@@ -28,7 +28,7 @@ struct FooterView: View {
                 }
                 .buttonStyle(.plain)
                 .help("Links quebrados neste documento — clique para ver")
-                .accessibilityLabel("\(info.brokenLinks.count) links quebrados")
+                .accessibilityLabel("\(info.brokenLinks.count) broken links")
                 .popover(isPresented: $showBrokenList, arrowEdge: .bottom) {
                     brokenListPopover
                 }
@@ -54,7 +54,7 @@ struct FooterView: View {
             HStack(spacing: 6) {
                 Image(systemName: "link.badge.clock")
                     .foregroundStyle(.orange)
-                Text("Links quebrados (\(info.brokenLinks.count))")
+                Text("Broken links (\(info.brokenLinks.count))")
                     .font(.headline)
             }
             .padding(.horizontal, 12)
@@ -101,8 +101,8 @@ struct FooterView: View {
 
     private func reasonText(for reason: BrokenLink.Reason) -> String {
         switch reason {
-        case .fileNotFound: return "arquivo inexistente"
-        case .anchorNotFound: return "âncora inexistente"
+        case .fileNotFound: return "file not found"
+        case .anchorNotFound: return "anchor not found"
         }
     }
 }
