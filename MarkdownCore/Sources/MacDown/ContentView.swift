@@ -293,14 +293,18 @@ struct GlobalSearchView: View {
     @State private var query = ""
     @State private var caseSensitive = false
     @State private var wholeWord = false
+    @State private var useRegex = false
     @State private var results: [FileSearchResult] = []
     /// R5.2 — query/opções usadas na última busca (par de `results`).
     @State private var lastQuery = ""
     @State private var lastOptions: SearchOptions = []
 
     private var options: SearchOptions {
-        SearchOptions(rawValue: (caseSensitive ? SearchOptions.caseSensitive.rawValue : 0)
-                            | (wholeWord ? SearchOptions.wholeWord.rawValue : 0))
+        var opts: SearchOptions = []
+        if caseSensitive { opts.insert(.caseSensitive) }
+        if wholeWord { opts.insert(.wholeWord) }
+        if useRegex { opts.insert(.regex) }
+        return opts
     }
 
     var body: some View {
@@ -312,6 +316,7 @@ struct GlobalSearchView: View {
                     .onSubmit(run)
                 Toggle("Aa", isOn: $caseSensitive).help("Case sensitive")
                 Toggle("Word", isOn: $wholeWord).help("Whole word")
+                Toggle(".*", isOn: $useRegex).help("Regular expression")
                 Button("Search") { run() }
                 Button("Done") { isPresented = false }
             }
@@ -324,7 +329,7 @@ struct GlobalSearchView: View {
                             Button { open(file.url, match: m) } label: {
                                 Text(Self.highlightedSnippet(m.snippet,
                                                             start: m.snippetMatchStart,
-                                                            length: query.utf16.count))
+                                                            length: m.range.count))
                                     .lineLimit(2)
                                     .frame(maxWidth: .infinity, alignment: .leading)
                             }
