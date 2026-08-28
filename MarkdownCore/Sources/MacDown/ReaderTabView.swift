@@ -19,6 +19,8 @@ struct ReaderTabView: View {
     @State private var tocRequest: TocNavigateRequest?
     /// R3.7 sync inversa — seção ativa reportada pelo scroll do WebView.
     @State private var activeHeadingSlug: String?
+    /// R10.1 — navegação até um link quebrado a partir do popover do rodapé.
+    @State private var brokenLinkRequest: BrokenLinkNavigateRequest?
     /// Fase 7 — busca no documento (R5.1), restrita à coluna de conteúdo.
     @State private var showSearch = false
     @FocusState private var searchFieldFocused: Bool
@@ -34,6 +36,8 @@ struct ReaderTabView: View {
         let searchCurrent = search?.current ?? 0
         let searchCount = search?.count ?? 0
         let tocOutline = (tab?.document).map { DocumentOutline($0.document) }
+        // R10.1 — validação única compartilhada entre render (marcação) e footer (badge)
+        let footerInfo = tab.map { FooterInfo(document: $0.document, folderRoot: folderRoot) }
 
         HStack(spacing: 0) {
             // MARK: Coluna central — abas, busca, update, render, estatísticas
@@ -56,7 +60,8 @@ struct ReaderTabView: View {
                     }
                 }
                 if let doc = tab?.document {
-                    let html = buildHTML(doc: doc, statuses: tabDiffStatuses)
+                    let html = buildHTML(doc: doc, statuses: tabDiffStatuses,
+                                         brokenHrefs: Set(footerInfo?.brokenLinks.map(\.href) ?? []))
                     MarkdownWebView(
                         html: html,
                         scrollPosition: tabScrollOffset,
@@ -65,6 +70,7 @@ struct ReaderTabView: View {
                         searchCurrent: searchCurrent,
                         baseURL: doc.url.deletingLastPathComponent(),
                         scrollToHeading: tocRequest,
+                        scrollToBrokenLink: brokenLinkRequest,
                         onActiveHeadingChange: { slug in
                             activeHeadingSlug = slug
                         },
@@ -72,8 +78,12 @@ struct ReaderTabView: View {
                     )
                 }
                 Divider()
-                if let doc = tab?.document {
-                    FooterView(info: FooterInfo(document: doc, folderRoot: folderRoot))
+                if let footerInfo {
+                    FooterView(info: footerInfo) { link in
+                        brokenLinkRequest = BrokenLinkNavigateRequest(
+                            token: (brokenLinkRequest?.token ?? 0) + 1,
+                            href: link.href)
+                    }
                 }
             }
 
@@ -107,8 +117,10 @@ struct ReaderTabView: View {
 
     // MARK: - HTML generation
 
-    private func buildHTML(doc: OpenDocument, statuses: [BlockDiffer.Status]?) -> String {
+    private func buildHTML(doc: OpenDocument, statuses: [BlockDiffer.Status]?,
+                           brokenHrefs: Set<String>) -> String {
         let converter = MarkdownHTMLConverter()
+        converter.brokenHrefs = brokenHrefs
 
         if let statuses = statuses {
             return buildDiffHTML(doc: doc, statuses: statuses, converter: converter)
