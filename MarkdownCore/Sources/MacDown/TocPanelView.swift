@@ -111,7 +111,7 @@ struct TocPanelView: View {
             .frame(width: Self.clamp(width))
             .transaction { $0.animation = nil }
         }
-        .background(Color(nsColor: .windowBackgroundColor))
+        .background(MDTheme.tocBackground)
         .onAppear { growOnlyToFit() }
         .onChange(of: requiredWidth) { _, newRequired in
             growOnlyToFit(target: newRequired)
