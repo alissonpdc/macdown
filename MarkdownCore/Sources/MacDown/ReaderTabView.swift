@@ -35,6 +35,11 @@ struct ReaderTabView: View {
         let searchQuery = isActiveSearch ? (search?.query ?? "") : ""
         let searchCurrent = search?.current ?? 0
         let searchCount = search?.count ?? 0
+        let searchOpts = search?.options ?? []
+        // R5.2 — salto até a ocorrência vinda da busca global (token 0 nunca dispara).
+        let searchNavigate = search.map {
+            SearchNavigateRequest(token: $0.navigationToken, ordinal: $0.current)
+        }
         let tocOutline = (tab?.document).map { DocumentOutline($0.document) }
         // R10.1 — validação única compartilhada entre render (marcação) e footer (badge)
         let footerInfo = tab.map { FooterInfo(document: $0.document, folderRoot: folderRoot) }
@@ -68,9 +73,11 @@ struct ReaderTabView: View {
                         searchQuery: searchQuery,
                         searchMatches: searchCount,
                         searchCurrent: searchCurrent,
+                        searchOptions: searchOpts,
                         baseURL: doc.url.deletingLastPathComponent(),
                         scrollToHeading: tocRequest,
                         scrollToBrokenLink: brokenLinkRequest,
+                        scrollToMatch: searchNavigate,
                         onActiveHeadingChange: { slug in
                             activeHeadingSlug = slug
                         },

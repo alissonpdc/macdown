@@ -294,6 +294,9 @@ struct GlobalSearchView: View {
     @State private var caseSensitive = false
     @State private var wholeWord = false
     @State private var results: [FileSearchResult] = []
+    /// R5.2 — query/opções usadas na última busca (par de `results`).
+    @State private var lastQuery = ""
+    @State private var lastOptions: SearchOptions = []
 
     private var options: SearchOptions {
         SearchOptions(rawValue: (caseSensitive ? SearchOptions.caseSensitive.rawValue : 0)
@@ -318,7 +321,7 @@ struct GlobalSearchView: View {
                 ForEach(results) { file in
                     Section {
                         ForEach(file.matches) { m in
-                            Button { open(file.url) } label: {
+                            Button { open(file.url, match: m) } label: {
                                 Text(Self.highlightedSnippet(m.snippet,
                                                             start: m.snippetMatchStart,
                                                             length: query.utf16.count))
@@ -338,6 +341,8 @@ struct GlobalSearchView: View {
 
     private func run() {
         guard !query.isEmpty else { results = []; return }
+        lastQuery = query
+        lastOptions = options
         let inputs = allURLs.compactMap { url -> (URL, CoreDocument)? in
             guard let doc = try? OpenDocument(url: url) else { return nil }
             return (url, doc.document)
@@ -345,8 +350,11 @@ struct GlobalSearchView: View {
         results = SearchEngine.findInFiles(inputs, query: query, options: options)
     }
 
-    private func open(_ url: URL) {
-        try? store.open(url: url)
+    /// R5.2 — abre o arquivo e salta a render até a ocorrência clicada.
+    private func open(_ url: URL, match: SearchMatch) {
+        try? store.open(url: url, revealingMatch: match,
+                        query: lastQuery.isEmpty ? query : lastQuery,
+                        options: lastOptions)
         isPresented = false
     }
 

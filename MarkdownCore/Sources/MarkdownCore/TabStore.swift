@@ -79,6 +79,9 @@ public struct SearchState: Equatable {
     public var current: Int = 0
     public var isActive: Bool = false
     public var options: SearchOptions = []
+    /// R5.2 — incrementado a cada salto vindo da busca global; força o WebView
+    /// a re-navegar mesmo com query/occorrência iguais.
+    public var navigationToken: Int = 0
     public var count: Int { matches.count }
 
     public init() {}
@@ -281,6 +284,25 @@ extension TabStore {
         guard !tabs[index].search.matches.isEmpty else { return }
         let n = tabs[index].search.matches.count
         tabs[index].search.current = (tabs[index].search.current - 1 + n) % n
+        tabs = tabs
+    }
+
+    /// R5.2 — abre o arquivo (ou foca a aba existente) e salta a render até a
+    /// ocorrência encontrada pela busca global, ativando o destaque do termo.
+    public func open(url: URL, revealingMatch match: SearchMatch,
+                     query: String, options: SearchOptions = []) throws {
+        try open(url: url)
+        guard let tabID = activeTabID,
+              let index = tabs.firstIndex(where: { $0.id == tabID }) else { return }
+        var state = tabs[index].search
+        state.options = options
+        state.query = query
+        state.isActive = true
+        state.matches = SearchEngine.findMatches(in: tabs[index].document.document,
+                                                 query: query, options: options)
+        state.current = min(match.ordinal, max(0, state.matches.count - 1))
+        state.navigationToken += 1
+        tabs[index].search = state
         tabs = tabs
     }
 }
