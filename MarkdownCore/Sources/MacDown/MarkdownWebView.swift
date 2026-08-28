@@ -1,6 +1,12 @@
 import SwiftUI
 import WebKit
 
+/// R10.1 — pedido de rolagem até um link quebrado (token crescente evita re-trigger).
+struct BrokenLinkNavigateRequest: Equatable {
+    let token: Int
+    let href: String
+}
+
 /// Wrapper SwiftUI para WKWebView que renderiza markdown convertido para HTML.
 struct MarkdownWebView: NSViewRepresentable {
     /// Canal de mensagens JS→Swift para a seção ativa (R3.7 sync inversa).
@@ -14,6 +20,8 @@ struct MarkdownWebView: NSViewRepresentable {
     let baseURL: URL?
     /// R3.7 — navegação do TOC: rola até o heading com o slug informado.
     var scrollToHeading: TocNavigateRequest?
+    /// R10.1 — navegação do badge de links quebrados: rola até a 1ª ocorrência.
+    var scrollToBrokenLink: BrokenLinkNavigateRequest?
     /// R3.7 — seção ativa detectada pelo scroll do conteúdo (nil = antes do 1º heading).
     var onActiveHeadingChange: (_ activeSlug: String?) -> Void = { _ in }
     let onOpenLink: (URL) -> Void
@@ -25,6 +33,7 @@ struct MarkdownWebView: NSViewRepresentable {
          searchCurrent: Int = 0,
          baseURL: URL? = nil,
          scrollToHeading: TocNavigateRequest? = nil,
+         scrollToBrokenLink: BrokenLinkNavigateRequest? = nil,
          onActiveHeadingChange: @escaping (_ activeSlug: String?) -> Void = { _ in },
          onOpenLink: @escaping (URL) -> Void = { _ in }) {
         self.html = html
@@ -34,6 +43,7 @@ struct MarkdownWebView: NSViewRepresentable {
         self.searchCurrent = searchCurrent
         self.baseURL = baseURL
         self.scrollToHeading = scrollToHeading
+        self.scrollToBrokenLink = scrollToBrokenLink
         self.onActiveHeadingChange = onActiveHeadingChange
         self.onOpenLink = onOpenLink
     }
@@ -109,6 +119,16 @@ struct MarkdownWebView: NSViewRepresentable {
                 context.coordinator.pendingTOCSlug = request.slug
             } else {
                 scroll(to: request.slug, in: webView)
+            }
+        }
+
+        if let request = scrollToBrokenLink,
+           context.coordinator.lastBrokenLinkToken != request.token {
+            context.coordinator.lastBrokenLinkToken = request.token
+            if webView.isLoading {
+                context.coordinator.pendingBrokenHref = request.href
+            } else {
+                jumpToBrokenLink(href: request.href, in: webView)
             }
         }
 
@@ -198,6 +218,29 @@ struct MarkdownWebView: NSViewRepresentable {
         """)
     }
 
+    /// R10.1 — rola até a 1ª ocorrência do link quebrado (a[data-broken] ou img[data-broken]),
+    /// com flash de destaque para identificação rápida.
+    private func jumpToBrokenLink(href: String, in webView: WKWebView) {
+        let escaped = href.replacingOccurrences(of: "\\", with: "\\\\")
+                          .replacingOccurrences(of: "'", with: "\\'")
+        webView.evaluateJavaScript("""
+        (function(){
+            var href = '\(escaped)';
+            var els = document.querySelectorAll('[data-broken]');
+            for (var i = 0; i < els.length; i++){
+                if (els[i].getAttribute('data-broken') === href){
+                    els[i].scrollIntoView({behavior:'smooth', block:'center'});
+                    els[i].classList.remove('broken-flash');
+                    void els[i].offsetWidth; // reinicia a animação
+                    els[i].classList.add('broken-flash');
+                    setTimeout(function(el){ el.classList.remove('broken-flash'); }.bind(null, els[i]), 1700);
+                    return;
+                }
+            }
+        })();
+        """)
+    }
+
     private func highlightSearch(in webView: WKWebView) {
         guard !searchQuery.isEmpty else {
             webView.evaluateJavaScript("""
@@ -263,6 +306,9 @@ struct MarkdownWebView: NSViewRepresentable {
         var lastSearchQuery: String = ""
         var lastSearchCurrent: Int = 0
         var lastTOCToken: Int = 0
+        var lastBrokenLinkToken: Int = 0
+        /// R10.1 — href aguardando o fim da navegação para executar o salto.
+        var pendingBrokenHref: String?
         /// R3.7 — slug aguardando o fim da navegação para executar o scroll.
         var pendingTOCSlug: String?
         /// R3.7 — tracking do scroll suspenso durante a animação TOC→conteúdo.
@@ -335,6 +381,11 @@ struct MarkdownWebView: NSViewRepresentable {
             if let slug = pendingTOCSlug {
                 pendingTOCSlug = nil
                 parent.scroll(to: slug, in: webView)
+            }
+            // R10.1 — salto para link quebrado que chegou durante o carregamento
+            if let href = pendingBrokenHref {
+                pendingBrokenHref = nil
+                parent.jumpToBrokenLink(href: href, in: webView)
             }
             if !parent.searchQuery.isEmpty {
                 parent.highlightSearch(in: webView)

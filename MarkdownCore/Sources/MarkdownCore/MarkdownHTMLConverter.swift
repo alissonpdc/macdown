@@ -8,6 +8,10 @@ public final class MarkdownHTMLConverter {
 
     private var headingSlugCounts: [String: Int] = [:]
 
+    /// R10.1 — hrefs quebrados (LinkValidator) marcados no HTML com
+    /// class="broken-link" + data-broken, para o badge do rodapé rolar até eles.
+    public var brokenHrefs: Set<String> = []
+
     public func convert(_ document: CoreDocument, frontmatter: Frontmatter? = nil,
                         frontmatterError: String? = nil, baseFileURL: URL? = nil,
                         readingPrefs: ReadingPrefs? = nil) -> String {
@@ -48,7 +52,7 @@ public final class MarkdownHTMLConverter {
             let anchor = "<a class=\"anchor\" href=\"#\(id)\" onclick=\"copyAnchor(event, this)\" title=\"Copiar link para esta seção\" aria-label=\"Copiar link para esta seção\">#</a>"
             return "<\(tag) id=\"\(id)\">\(Self.escapeHTML(h.inlineText))\(anchor)</\(tag)>\n"
         case let p as ParagraphNode:
-            return "<p>\(Self.inlineMarkdown(p.rawMarkdown, baseURL: baseFileURL))</p>\n"
+            return "<p>\(Self.inlineMarkdown(p.rawMarkdown, baseURL: baseFileURL, brokenHrefs: brokenHrefs))</p>\n"
         case let c as CodeBlockNode:
             let lang = c.language ?? ""
             let highlighted = SyntaxHighlighter.highlight(c.code, language: lang)
@@ -65,11 +69,11 @@ public final class MarkdownHTMLConverter {
             let paras = q.paragraphs.map { "<p>\(Self.escapeHTML($0))</p>" }.joined(separator: "\n")
             return "<blockquote>\(paras)</blockquote>\n"
         case let l as ListNode:
-            return Self.convertListHTML(l, baseURL: baseFileURL)
+            return convertListHTML(l, baseURL: baseFileURL)
         case let t as TaskListItemsNode:
-            return Self.convertTaskListHTML(t, baseURL: baseFileURL)
+            return convertTaskListHTML(t, baseURL: baseFileURL)
         case let t as TableNode:
-            return Self.convertTableHTML(t, baseURL: baseFileURL)
+            return convertTableHTML(t, baseURL: baseFileURL)
         case is HorizontalRuleNode:
             return "<hr>\n"
         case let g as GenericBlockNode:
@@ -81,11 +85,11 @@ public final class MarkdownHTMLConverter {
 
     // MARK: - List
 
-    private static func convertListHTML(_ list: ListNode, baseURL: URL?) -> String {
+    private func convertListHTML(_ list: ListNode, baseURL: URL?) -> String {
         let tag = list.isOrdered ? "ol" : (list.isTaskList ? "ul class=\"task-list\"" : "ul")
         var html = "<\(tag)>\n"
         for item in list.items {
-            html += "  <li>\(inlineMarkdown(item.text, baseURL: baseURL))"
+            html += "  <li>\(Self.inlineMarkdown(item.text, baseURL: baseURL, brokenHrefs: brokenHrefs))"
             for child in item.children {
                 html += convertListHTML(child, baseURL: baseURL).trimmingCharacters(in: .newlines)
             }
@@ -95,11 +99,11 @@ public final class MarkdownHTMLConverter {
         return html
     }
 
-    private static func convertTaskListHTML(_ taskList: TaskListItemsNode, baseURL: URL?) -> String {
+    private func convertTaskListHTML(_ taskList: TaskListItemsNode, baseURL: URL?) -> String {
         var html = "<ul class=\"task-list\">\n"
         for item in taskList.items {
             let checked = item.isChecked ? " checked" : ""
-            html += "  <li class=\"task-item\"><input type=\"checkbox\"\(checked) disabled><span class=\"task-text\">\(inlineMarkdown(item.text, baseURL: baseURL))</span></li>\n"
+            html += "  <li class=\"task-item\"><input type=\"checkbox\"\(checked) disabled><span class=\"task-text\">\(Self.inlineMarkdown(item.text, baseURL: baseURL, brokenHrefs: brokenHrefs))</span></li>\n"
         }
         html += "</ul>\n"
         return html
@@ -107,16 +111,16 @@ public final class MarkdownHTMLConverter {
 
     // MARK: - Table
 
-    private static func convertTableHTML(_ table: TableNode, baseURL: URL?) -> String {
+    private func convertTableHTML(_ table: TableNode, baseURL: URL?) -> String {
         var html = "<div class=\"table-wrapper\"><table>\n<thead>\n<tr>\n"
         for cell in table.headerCells {
-            html += "  <th>\(inlineMarkdown(cell, baseURL: baseURL))</th>\n"
+            html += "  <th>\(Self.inlineMarkdown(cell, baseURL: baseURL, brokenHrefs: brokenHrefs))</th>\n"
         }
         html += "</tr>\n</thead>\n<tbody>\n"
         for row in table.rows {
             html += "<tr>\n"
             for cell in row {
-                html += "  <td>\(inlineMarkdown(cell, baseURL: baseURL))</td>\n"
+                html += "  <td>\(Self.inlineMarkdown(cell, baseURL: baseURL, brokenHrefs: brokenHrefs))</td>\n"
             }
             html += "</tr>\n"
         }
@@ -156,7 +160,20 @@ public final class MarkdownHTMLConverter {
 
     // MARK: - Inline markdown to HTML
 
-    static func inlineMarkdown(_ text: String, baseURL: URL? = nil) -> String {
+    /// R10.1 — atributos de marcação de link quebrado (data-broken decodifica
+    /// para o href bruto, casando com LinkValidator.BrokenLink.href).
+    private static func brokenAttr(_ rawHref: String) -> String {
+        " class=\"broken-link\" data-broken=\"\(escapeHTML(rawHref))\""
+    }
+
+    /// Inverso mínimo de escapeHTML (&amp; &lt; &gt;) para comparar hrefs.
+    static func unescapeBasic(_ s: String) -> String {
+        s.replacingOccurrences(of: "&lt;", with: "<")
+            .replacingOccurrences(of: "&gt;", with: ">")
+            .replacingOccurrences(of: "&amp;", with: "&")
+    }
+
+    static func inlineMarkdown(_ text: String, baseURL: URL? = nil, brokenHrefs: Set<String> = []) -> String {
         var result = escapeHTML(text)
 
         // Imagens: ![alt](url) — antes de links, senão o link engole o `!`
@@ -169,7 +186,8 @@ public final class MarkdownHTMLConverter {
                 let alt = ns.substring(with: m.range(at: 1))
                 let href = ns.substring(with: m.range(at: 2)).trimmingCharacters(in: .whitespaces)
                 let src = imageURLSource(href, baseURL: baseURL)
-                let replacement = "<img src=\"\(src)\" alt=\"\(alt)\">"
+                let broken = brokenHrefs.contains(href) ? brokenAttr(href) : ""
+                let replacement = "<img src=\"\(src)\" alt=\"\(alt)\"\(broken)>"
                 result = (result as NSString).replacingCharacters(in: m.range, with: replacement)
             }
         }
@@ -179,8 +197,16 @@ public final class MarkdownHTMLConverter {
         if let linkRegex = try? NSRegularExpression(pattern: linkPattern, options: []) {
             let ns = result as NSString
             let range = NSRange(location: 0, length: ns.length)
-            result = linkRegex.stringByReplacingMatches(in: result, options: [], range: range,
-                withTemplate: "<a href=\"$2\">$1</a>")
+            let matches = linkRegex.matches(in: result, options: [], range: range).reversed()
+            for m in matches {
+                let label = ns.substring(with: m.range(at: 1))
+                let hrefEscaped = ns.substring(with: m.range(at: 2))
+                // href no texto escapado (& vira &amp;): desescapa para casar com o href bruto
+                let raw = Self.unescapeBasic(hrefEscaped).trimmingCharacters(in: .whitespaces)
+                let broken = brokenHrefs.contains(raw) ? brokenAttr(raw) : ""
+                let replacement = "<a href=\"\(hrefEscaped)\"\(broken)>\(label)</a>"
+                result = (result as NSString).replacingCharacters(in: m.range, with: replacement)
+            }
         }
 
         // Inline code: `code`
@@ -317,6 +343,8 @@ public final class MarkdownHTMLConverter {
         --table-border: #d1d9e0;
         --table-header-bg: #f6f8fa;
         --link-color: #0969da;
+        --broken-color: #b45309;
+        --broken-flash-bg: rgba(234, 164, 57, .35);
         --code-keyword: #cf222e;
         --code-string: #0a3069;
         --code-comment: #6e7781;
@@ -338,6 +366,8 @@ public final class MarkdownHTMLConverter {
             --table-border: #30363d;
             --table-header-bg: #161b22;
             --link-color: #58a6ff;
+            --broken-color: #e3b341;
+            --broken-flash-bg: rgba(227, 179, 65, .30);
             --code-keyword: #ff7b72;
             --code-string: #a5d6ff;
             --code-comment: #8b949e;
@@ -381,6 +411,10 @@ public final class MarkdownHTMLConverter {
     p { margin: 0 0 16px; }
     a { color: var(--link-color); text-decoration: none; }
     a:hover { text-decoration: underline; }
+    a.broken-link { color: var(--broken-color); text-decoration: underline wavy; text-underline-offset: 3px; }
+    img.broken-link { outline: 2px dashed var(--broken-color); outline-offset: 2px; border-radius: 2px; opacity: .75; }
+    @keyframes brokenFlash { 0%,60% { background-color: var(--broken-flash-bg); } 100% { background-color: transparent; } }
+    .broken-flash { animation: brokenFlash 1.6s ease; }
     strong { font-weight: 600; }
     del { text-decoration: line-through; color: var(--fg-secondary); }
     code {
