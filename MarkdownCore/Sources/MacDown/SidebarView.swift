@@ -40,7 +40,7 @@ struct SidebarView: View {
             }
         }
         .frame(minWidth: 200)
-        .background(Color(nsColor: .windowBackgroundColor))
+        .background(MDTheme.sidebarBackground)
     }
 
     // MARK: - Visible items (flat list for keyboard navigation)

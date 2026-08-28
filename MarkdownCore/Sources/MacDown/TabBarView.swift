@@ -2,47 +2,50 @@ import SwiftUI
 import MarkdownCore
 
 /// R6.1 — barra de abas estilo VSCode com integração visual ao conteúdo.
+/// O conjunto de abas fica centralizado na coluna central: com uma aba só,
+/// ela fica no meio; com várias, o grupo inteiro se centraliza e vira scroll
+/// horizontal quando excede a largura.
 struct TabBarView: View {
     @ObservedObject var store: TabStore
     var onOpenFile: () -> Void
     var recordVisit: (URL) -> Void
 
     var body: some View {
-        HStack(spacing: 0) {
-            ForEach(store.tabs) { tab in
-                TabItemView(
-                    tab: tab,
-                    isActive: tab.id == store.activeTabID,
-                    updateSummary: tab.hasExternalUpdate ? (tab.diffResult?.summary ?? "Atualizado") : nil,
-                    onSelect: { store.select(tab.id) },
-                    onClose: { store.close(id: tab.id) }
-                )
+        GeometryReader { geo in
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 0) {
+                    ForEach(store.tabs) { tab in
+                        TabItemView(
+                            tab: tab,
+                            isActive: tab.id == store.activeTabID,
+                            updateSummary: tab.hasExternalUpdate ? (tab.diffResult?.summary ?? "Atualizado") : nil,
+                            onSelect: { store.select(tab.id) },
+                            onClose: { store.close(id: tab.id) }
+                        )
+                    }
+                    Button {
+                        onOpenFile()
+                    } label: {
+                        Image(systemName: "plus")
+                            .foregroundStyle(.secondary)
+                            .frame(width: 24, height: 24)
+                            .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+                    .help("Open file")
+                    .accessibilityLabel("New tab")
+                    .padding(.leading, 4)
+                }
+                // minWidth = largura da coluna: conteúdo menor que a viewport
+                // fica CENTRALIZADO; maior, habilita o scroll horizontal.
+                .padding(.horizontal, 8)
+                .frame(minWidth: geo.size.width, alignment: .center)
             }
-            Button {
-                onOpenFile()
-            } label: {
-                Image(systemName: "plus")
-                    .frame(width: 24, height: 24)
-            }
-            .buttonStyle(.plain)
-            .help("Open file")
-            .accessibilityLabel("New tab")
-            .padding(.leading, 4)
         }
-        .padding(.horizontal, 8)
-        .padding(.vertical, 0)
-        .background(Color(nsColor: .controlBackgroundColor))
+        .frame(height: 32)
+        .background(MDTheme.chromeBackground)
     }
 
-}
-
-private extension Color {
-    static let mdBg = Color(nsColor: NSColor(red: 1.0, green: 1.0, blue: 1.0, alpha: 1.0))
-    static let mdBgDark = Color(nsColor: NSColor(red: 0.051, green: 0.067, blue: 0.090, alpha: 1.0))
-
-    static var mdContentBackground: Color {
-        NSApp.effectiveAppearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua ? .mdBgDark : .mdBg
-    }
 }
 
 struct TabItemView: View {
@@ -77,15 +80,22 @@ struct TabItemView: View {
             }
         }
         .font(isActive ? .system(size: 12, weight: .medium) : .system(size: 12))
+        // Sem .opacity no conjunto: no modo claro o texto sumia sobre o fundo.
+        // Cor de texto explícita por estado + fundo sólido por estado.
+        .foregroundStyle(isActive ? Color.primary : Color.secondary)
         .padding(.horizontal, 12)
-        .padding(.vertical, 6)
+        .frame(maxHeight: .infinity)
         .background(
             VStack(spacing: 0) {
-                Color.accentColor.frame(height: isActive ? 2 : 0)
-                isActive ? Color.mdContentBackground : Color.clear
+                Rectangle()
+                    .fill(isActive ? Color.accentColor : .clear)
+                    .frame(height: isActive ? 2 : 0)
+                isActive ? MDTheme.contentBackground
+                    : hovering ? Color.primary.opacity(0.06)
+                    : Color.clear
             }
         )
-        .opacity(isActive ? 1.0 : (hovering ? 0.85 : 0.55))
+        .contentShape(Rectangle())
         .onHover { hovering = $0 }
         .onTapGesture(perform: onSelect)
         .contextMenu {
