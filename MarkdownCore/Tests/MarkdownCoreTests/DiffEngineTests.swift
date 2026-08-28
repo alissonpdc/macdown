@@ -102,7 +102,7 @@ final class DiffEngineTests: XCTestCase {
     func testPlainTextOfBlockKinds() {
         XCTAssertEqual(BlockDiffer.plainText(of: h("Título")), "Título")
         XCTAssertEqual(BlockDiffer.plainText(of: p("texto")), "texto")
-        XCTAssertEqual(BlockDiffer.plainText(of: ListNode(items: ["um", "dois"], isTaskList: false)),
+        XCTAssertEqual(BlockDiffer.plainText(of: ListNode(items: [.init(text: "um"), .init(text: "dois")], isTaskList: false)),
                        "- um\n- dois")
         let task = TaskListItemsNode(items: [.init(isChecked: true, text: "feito"),
                                              .init(isChecked: false, text: "falta")])

@@ -20,13 +20,13 @@ final class BlockModelTests: XCTestCase {
 
     func testOrderedListIsNotTaskList() throws {
         let node = try XCTUnwrap(parser.parse("1. um\n2. dois").blocks.first as? ListNode)
-        XCTAssertEqual(node.items, ["um", "dois"])
+        XCTAssertEqual(node.items.map(\.text), ["um", "dois"])
         XCTAssertFalse(node.isTaskList)
     }
 
     func testPlainBulletList() throws {
         let node = try XCTUnwrap(parser.parse("- a\n- b").blocks.first as? ListNode)
-        XCTAssertEqual(node.items, ["a", "b"])
+        XCTAssertEqual(node.items.map(\.text), ["a", "b"])
         XCTAssertFalse(node.isTaskList)
     }
 

@@ -82,12 +82,16 @@ public final class MarkdownHTMLConverter {
     // MARK: - List
 
     private static func convertListHTML(_ list: ListNode, baseURL: URL?) -> String {
-        let tag = list.isTaskList ? "ul class=\"task-list\"" : "ul"
+        let tag = list.isOrdered ? "ol" : (list.isTaskList ? "ul class=\"task-list\"" : "ul")
         var html = "<\(tag)>\n"
         for item in list.items {
-            html += "  <li>\(inlineMarkdown(item, baseURL: baseURL))</li>\n"
+            html += "  <li>\(inlineMarkdown(item.text, baseURL: baseURL))"
+            for child in item.children {
+                html += convertListHTML(child, baseURL: baseURL).trimmingCharacters(in: .newlines)
+            }
+            html += "</li>\n"
         }
-        html += "</ul>\n"
+        html += "</\(list.isOrdered ? "ol" : "ul")>\n"
         return html
     }
 
@@ -215,13 +219,13 @@ public final class MarkdownHTMLConverter {
                 withTemplate: "<em>$2</em>")
         }
 
-        // Strikethrough: ~~text~~
-        let strikePattern = #"~~(.+?)~~"#
+        // Strikethrough: ~~text~~ ou ~text~ (GFM aceita ambos)
+        let strikePattern = #"(~{1,2})(.+?)\1"#
         if let sRegex = try? NSRegularExpression(pattern: strikePattern, options: []) {
             let ns = result as NSString
             let range = NSRange(location: 0, length: ns.length)
             result = sRegex.stringByReplacingMatches(in: result, options: [], range: range,
-                withTemplate: "<del>$1</del>")
+                withTemplate: "<del>$2</del>")
         }
 
         return result
@@ -367,7 +371,7 @@ public final class MarkdownHTMLConverter {
     h6 { font-size: 0.85em; font-weight: 600; margin: 1em 0 0.43em; color: var(--fg-secondary); }
     .anchor {
         opacity: 0;
-        margin-right: 8px;
+        margin-left: 8px;
         color: var(--link-color);
         text-decoration: none;
         font-weight: 400;
@@ -470,6 +474,7 @@ public final class MarkdownHTMLConverter {
     }
     blockquote p:last-child { margin-bottom: 0; }
     ul, ol { margin: 0 0 16px; padding-left: 2em; }
+    li > ul, li > ol { margin-bottom: 0; }
     li { margin: 0.25em 0; }
     li + li { margin-top: 0.25em; }
     .task-list { list-style: none; padding-left: 0; }
