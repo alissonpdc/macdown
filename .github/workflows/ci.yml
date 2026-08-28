@@ -1,0 +1,37 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - 'feat/**'
+      - 'fix/**'
+      - 'refactor/**'
+      - 'docs/**'
+      - 'test/**'
+      - 'chore/**'
+  pull_request:
+    branches:
+      - main
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: Build (zero warnings) + Testes
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build (falha se houver warnings)
+        run: |
+          set -o pipefail
+          swift build -c release 2>&1 | tee build.log
+          if grep -q "warning:" build.log; then
+            echo "::error::Build gerou warnings — corrija antes de prosseguir"
+            exit 1
+          fi
+
+      - name: Testes
+        run: swift test

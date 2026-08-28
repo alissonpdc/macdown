@@ -1,0 +1,5 @@
+#!/bin/sh
+# CLI do MacDown — `macdown [arquivo.md | pasta]...` abre no app.
+# Reusa a instância em execução (novos itens viram abas) e lança o app se necessário.
+# MACDOWN_APP substitui o caminho do .app (uso em dev/testes).
+exec /usr/bin/open -a "${MACDOWN_APP:-/Applications/MacDown.app}" "$@"

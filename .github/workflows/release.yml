@@ -1,0 +1,105 @@
+name: Release
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-main
+  cancel-in-progress: false
+
+jobs:
+  build-release:
+    name: Build, empacotar e publicar release
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Build (falha se houver warnings)
+        run: |
+          set -o pipefail
+          swift build -c release 2>&1 | tee build.log
+          if grep -q "warning:" build.log; then
+            echo "::error::Build gerou warnings — release abortada"
+            exit 1
+          fi
+
+      - name: Testes
+        run: swift test
+
+      - name: Empacotar MacDown.app
+        run: |
+          make build
+          rm -f build.log
+          ditto -c -k --sequesterRsrc --keepParent MacDown.app MacDown.app.zip
+
+      - name: Definir versão (semver automático pelo histórico de commits)
+        id: version
+        run: |
+          LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0")
+          LAST=${LAST_TAG#v}
+          MAJOR=$(echo "$LAST" | cut -d. -f1)
+          MINOR=$(echo "$LAST" | cut -d. -f2)
+          PATCH=$(echo "$LAST" | cut -d. -f3)
+          if [ "$LAST_TAG" = "v0.0.0" ]; then
+            RANGE="HEAD"
+          else
+            RANGE="$LAST_TAG..HEAD"
+          fi
+          # BREAKING CHANGE (no corpo ou "!:" no subject) → major
+          # feat → minor | demais → patch
+          if git log --pretty=format:"%B %s" "$RANGE" | grep -qiE "BREAKING CHANGE|^(feat|fix|refactor|perf|chore|docs|test|build|ci)(\([^)]*\))?!:"; then
+            NEW_TAG="v$((MAJOR + 1)).0.0"
+          elif git log --pretty=format:"%s" "$RANGE" | grep -qE "^feat(\([^)]*\))?:"; then
+            NEW_TAG="v${MAJOR}.$((MINOR + 1)).0"
+          else
+            NEW_TAG="v${MAJOR}.${MINOR}.$((PATCH + 1))"
+          fi
+          echo "last_tag=$LAST_TAG" >> "$GITHUB_OUTPUT"
+          echo "new_tag=$NEW_TAG" >> "$GITHUB_OUTPUT"
+          echo "Versão: $LAST_TAG -> $NEW_TAG"
+
+      - name: Gerar release notes (conventional commits)
+        id: notes
+        run: |
+          LAST_TAG="${{ steps.version.outputs.last_tag }}"
+          if [ "$LAST_TAG" = "v0.0.0" ]; then
+            RANGE="HEAD"
+          else
+            RANGE="$LAST_TAG..HEAD"
+          fi
+          {
+            echo "notes<<EOF"
+            git log --pretty=format:"%s" "$RANGE" | grep -v "release:" | awk -F': ' '
+              /^feat/ {feat = feat "- " $0 "\n"; next}
+              /^fix/  {fix  = fix  "- " $0 "\n"; next}
+              {other  = other  "- " $0 "\n"}
+              END {
+                if (feat != "") print "### Features\n" feat
+                if (fix  != "") print "### Fixes\n" fix
+                if (other != "") print "### Outros\n" other
+              }'
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Criar tag e publicar release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.version.outputs.new_tag }}
+          name: MacDown ${{ steps.version.outputs.new_tag }}
+          body: ${{ steps.notes.outputs.notes }}
+          files: MacDown.app.zip
+          fail_on_unmatched_files: true
+
+      - name: Upload do artefato na run
+        uses: actions/upload-artifact@v4
+        with:
+          name: MacDown-${{ steps.version.outputs.new_tag }}.app.zip
+          path: MacDown.app.zip
+          retention-days: 30
