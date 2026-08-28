@@ -478,8 +478,8 @@ public final class MarkdownHTMLConverter {
     li { margin: 0.25em 0; }
     li + li { margin-top: 0.25em; }
     .task-list { list-style: none; padding-left: 0; }
-    .task-item { display: flex; align-items: baseline; gap: 8px; }
-    .task-item input[type="checkbox"] { margin: 0; flex-shrink: 0; align-self: center; }
+    .task-item { display: flex; align-items: flex-start; gap: 8px; }
+    .task-item input[type="checkbox"] { margin: 0.4em 0 0; flex-shrink: 0; }
     .task-text { flex: 1; min-width: 0; }
     hr {
         height: 0.25em;
