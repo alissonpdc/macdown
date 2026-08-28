@@ -242,6 +242,9 @@ extension TabStore {
     public func updateSearch(query: String, in tabID: UUID, options: SearchOptions? = nil) {
         guard let index = tabs.firstIndex(where: { $0.id == tabID }) else { return }
         var state = tabs[index].search
+        // No-op quando nada mudou: re-focar o campo (Enter da busca cíclica)
+        // re-dispara o binding e não deve resetar a ocorrência atual.
+        if state.query == query && (options == nil || options == state.options) { return }
         if let options { state.options = options }
         state.query = query
         if query.isEmpty {

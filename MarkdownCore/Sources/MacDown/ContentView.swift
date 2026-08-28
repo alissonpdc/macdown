@@ -258,7 +258,14 @@ struct SearchBarView: View {
             TextField("Search", text: binding)
                 .focused(isFocused)
                 .textFieldStyle(.plain)
-                .onSubmit { if let id = store.activeTabID { store.nextMatch(in: id) } }
+                .onSubmit {
+                    if let id = store.activeTabID { store.nextMatch(in: id) }
+                    // Enter não pode derrubar o foco: o re-render da busca órfã
+                    // ignora os Enter seguintes. Re-afirma o foco no campo para
+                    // permitir a busca cíclica (Chrome-like).
+                    isFocused.wrappedValue = false
+                    DispatchQueue.main.async { isFocused.wrappedValue = true }
+                }
             if let tab, tab.search.isActive {
                 let total = tab.search.count
                 let pos = total == 0 ? 0 : tab.search.current + 1
