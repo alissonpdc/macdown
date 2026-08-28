@@ -437,7 +437,8 @@ public final class MarkdownHTMLConverter {
     .header-actions { display: flex; gap: 8px; }
     .code-block.folded pre {
         max-height: 500px;
-        overflow: hidden;
+        overflow-y: auto;
+        overflow-x: auto;
         position: relative;
     }
     .code-block.folded pre::after {
