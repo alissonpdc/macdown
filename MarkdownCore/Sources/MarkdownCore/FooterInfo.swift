@@ -6,6 +6,8 @@ public struct FooterInfo: Equatable {
     public let wordCount: Int
     public let characterCount: Int
     public let taskSummary: String?
+    /// R10.1 — links internos quebrados (arquivo/âncora inexistente) para o badge do rodapé.
+    public let brokenLinks: [BrokenLink]
 
     public init(document: OpenDocument, folderRoot: URL? = nil) {
         self.breadcrumb = Self.computeBreadcrumb(url: document.url, root: folderRoot)
@@ -13,6 +15,7 @@ public struct FooterInfo: Equatable {
         self.characterCount = document.characterCount
         let summary = TaskSummary(document.document)
         self.taskSummary = summary.total > 0 ? "\(summary.checked)/\(summary.total) tasks" : nil
+        self.brokenLinks = LinkValidator.brokenLinks(in: document)
     }
 
     /// R8.1 — breadcrumb: caminho relativo à pasta raiz, ou apenas o nome do arquivo.

@@ -55,4 +55,20 @@ final class FooterInfoTests: XCTestCase {
         let footer = FooterInfo(document: doc)
         XCTAssertEqual(footer.taskSummary, "2/3 tasks")
     }
+
+    // R10.1 — badge de links quebrados
+
+    func testBrokenLinksEmptyForValidDocument() {
+        let doc = OpenDocument(url: URL(fileURLWithPath: "/tmp/t.md"),
+                               rawText: "# T\n\n[ok](https://example.com) [vai](#t)")
+        let footer = FooterInfo(document: doc)
+        XCTAssertTrue(footer.brokenLinks.isEmpty)
+    }
+
+    func testBrokenLinksReportedForBadAnchor() {
+        let doc = OpenDocument(url: URL(fileURLWithPath: "/tmp/t.md"),
+                               rawText: "# T\n\n[vai](#fantasma)")
+        let footer = FooterInfo(document: doc)
+        XCTAssertEqual(footer.brokenLinks, [BrokenLink(href: "#fantasma", reason: .anchorNotFound)])
+    }
 }
