@@ -48,7 +48,7 @@ public final class MarkdownHTMLConverter {
             let anchor = "<a class=\"anchor\" href=\"#\(id)\" onclick=\"copyAnchor(event, this)\" title=\"Copiar link para esta seção\" aria-label=\"Copiar link para esta seção\">#</a>"
             return "<\(tag) id=\"\(id)\">\(anchor)\(Self.escapeHTML(h.inlineText))</\(tag)>\n"
         case let p as ParagraphNode:
-            return "<p>\(Self.inlineMarkdown(p.rawMarkdown))</p>\n"
+            return "<p>\(Self.inlineMarkdown(p.rawMarkdown, baseURL: baseFileURL))</p>\n"
         case let c as CodeBlockNode:
             let lang = c.language ?? ""
             let highlighted = SyntaxHighlighter.highlight(c.code, language: lang)
@@ -64,11 +64,11 @@ public final class MarkdownHTMLConverter {
         case let q as QuoteNode:
             return "<blockquote><p>\(Self.escapeHTML(q.plainText))</p></blockquote>\n"
         case let l as ListNode:
-            return Self.convertListHTML(l)
+            return Self.convertListHTML(l, baseURL: baseFileURL)
         case let t as TaskListItemsNode:
-            return Self.convertTaskListHTML(t)
+            return Self.convertTaskListHTML(t, baseURL: baseFileURL)
         case let t as TableNode:
-            return Self.convertTableHTML(t)
+            return Self.convertTableHTML(t, baseURL: baseFileURL)
         case is HorizontalRuleNode:
             return "<hr>\n"
         case let g as GenericBlockNode:
@@ -80,21 +80,21 @@ public final class MarkdownHTMLConverter {
 
     // MARK: - List
 
-    private static func convertListHTML(_ list: ListNode) -> String {
+    private static func convertListHTML(_ list: ListNode, baseURL: URL?) -> String {
         let tag = list.isTaskList ? "ul class=\"task-list\"" : "ul"
         var html = "<\(tag)>\n"
         for item in list.items {
-            html += "  <li>\(inlineMarkdown(item))</li>\n"
+            html += "  <li>\(inlineMarkdown(item, baseURL: baseURL))</li>\n"
         }
         html += "</ul>\n"
         return html
     }
 
-    private static func convertTaskListHTML(_ taskList: TaskListItemsNode) -> String {
+    private static func convertTaskListHTML(_ taskList: TaskListItemsNode, baseURL: URL?) -> String {
         var html = "<ul class=\"task-list\">\n"
         for item in taskList.items {
             let checked = item.isChecked ? " checked" : ""
-            html += "  <li class=\"task-item\"><input type=\"checkbox\"\(checked) disabled>\(inlineMarkdown(item.text))</li>\n"
+            html += "  <li class=\"task-item\"><input type=\"checkbox\"\(checked) disabled>\(inlineMarkdown(item.text, baseURL: baseURL))</li>\n"
         }
         html += "</ul>\n"
         return html
@@ -102,21 +102,35 @@ public final class MarkdownHTMLConverter {
 
     // MARK: - Table
 
-    private static func convertTableHTML(_ table: TableNode) -> String {
+    private static func convertTableHTML(_ table: TableNode, baseURL: URL?) -> String {
         var html = "<div class=\"table-wrapper\"><table>\n<thead>\n<tr>\n"
         for cell in table.headerCells {
-            html += "  <th>\(inlineMarkdown(cell))</th>\n"
+            html += "  <th>\(inlineMarkdown(cell, baseURL: baseURL))</th>\n"
         }
         html += "</tr>\n</thead>\n<tbody>\n"
         for row in table.rows {
             html += "<tr>\n"
             for cell in row {
-                html += "  <td>\(inlineMarkdown(cell))</td>\n"
+                html += "  <td>\(inlineMarkdown(cell, baseURL: baseURL))</td>\n"
             }
             html += "</tr>\n"
         }
         html += "</tbody>\n</table></div>\n"
         return html
+    }
+
+    // MARK: - Image src (R3.12)
+
+    /// Resolve caminho de imagem: mantém URLs com scheme (http/data/file);
+    /// resolve caminhos relativos contra a pasta do documento quando base presente.
+    static func imageURLSource(_ href: String, baseURL: URL?) -> String {
+        if let url = URL(string: href), url.scheme != nil {
+            return href
+        }
+        guard let base = baseURL else { return href }
+        return URL(fileURLWithPath: href, relativeTo: base.deletingLastPathComponent())
+            .standardizedFileURL
+            .absoluteString
     }
 
     // MARK: - Frontmatter
@@ -137,8 +151,23 @@ public final class MarkdownHTMLConverter {
 
     // MARK: - Inline markdown to HTML
 
-    static func inlineMarkdown(_ text: String) -> String {
+    static func inlineMarkdown(_ text: String, baseURL: URL? = nil) -> String {
         var result = escapeHTML(text)
+
+        // Imagens: ![alt](url) — antes de links, senão o link engole o `!`
+        let imagePattern = #"!\[([^\]]*)\]\(([^)]+)\)"#
+        if let imageRegex = try? NSRegularExpression(pattern: imagePattern, options: []) {
+            let ns = result as NSString
+            let range = NSRange(location: 0, length: ns.length)
+            let matches = imageRegex.matches(in: result, options: [], range: range).reversed()
+            for m in matches {
+                let alt = ns.substring(with: m.range(at: 1))
+                let href = ns.substring(with: m.range(at: 2)).trimmingCharacters(in: .whitespaces)
+                let src = imageURLSource(href, baseURL: baseURL)
+                let replacement = "<img src=\"\(src)\" alt=\"\(alt)\">"
+                result = (result as NSString).replacingCharacters(in: m.range, with: replacement)
+            }
+        }
 
         // Links: [text](url)
         let linkPattern = #"\[([^\]]+)\]\(([^)]+)\)"#
@@ -431,6 +460,7 @@ public final class MarkdownHTMLConverter {
     .op { color: var(--code-operator); }
     .fn { color: var(--code-function); }
     .ty { color: var(--code-type); }
+    img { max-width: 100%; height: auto; border-radius: 6px; margin: 0 0 16px; }
     blockquote {
         margin: 0 0 16px;
         padding: 0 1em;
