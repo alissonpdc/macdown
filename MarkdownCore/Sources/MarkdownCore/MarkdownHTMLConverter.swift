@@ -51,7 +51,7 @@ public final class MarkdownHTMLConverter {
             return "<p>\(Self.inlineMarkdown(p.rawMarkdown))</p>\n"
         case let c as CodeBlockNode:
             let lang = c.language ?? ""
-            let highlighted = Self.syntaxHighlight(Self.escapeHTML(c.code), language: lang)
+            let highlighted = SyntaxHighlighter.highlight(c.code, language: lang)
             let lines = Self.lineCount(of: c.code)
             if lines > Self.foldLineThreshold {
                 return """
@@ -197,81 +197,7 @@ public final class MarkdownHTMLConverter {
         return result
     }
 
-    // MARK: - Syntax highlighting (basic)
-
-    private static func syntaxHighlight(_ code: String, language: String) -> String {
-        guard !language.isEmpty else { return code }
-        let keywords: [String: [String]] = [
-            "swift": ["func", "let", "var", "if", "else", "return", "class", "struct", "enum", "protocol",
-                       "import", "public", "private", "static", "override", "init", "self", "true", "false",
-                       "for", "while", "switch", "case", "break", "continue", "nil", "guard", "defer",
-                       "try", "catch", "throws", "async", "await", "some", "any"],
-            "python": ["def", "class", "if", "else", "elif", "return", "import", "from", "as", "with",
-                        "try", "except", "finally", "for", "while", "True", "False", "None", "and", "or",
-                        "not", "in", "is", "lambda", "yield", "pass", "break", "continue", "raise"],
-            "javascript": ["function", "const", "let", "var", "if", "else", "return", "class", "extends",
-                            "import", "export", "from", "default", "new", "this", "true", "false", "null",
-                            "for", "while", "switch", "case", "break", "continue", "try", "catch", "async",
-                            "await", "yield", "typeof", "instanceof"],
-            "bash": ["if", "then", "else", "fi", "for", "do", "done", "while", "case", "esac",
-                      "function", "return", "exit", "echo", "export", "source", "local", "readonly",
-                      "declare", "set", "unset", "shift", "exec", "eval"],
-            "sh": ["if", "then", "else", "fi", "for", "do", "done", "while", "case", "esac",
-                    "function", "return", "exit", "echo", "export", "source", "local", "readonly"],
-            "zsh": ["if", "then", "else", "fi", "for", "do", "done", "while", "case", "esac",
-                     "function", "return", "exit", "echo", "export", "source", "local", "readonly"],
-            "html": ["html", "head", "body", "div", "span", "p", "a", "h1", "h2", "h3", "h4", "h5", "h6",
-                      "ul", "ol", "li", "table", "tr", "td", "th", "pre", "code", "img", "link", "script",
-                      "style", "meta", "title"],
-            "css": ["color", "background", "margin", "padding", "border", "font", "display", "position",
-                     "width", "height", "top", "left", "right", "bottom", "flex", "grid"],
-            "rust": ["fn", "let", "mut", "if", "else", "return", "struct", "enum", "impl", "trait",
-                      "pub", "use", "mod", "self", "true", "false", "for", "while", "loop", "match",
-                      "break", "continue", "move", "ref", "async", "await", "where", "type"],
-            "go": ["func", "var", "const", "if", "else", "return", "struct", "interface", "package",
-                    "import", "type", "map", "chan", "go", "select", "case", "default", "for", "range",
-                    "break", "continue", "defer", "true", "false", "nil"],
-            "json": [],
-            "yaml": [],
-        ]
-
-        let langKeywords = keywords[language.lowercased()] ?? []
-        guard !langKeywords.isEmpty else { return code }
-
-        var result = code
-        let pattern = "\\b(\(langKeywords.joined(separator: "|")))\\b"
-        guard let regex = try? NSRegularExpression(pattern: pattern, options: []) else { return result }
-        let ns = result as NSString
-        let range = NSRange(location: 0, length: ns.length)
-        result = regex.stringByReplacingMatches(in: result, options: [], range: range,
-                                                withTemplate: "<span class=\"kw\">$1</span>")
-
-        let commentPattern: String
-        switch language.lowercased() {
-        case "swift", "rust", "go", "javascript":
-            commentPattern = "(//[^\\n]*)"
-        case "python", "yaml", "bash", "sh", "zsh":
-            commentPattern = "(#[^\\n]*)"
-        default:
-            commentPattern = ""
-        }
-        if !commentPattern.isEmpty, let commentRegex = try? NSRegularExpression(pattern: commentPattern, options: []) {
-            let ns2 = result as NSString
-            let range2 = NSRange(location: 0, length: ns2.length)
-            result = commentRegex.stringByReplacingMatches(in: result, options: [], range: range2,
-                                                           withTemplate: "<span class=\"cm\">$1</span>")
-        }
-
-        let stringPattern = "(\"[^\"]*\")"
-        if let stringRegex = try? NSRegularExpression(pattern: stringPattern, options: []) {
-            let ns3 = result as NSString
-            let range3 = NSRange(location: 0, length: ns3.length)
-            result = stringRegex.stringByReplacingMatches(in: result, options: [], range: range3,
-                                                          withTemplate: "<span class=\"st\">$1</span>")
-        }
-
-        return result
-    }
+    // MARK: - Syntax highlighting (delegado ao SyntaxHighlighter — R3.2)
 
     // MARK: - Code fold (R3.10)
 
@@ -360,6 +286,10 @@ public final class MarkdownHTMLConverter {
         --code-keyword: #cf222e;
         --code-string: #0a3069;
         --code-comment: #6e7781;
+        --code-number: #0550ae;
+        --code-operator: #0550ae;
+        --code-function: #8250df;
+        --code-type: #953800;
         --reading-font-size: \(fontSize)px;
         --reading-width: \(widthCh)ch;
     }
@@ -377,6 +307,10 @@ public final class MarkdownHTMLConverter {
             --code-keyword: #ff7b72;
             --code-string: #a5d6ff;
             --code-comment: #8b949e;
+            --code-number: #79c0ff;
+            --code-operator: #79c0ff;
+            --code-function: #d2a8ff;
+            --code-type: #ffa657;
         }
     }
     * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -493,6 +427,10 @@ public final class MarkdownHTMLConverter {
     .kw { color: var(--code-keyword); }
     .st { color: var(--code-string); }
     .cm { color: var(--code-comment); font-style: italic; }
+    .num { color: var(--code-number); }
+    .op { color: var(--code-operator); }
+    .fn { color: var(--code-function); }
+    .ty { color: var(--code-type); }
     blockquote {
         margin: 0 0 16px;
         padding: 0 1em;

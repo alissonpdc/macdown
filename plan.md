@@ -70,7 +70,7 @@
 - [x] Cmd+Shift+F global na pasta, resultados por arquivo (R5.2)
 
 ### Fase 8 — Polish incremental
-- [ ] Syntax highlighting completo (R3.2) — **parcial**: `syntaxHighlight()` em MarkdownHTMLConverter cobre keywords/comentários/strings para ~10 linguagens. Falta: números, operadores, tokenização completa, muitas linguagens.
+- [x] Syntax highlighting completo (R3.2) — `SyntaxHighlighter`: lexer de uma passada ancorado (regra → token), nunca destaca dentro de strings/comentários; classes kw/st/cm/num/op/fn/ty; ~20 linguagens (swift, c/cpp/objc, java, kotlin, c#, js/ts, rust, go, php, python, ruby, bash/sh/zsh, sql, json, yaml, toml, html/xml/svg, css, diff) + aliases (js, ts, py, rb, golang, c++…); escape correto (& < >)
 - [ ] Copiar Comando shell: limpar prompts/comentários/continuações (R3.2) — **não implementado**: botão "Copiar" copia código bruto. Sem opção "Copiar Comando".
 - [x] Fold de código >30 linhas (R3.10) — blocos com >30 linhas rendem colapsados (`.code-block.folded`, max-height 500px + fade), botões com ícones SVG no code-header via `toggleFold()`; contraído permanece rolável vertical/horizontal (R3.10); threshold 30 em `MarkdownHTMLConverter.foldLineThreshold`
 - [x] Outline/TOC bidirecional (R3.7) — TocPanelView lateral direito (Cmd+Shift+T, coluna redimensionável grow-only) + navegação por clique via âncoras + destaque da seção ativa ao rolar (scroll listener JS → WKScriptMessageHandler)
