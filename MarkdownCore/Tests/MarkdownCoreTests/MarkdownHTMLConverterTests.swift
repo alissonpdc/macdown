@@ -10,8 +10,10 @@ final class MarkdownHTMLConverterTests: XCTestCase {
             HeadingNode(level: 2, inlineText: "Subtitle"),
         ])
         let html = converter.convert(doc)
-        XCTAssertTrue(html.contains("<h1 id=\"title\">Title</h1>"))
-        XCTAssertTrue(html.contains("<h2 id=\"subtitle\">Subtitle</h2>"))
+        XCTAssertTrue(html.contains("<h1 id=\"title\"><a class=\"anchor\" href=\"#title\""))
+        XCTAssertTrue(html.contains(">Title</h1>"))
+        XCTAssertTrue(html.contains("<h2 id=\"subtitle\"><a class=\"anchor\" href=\"#subtitle\""))
+        XCTAssertTrue(html.contains(">Subtitle</h2>"))
     }
 
     func testParagraphWithInlineFormatting() {

@@ -12,6 +12,10 @@ public final class MarkdownHTMLConverter {
                         frontmatterError: String? = nil, baseFileURL: URL? = nil,
                         readingPrefs: ReadingPrefs? = nil) -> String {
         var html = Self.htmlHeader(readingPrefs: readingPrefs)
+        if let base = baseFileURL {
+            let escaped = Self.escapeHTML(base.absoluteString)
+            html += "<script>var BASE_URL = \"\(escaped)\";</script>\n"
+        }
         if let fm = frontmatter, !fm.isEmpty {
             html += Self.frontmatterCardHTML(fm)
         } else if let err = frontmatterError {
@@ -41,7 +45,8 @@ public final class MarkdownHTMLConverter {
         case let h as HeadingNode:
             let tag = "h\(min(h.level, 6))"
             let id = uniqueSlug(Self.slugify(h.inlineText))
-            return "<\(tag) id=\"\(id)\">\(Self.escapeHTML(h.inlineText))</\(tag)>\n"
+            let anchor = "<a class=\"anchor\" href=\"#\(id)\" onclick=\"copyAnchor(event, this)\" title=\"Copiar link para esta seção\" aria-label=\"Copiar link para esta seção\">#</a>"
+            return "<\(tag) id=\"\(id)\">\(anchor)\(Self.escapeHTML(h.inlineText))</\(tag)>\n"
         case let p as ParagraphNode:
             return "<p>\(Self.inlineMarkdown(p.rawMarkdown))</p>\n"
         case let c as CodeBlockNode:
@@ -396,6 +401,15 @@ public final class MarkdownHTMLConverter {
     h4 { font-size: 1em; font-weight: 600; margin: 1em 0 0.43em; }
     h5 { font-size: 0.875em; font-weight: 600; margin: 1em 0 0.43em; }
     h6 { font-size: 0.85em; font-weight: 600; margin: 1em 0 0.43em; color: var(--fg-secondary); }
+    .anchor {
+        opacity: 0;
+        margin-right: 8px;
+        color: var(--link-color);
+        text-decoration: none;
+        font-weight: 400;
+        user-select: none;
+    }
+    :is(h1,h2,h3,h4,h5,h6):hover .anchor, .anchor:focus { opacity: 1; }
     p { margin: 0 0 16px; }
     a { color: var(--link-color); text-decoration: none; }
     a:hover { text-decoration: underline; }
@@ -572,6 +586,14 @@ public final class MarkdownHTMLConverter {
             btn.innerHTML = COPY_ICON;
             btn.setAttribute('aria-label', 'Copiar');
         }, 1500);
+    }
+    function copyAnchor(event, el) {
+        var id = el.parentNode.id;
+        var url = (typeof BASE_URL !== 'undefined' && BASE_URL) ? BASE_URL + '#' + id : '#' + id;
+        navigator.clipboard.writeText(url);
+        var original = el.textContent;
+        el.textContent = '✓';
+        setTimeout(function() { el.textContent = original; }, 1200);
     }
     function toggleFold(btn) {
         var block = btn.closest('.code-block');
