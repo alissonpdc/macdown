@@ -46,7 +46,7 @@ public final class MarkdownHTMLConverter {
             let tag = "h\(min(h.level, 6))"
             let id = uniqueSlug(Self.slugify(h.inlineText))
             let anchor = "<a class=\"anchor\" href=\"#\(id)\" onclick=\"copyAnchor(event, this)\" title=\"Copiar link para esta seção\" aria-label=\"Copiar link para esta seção\">#</a>"
-            return "<\(tag) id=\"\(id)\">\(anchor)\(Self.escapeHTML(h.inlineText))</\(tag)>\n"
+            return "<\(tag) id=\"\(id)\">\(Self.escapeHTML(h.inlineText))\(anchor)</\(tag)>\n"
         case let p as ParagraphNode:
             return "<p>\(Self.inlineMarkdown(p.rawMarkdown, baseURL: baseFileURL))</p>\n"
         case let c as CodeBlockNode:
@@ -62,7 +62,8 @@ public final class MarkdownHTMLConverter {
             <div class="code-block"><div class="code-header"><span class="lang">\(Self.escapeHTML(lang))</span><button class="copy-btn" onclick="copyCode(this)" title="Copiar" aria-label="Copiar">\(Self.copyIcon)</button></div><pre><code class="language-\(lang)">\(highlighted)</code></pre></div>\n
             """
         case let q as QuoteNode:
-            return "<blockquote><p>\(Self.escapeHTML(q.plainText))</p></blockquote>\n"
+            let paras = q.paragraphs.map { "<p>\(Self.escapeHTML($0))</p>" }.joined(separator: "\n")
+            return "<blockquote>\(paras)</blockquote>\n"
         case let l as ListNode:
             return Self.convertListHTML(l, baseURL: baseFileURL)
         case let t as TaskListItemsNode:

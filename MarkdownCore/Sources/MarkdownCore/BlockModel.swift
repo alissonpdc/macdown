@@ -33,10 +33,20 @@ public struct ListNode: BlockNode, Equatable {
 }
 
 public struct QuoteNode: BlockNode, Equatable {
-    public let plainText: String
+    /// Cada bloco da citação vira um parágrafo (renderização multiline).
+    public let paragraphs: [String]
+
+    public init(paragraphs: [String]) {
+        self.paragraphs = paragraphs
+    }
+
+    /// Compat com Search/Diff: todos os parágrafos juntos.
+    public var plainText: String {
+        paragraphs.joined(separator: " ")
+    }
 
     public init(plainText: String) {
-        self.plainText = plainText
+        self.init(paragraphs: plainText.components(separatedBy: "\n"))
     }
 }
 

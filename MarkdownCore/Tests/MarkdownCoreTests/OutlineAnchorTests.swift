@@ -46,12 +46,12 @@ final class OutlineAnchorTests: XCTestCase {
         }
     }
 
-    // R3.8 — ícone hover `#` para copiar link da seção
+    // R3.8 — ícone hover `#` para copiar link da seção (renderizado no FIM do heading)
     func testHeadingContainsHoverAnchorLink() {
         let doc = parser.parse("# Intro\n\ntexto")
         let html = MarkdownHTMLConverter().convert(doc)
-        XCTAssertTrue(html.contains(##"<h1 id="intro"><a class="anchor" href="#intro""##),
-                      "Heading should contain hover anchor link to its own slug")
+        XCTAssertTrue(html.contains(##"<h1 id="intro">Intro<a class="anchor" href="#intro""##),
+                      "Heading should contain hover anchor link to its own slug, at the end")
         XCTAssertTrue(html.contains("copyAnchor"),
                       "Anchor click should trigger copy of the section link")
     }
@@ -60,8 +60,8 @@ final class OutlineAnchorTests: XCTestCase {
         let markdown = "# Intro\n\na\n\n## Instalação\n\nb"
         let doc = parser.parse(markdown)
         let html = MarkdownHTMLConverter().convert(doc)
-        XCTAssertTrue(html.contains(##"<h1 id="intro"><a class="anchor" href="#intro""##))
-        XCTAssertTrue(html.contains(##"<h2 id="instalação"><a class="anchor" href="#instalação""##))
+        XCTAssertTrue(html.contains(##"<h1 id="intro">Intro<a class="anchor" href="#intro""##))
+        XCTAssertTrue(html.contains(##"<h2 id="instalação">Instalação<a class="anchor" href="#instalação""##))
     }
 
     func testAnchorCopyUsesBaseFileURLWhenProvided() {

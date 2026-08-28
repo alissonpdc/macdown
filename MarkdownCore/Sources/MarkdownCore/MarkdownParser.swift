@@ -24,7 +24,8 @@ public struct MarkdownParser {
             return CodeBlockNode(language: code.language, code: code.code)
         }
         if let quote = node as? BlockQuote {
-            return QuoteNode(plainText: quote.children.compactMap { $0 as? (any PlainTextConvertibleMarkup) }.map(\.plainText).joined(separator: " "))
+            let paragraphs = quote.children.compactMap { $0 as? (any PlainTextConvertibleMarkup) }.map(\.plainText)
+            return QuoteNode(paragraphs: paragraphs)
         }
         if let list = node as? Markdown.UnorderedList {
             return listNode(from: list.children)

@@ -44,7 +44,6 @@ struct MarkdownWebView: NSViewRepresentable {
 
     func makeNSView(context: Context) -> WKWebView {
         let config = WKWebViewConfiguration()
-        config.preferences.setValue(true, forKey: "allowFileAccessFromFileURLs")
         config.userContentController.add(context.coordinator, name: Self.tocMessageName)
         let webView = WKWebView(frame: .zero, configuration: config)
         webView.navigationDelegate = context.coordinator
@@ -52,20 +51,40 @@ struct MarkdownWebView: NSViewRepresentable {
         webView.allowsBackForwardNavigationGestures = false
 
         let fullHTML = themedHTML(html)
-        webView.loadHTMLString(fullHTML, baseURL: baseURL)
+        load(fullHTML, in: webView, coordinator: context.coordinator)
 
         return webView
     }
 
+    /// R3.12 — imagens locais: `loadHTMLString` bloqueia subrecursos `file://`.
+    /// Escreve o HTML em arquivo temporário e carrega com `loadFileURL`,
+    /// concedendo acesso de leitura à pasta do documento.
+    private func load(_ fullHTML: String, in webView: WKWebView, coordinator: Coordinator) {
+        let dir = FileManager.default.temporaryDirectory
+            .appendingPathComponent("MacDownRender", isDirectory: true)
+        try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        let fileURL = dir.appendingPathComponent("render-\(UUID().uuidString).html")
+        try? fullHTML.write(to: fileURL, atomically: true, encoding: .utf8)
+        if let previous = coordinator.currentRenderFile {
+            try? FileManager.default.removeItem(at: previous)
+        }
+        coordinator.currentRenderFile = fileURL
+        let accessRoot = baseURL?.standardizedFileURL ?? URL(fileURLWithPath: "/")
+        webView.loadFileURL(fileURL, allowingReadAccessTo: accessRoot)
+    }
+
     static func dismantleNSView(_ webView: WKWebView, coordinator: Coordinator) {
         webView.configuration.userContentController.removeAllScriptMessageHandlers()
+        if let file = coordinator.currentRenderFile {
+            try? FileManager.default.removeItem(at: file)
+        }
     }
 
     func updateNSView(_ webView: WKWebView, context: Context) {
         if context.coordinator.lastHTML != html {
             context.coordinator.lastHTML = html
             let fullHTML = themedHTML(html)
-            webView.loadHTMLString(fullHTML, baseURL: baseURL)
+            load(fullHTML, in: webView, coordinator: context.coordinator)
             return
         }
 
@@ -246,6 +265,8 @@ struct MarkdownWebView: NSViewRepresentable {
         /// R3.7 — tracking do scroll suspenso durante a animação TOC→conteúdo.
         private(set) var suppressTOCFeedback = false
         private var lastSuppressedActiveSlug: String?
+        /// R3.12 — arquivo HTML temporário em uso, removido na próxima recarga.
+        var currentRenderFile: URL?
 
         init(_ parent: MarkdownWebView) {
             self.parent = parent
@@ -282,8 +303,11 @@ struct MarkdownWebView: NSViewRepresentable {
         func webView(_ webView: WKWebView, decidePolicyFor navigationAction: WKNavigationAction,
                      decisionHandler: @escaping (WKNavigationActionPolicy) -> Void) {
             if navigationAction.navigationType == .linkActivated, let url = navigationAction.request.url {
-                // Anchor links (#section) — WebKit handles in-page scroll
-                if url.fragment != nil && url.host == nil && url.scheme == nil {
+                // Anchor links (#section) — WebKit handles in-page scroll.
+                // R3.12: com loadFileURL a âncora in-page carrega scheme file +
+                // mesmo path do render temporário; link para outro arquivo tem
+                // path diferente e cai no onOpenLink abaixo.
+                if url.fragment != nil, url.path == webView.url?.path {
                     decisionHandler(.allow)
                     return
                 }
