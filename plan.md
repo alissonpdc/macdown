@@ -29,6 +29,7 @@
 - [x] App target MacDown (SwiftUI) — MacDownApp.swift, ContentView.swift, SidebarView, TabBarView, ReaderTabView
 - [x] Suite rodando verde (`swift test`)
 - [x] Gate de teste documentado neste arquivo
+- [x] CI GitHub Actions — `ci.yml` (build release falha com warning + `swift test` em branches/PRs) e `release.yml` (push main: build/test, `make app`, release automática com versionamento semver baseado em conventional commits + release notes)
 
 ### Fase 1 — MarkdownCore (parse)
 - [x] Parser swift-markdown (cmark-gfm) integrado ao Core
@@ -57,7 +58,7 @@
 - [x] Scanner de pasta recursivo, filtro família md (R2.4) — FolderScanner
 - [x] Sidebar árvore colapsável, arquivo ativo destacado (R2.1–R2.3) — SidebarView
 - [x] Links internos relativos → nova aba (R3.5, R6.2) — ContentView onOpenLink
-- [x] Histórico por aba Cmd+←/→ (R6.3) — History + Navigate menu
+- [x] Histórico por aba (R6.3) — History + Navigate menu (Cmd+[/Cmd+])
 
 ### Fase 6 — FileWatcher + Diff
 - [x] Watch arquivo aberto e árvore (FSEvents/DispatchSource) (R4.1, R4.3)
@@ -77,7 +78,7 @@
 - [x] Âncoras com hover `#` (R3.8) — headings rendem `<a class="anchor" href="#slug">` visível no hover (`.anchor { opacity: 0 }` + `:hover`), clique executa `copyAnchor()` que copia `BASE_URL#slug` (BASE_URL injetado quando `baseFileURL` presente, senão `#slug`) com feedback `✓`
 - [x] Tabelas largas rolam horizontal (R3.9) — **implementado**: CSS `.table-wrapper { overflow-x: auto; }` + `table { display: block; width: max-content; }`
 - [x] Footer: breadcrumb + palavras/caracteres + tasks (R8.1, R3.13) — FooterInfo + FooterView
-- [ ] Validação: links quebrados, mermaid erro (R10.1) — **não implementado**
+- [ ] Validação: links quebrados, mermaid erro (R10.1) — **parcial**: `LinkValidator` valida links internos do corpo (frontmatter ignorado) — arquivo inexistente → `fileNotFound`, âncora `#slug` pura ou em `.md` alvo → `anchorNotFound` (slugs via `DocumentOutline`, dedupe de repetidos); externos/`mailto`/âncoras em não-md ignorados; suporta `%20` e `../`. Badge discreto laranja no footer (`FooterInfo.brokenLinks` + `FooterView`, hover lista hrefs, 2 testes em FooterInfoTests + 14 em LinkValidatorTests). Mermaid erro pendente até R3.3.
 - [ ] Mermaid inline (R3.3) — **não implementado**: sem integração mermaid.js
 - [x] Imagens locais relativas (R3.12) — `inlineMarkdown` converte `![alt](url)` para `<img>` (antes do regex de links); `imageURLSource` mantém URLs com scheme e resolve caminhos relativos contra a pasta do documento (`baseFileURL`, com `../` e %20); sem base mantém caminho relativo; CSS `img { max-width: 100% }`
 - [x] Largura de leitura ajustável persistida (R3.11) — ReadingPrefs + menu "Reading Width" (Cmd+Opt+/-)
@@ -87,6 +88,6 @@
 - [ ] Renderização progressiva >500KB (R15.1) — **não implementado**
 - [ ] Deep link macdown:// (R11.2) — **não implementado**
 - [ ] CLI macdown (R12.1) — **parcial**: `LaunchArgs` existe mas sem binário/symlink instalável
-- [ ] Menu nativo + atalhos completos (R7.1) — **parcial**: menu básico (Open, Close Tab, Find, Appearance) sem atalhos completos
+- [x] Menu nativo + atalhos completos (R7.1) — File (⌘O, ⇧⌘O, ⌘W), Tabs (⌘←/→, Ctrl+Tab via TabShortcutMonitor), Navigate (⌘[/⌘], ⌘D), View (⇧⌘T TOC, ⌥⌘± width, ⌘±/⌘0 zoom), Find (⌘F, ⌘G/⇧⌘G, ⇧⌘F); ⌘Q nativo
 - [ ] Acessibilidade: teclado sidebar/abas/TOC, VoiceOver, contraste 3 temas (R16.1) — **parcial**: 5 accessibilityLabels em Sidebar/TabBar, sem navegação completa por teclado ou VoiceOver
 - [ ] Default handler onboarding (R1.2) — **não implementado**
