@@ -2,16 +2,12 @@ import SwiftUI
 import MarkdownCore
 
 /// R6.1 — barra de abas estilo VSCode com integração visual ao conteúdo.
-/// O conjunto de abas fica centralizado na coluna central: com uma aba só,
+/// Vive na coluna central (ao lado do TOC em altura total): com uma aba só,
 /// ela fica no meio; com várias, o grupo inteiro se centraliza e vira scroll
-/// horizontal quando excede a largura.
+/// horizontal quando excede a largura da coluna.
 struct TabBarView: View {
     @ObservedObject var store: TabStore
-    /// Largura atual da coluna TOC (0 = TOC oculto): as abas se centralizam
-    /// sobre a coluna de render (largura total − TOC), não sobre o detalhe inteiro.
-    @ObservedObject var tocWidth: TOCWidthStore
     var onOpenFile: () -> Void
-    var recordVisit: (URL) -> Void
 
     var body: some View {
         GeometryReader { geo in
@@ -39,11 +35,10 @@ struct TabBarView: View {
                     .accessibilityLabel("New tab")
                     .padding(.leading, 4)
                 }
-                // minWidth = largura da coluna de RENDER (exclui o TOC): conteúdo
-                // menor que a viewport fica CENTRALIZADO sobre ela; maior, habilita
-                // o scroll horizontal.
+                // minWidth = largura da coluna central: conteúdo menor que a
+                // viewport fica CENTRALIZADO; maior, habilita o scroll horizontal.
                 .padding(.horizontal, 8)
-                .frame(minWidth: max(0, geo.size.width - tocWidth.width), alignment: .center)
+                .frame(minWidth: geo.size.width, alignment: .center)
             }
         }
         .frame(height: 32)
