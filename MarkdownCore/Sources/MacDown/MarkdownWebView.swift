@@ -1,10 +1,18 @@
 import SwiftUI
 import WebKit
+import MarkdownCore
 
 /// R10.1 — pedido de rolagem até um link quebrado (token crescente evita re-trigger).
 struct BrokenLinkNavigateRequest: Equatable {
     let token: Int
     let href: String
+}
+
+/// Fase 7 (R5.2) — pedido de salto até uma ocorrência da busca (vinda da busca global).
+/// O token crescente garante re-navegação mesmo com a mesma ocorrência atual.
+struct SearchNavigateRequest: Equatable {
+    let token: Int
+    let ordinal: Int
 }
 
 /// Wrapper SwiftUI para WKWebView que renderiza markdown convertido para HTML.
@@ -17,11 +25,14 @@ struct MarkdownWebView: NSViewRepresentable {
     let searchQuery: String
     let searchMatches: Int
     let searchCurrent: Int
+    let searchOptions: SearchOptions
     let baseURL: URL?
     /// R3.7 — navegação do TOC: rola até o heading com o slug informado.
     var scrollToHeading: TocNavigateRequest?
     /// R10.1 — navegação do badge de links quebrados: rola até a 1ª ocorrência.
     var scrollToBrokenLink: BrokenLinkNavigateRequest?
+    /// Fase 7 (R5.2) — salto até a ocorrência vinda da busca global.
+    var scrollToMatch: SearchNavigateRequest?
     /// R3.7 — seção ativa detectada pelo scroll do conteúdo (nil = antes do 1º heading).
     var onActiveHeadingChange: (_ activeSlug: String?) -> Void = { _ in }
     let onOpenLink: (URL) -> Void
@@ -31,9 +42,11 @@ struct MarkdownWebView: NSViewRepresentable {
          searchQuery: String = "",
          searchMatches: Int = 0,
          searchCurrent: Int = 0,
+         searchOptions: SearchOptions = [],
          baseURL: URL? = nil,
          scrollToHeading: TocNavigateRequest? = nil,
          scrollToBrokenLink: BrokenLinkNavigateRequest? = nil,
+         scrollToMatch: SearchNavigateRequest? = nil,
          onActiveHeadingChange: @escaping (_ activeSlug: String?) -> Void = { _ in },
          onOpenLink: @escaping (URL) -> Void = { _ in }) {
         self.html = html
@@ -41,9 +54,11 @@ struct MarkdownWebView: NSViewRepresentable {
         self.searchQuery = searchQuery
         self.searchMatches = searchMatches
         self.searchCurrent = searchCurrent
+        self.searchOptions = searchOptions
         self.baseURL = baseURL
         self.scrollToHeading = scrollToHeading
         self.scrollToBrokenLink = scrollToBrokenLink
+        self.scrollToMatch = scrollToMatch
         self.onActiveHeadingChange = onActiveHeadingChange
         self.onOpenLink = onOpenLink
     }
@@ -94,8 +109,17 @@ struct MarkdownWebView: NSViewRepresentable {
     }
 
     func updateNSView(_ webView: WKWebView, context: Context) {
+        // SwiftUI NÃO atualiza coordinator.parent: sem esta linha, didFinish lia
+        // o struct da criação (query vazia, scroll 0) e perdia re-destaque/scroll.
+        context.coordinator.parent = self
+
         if context.coordinator.lastHTML != html {
             context.coordinator.lastHTML = html
+            // Mudança de busca na mesma atualização da recarga seria engolida
+            // pelo return; didFinish executa via flag.
+            context.coordinator.lastSearchQuery = searchQuery
+            context.coordinator.lastSearchCurrent = searchCurrent
+            context.coordinator.pendingSearchUpdate = !searchQuery.isEmpty
             let fullHTML = themedHTML(html)
             load(fullHTML, in: webView, coordinator: context.coordinator)
             return
@@ -132,11 +156,31 @@ struct MarkdownWebView: NSViewRepresentable {
             }
         }
 
+        // Fase 7 (R5.2) — salto até a ocorrência vinda da busca global. O token
+        // força re-destaque/scroll mesmo sem mudança de query/current.
+        if let request = scrollToMatch,
+           context.coordinator.lastSearchToken != request.token {
+            context.coordinator.lastSearchToken = request.token
+            context.coordinator.lastSearchQuery = searchQuery
+            context.coordinator.lastSearchCurrent = searchCurrent
+            if webView.isLoading {
+                context.coordinator.pendingSearchUpdate = true
+            } else {
+                highlightSearch(in: webView)
+            }
+        }
+
         if context.coordinator.lastSearchQuery != searchQuery ||
             context.coordinator.lastSearchCurrent != searchCurrent {
             context.coordinator.lastSearchQuery = searchQuery
             context.coordinator.lastSearchCurrent = searchCurrent
-            highlightSearch(in: webView)
+            if webView.isLoading {
+                // Requisição chegou durante recarga: guarda p/ executar no
+                // didFinish, senão o JS rola num documento incompleto.
+                context.coordinator.pendingSearchUpdate = true
+            } else {
+                highlightSearch(in: webView)
+            }
         }
     }
 
@@ -269,7 +313,8 @@ struct MarkdownWebView: NSViewRepresentable {
             var idx = 0;
             var current = \(searchCurrent);
             var escapedQ = q.replace(/[.*+?^${}()|[\\]\\\\]/g, '\\\\$&');
-            var re = new RegExp(escapedQ, 'gi');
+            if (\(searchOptions.contains(.wholeWord))) { escapedQ = '\\b' + escapedQ + '\\b'; }
+            var re = new RegExp(escapedQ, '\(searchOptions.contains(.caseSensitive) ? "g" : "gi")');
             nodes.forEach(function(node){
                 var text = node.nodeValue;
                 re.lastIndex = 0;
@@ -305,6 +350,9 @@ struct MarkdownWebView: NSViewRepresentable {
         var pendingScroll: CGFloat = -1
         var lastSearchQuery: String = ""
         var lastSearchCurrent: Int = 0
+        var lastSearchToken: Int = 0
+        /// Fase 7 — destaque/scroll aguardando o fim da navegação p/ executar.
+        var pendingSearchUpdate = false
         var lastTOCToken: Int = 0
         var lastBrokenLinkToken: Int = 0
         /// R10.1 — href aguardando o fim da navegação para executar o salto.
@@ -387,7 +435,10 @@ struct MarkdownWebView: NSViewRepresentable {
                 pendingBrokenHref = nil
                 parent.jumpToBrokenLink(href: href, in: webView)
             }
-            if !parent.searchQuery.isEmpty {
+            // Fase 7 — destaque da busca (veio em fila durante a recarga, ou
+            // termo já ativo numa recarga disparada pelo watcher).
+            if pendingSearchUpdate || !parent.searchQuery.isEmpty {
+                pendingSearchUpdate = false
                 parent.highlightSearch(in: webView)
             }
         }
