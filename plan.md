@@ -72,7 +72,7 @@
 ### Fase 8 — Polish incremental
 - [ ] Syntax highlighting completo (R3.2) — **parcial**: `syntaxHighlight()` em MarkdownHTMLConverter cobre keywords/comentários/strings para ~10 linguagens. Falta: números, operadores, tokenização completa, muitas linguagens.
 - [ ] Copiar Comando shell: limpar prompts/comentários/continuações (R3.2) — **não implementado**: botão "Copiar" copia código bruto. Sem opção "Copiar Comando".
-- [x] Fold de código >30 linhas (R3.10) — blocos com >30 linhas rendem colapsados (`.code-block.folded`, max-height 500px + fade), botão "Mostrar tudo (N linhas)"/"Recolher" no code-header via `toggleFold()`; threshold 30 em `MarkdownHTMLConverter.foldLineThreshold`
+- [x] Fold de código >30 linhas (R3.10) — blocos com >30 linhas rendem colapsados (`.code-block.folded`, max-height 500px + fade), botões com ícones SVG no code-header via `toggleFold()`; contraído permanece rolável vertical/horizontal (R3.10); threshold 30 em `MarkdownHTMLConverter.foldLineThreshold`
 - [x] Outline/TOC bidirecional (R3.7) — TocPanelView lateral direito (Cmd+Shift+T, coluna redimensionável grow-only) + navegação por clique via âncoras + destaque da seção ativa ao rolar (scroll listener JS → WKScriptMessageHandler)
 - [ ] Âncoras com hover `#` (R3.8) — **parcial**: headings recebem `id` (slug), mas sem ícone hover para copiar link
 - [x] Tabelas largas rolam horizontal (R3.9) — **implementado**: CSS `.table-wrapper { overflow-x: auto; }` + `table { display: block; width: max-content; }`
