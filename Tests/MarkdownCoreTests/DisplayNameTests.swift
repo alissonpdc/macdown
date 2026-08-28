@@ -9,8 +9,11 @@ final class DisplayNameTests: XCTestCase {
     }
 
     // Título da aba continua limpo? Não — usuário pediu extensão também na aba.
-    func testTabTitleKeepsExtension() {
-        let doc = try! OpenDocument(url: URL(fileURLWithPath: "/tmp/a.md"))
+    func testTabTitleKeepsExtension() throws {
+        let url = URL(fileURLWithPath: NSTemporaryDirectory()).appendingPathComponent("a.md")
+        try "# title".write(to: url, atomically: true, encoding: .utf8)
+        defer { try? FileManager.default.removeItem(at: url) }
+        let doc = try OpenDocument(url: url)
         // ReaderTab.title delega para DisplayName
         let tab = ReaderTab(document: doc)
         XCTAssertEqual(tab.title, "a.md")
