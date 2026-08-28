@@ -69,8 +69,11 @@ struct MarkdownWebView: NSViewRepresentable {
             try? FileManager.default.removeItem(at: previous)
         }
         coordinator.currentRenderFile = fileURL
-        let accessRoot = baseURL?.standardizedFileURL ?? URL(fileURLWithPath: "/")
-        webView.loadFileURL(fileURL, allowingReadAccessTo: accessRoot)
+        // O arquivo temporário está em /tmp, fora da pasta do documento — o
+        // WebKit exige que o HTML carregado esteja DENTRO da access root,
+        // senão a navegação inteira falha (tela em branco). App sem sandbox:
+        // raiz "/" cobre render + doc + imagens fora da pasta do doc.
+        webView.loadFileURL(fileURL, allowingReadAccessTo: URL(fileURLWithPath: "/"))
     }
 
     static func dismantleNSView(_ webView: WKWebView, coordinator: Coordinator) {
