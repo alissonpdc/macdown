@@ -305,45 +305,74 @@ struct MarkdownWebView: NSViewRepresentable {
             pattern = "\\b" + pattern + "\\b"
         }
         let flags = searchOptions.contains(.caseSensitive) ? "g" : "gi"
+        // O contador (SearchEngine) casa sobre o texto contíguo do AST, mas o
+        // render quebra o texto em vários text nodes (syntax highlight, strong,
+        // em, links, code). Casar por text node deixava matches invisíveis e o
+        // salto nunca acontecia. Aqui o texto é concatenado na ordem do DOM e
+        // o match pode atravessar nós — a ocorrência é então envolvida em
+        // spans por segmento. Se o total do DOM divergir do do Swift, o índice
+        // corrente é reencaixado (mod) para que Enter sempre mova o destaque.
         let js = """
         (function(){
+            function escapeHTML(s){
+                return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+            }
             document.querySelectorAll('.search-match,.search-current').forEach(function(el){
                 var t = document.createTextNode(el.textContent);
                 el.parentNode.replaceChild(t, el);
             });
             var body = document.body;
-            if (!body) return;
+            if (!body) return 0;
+            body.normalize();
             var re;
             try { re = new RegExp('\(Self.jsStringLiteral(pattern))', '\(flags)'); }
-            catch (e) { return; }
-            var walk = document.createTreeWalker(body, NodeFilter.SHOW_TEXT, null, false);
-            var nodes = [];
-            while(walk.nextNode()) nodes.push(walk.currentNode);
-            var idx = 0;
-            var current = \(searchCurrent);
-            nodes.forEach(function(node){
-                var text = node.nodeValue;
-                re.lastIndex = 0;
-                var match;
-                var html = '';
-                var last = 0;
-                while((match = re.exec(text)) !== null){
-                    if (match[0].length === 0) { re.lastIndex++; continue; }
-                    html += text.substring(last, match.index);
-                    var cls = idx === current ? 'search-current' : 'search-match';
-                    html += '<span class="' + cls + '">' + text.substring(match.index, match.index + match[0].length) + '</span>';
-                    last = match.index + match[0].length;
-                    idx++;
-                }
-                if (html) {
-                    html += text.substring(last);
-                    var span = document.createElement('span');
-                    span.innerHTML = html;
-                    node.parentNode.replaceChild(span, node);
+            catch (e) { return 0; }
+            var walk = document.createTreeWalker(body, NodeFilter.SHOW_TEXT, {
+                acceptNode: function(n){
+                    var p = n.parentNode && n.parentNode.nodeName;
+                    return (p === 'SCRIPT' || p === 'STYLE') ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT;
                 }
             });
+            var nodes = [], starts = [], combined = '';
+            while (walk.nextNode()){
+                starts.push(combined.length);
+                combined += walk.currentNode.nodeValue;
+                nodes.push(walk.currentNode);
+            }
+            var matches = [];
+            re.lastIndex = 0;
+            var m;
+            while ((m = re.exec(combined)) !== null){
+                if (m[0].length === 0) { re.lastIndex++; continue; }
+                matches.push({s: m.index, e: m.index + m[0].length, cur: matches.length === \(searchCurrent)});
+            }
+            nodes.forEach(function(node, i){
+                var start = starts[i], end = start + node.nodeValue.length;
+                var segs = [];
+                for (var k = 0; k < matches.length; k++){
+                    var s = Math.max(matches[k].s, start), e = Math.min(matches[k].e, end);
+                    if (s < e) segs.push({s: s - start, e: e - start, cur: matches[k].cur});
+                }
+                if (!segs.length) return;
+                var text = node.nodeValue, html = '', last = 0;
+                segs.forEach(function(seg){
+                    html += escapeHTML(text.substring(last, seg.s));
+                    html += '<span class="' + (seg.cur ? 'search-current' : 'search-match') + '">' + escapeHTML(text.substring(seg.s, seg.e)) + '</span>';
+                    last = seg.e;
+                });
+                html += escapeHTML(text.substring(last));
+                var span = document.createElement('span');
+                span.innerHTML = html;
+                node.parentNode.replaceChild(span, node);
+            });
             var cur = document.querySelector('.search-current');
+            if (!cur && matches.length){
+                var all = document.querySelectorAll('.search-match');
+                cur = all[\(searchCurrent) % all.length];
+                if (cur) cur.className = 'search-current';
+            }
             if (cur) cur.scrollIntoView({behavior:'smooth', block:'center'});
+            return matches.length;
         })();
         """
         webView.evaluateJavaScript(js)
