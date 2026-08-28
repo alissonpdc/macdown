@@ -8,6 +8,8 @@ public struct SearchOptions: OptionSet, Equatable {
     public static let caseSensitive = SearchOptions(rawValue: 1 << 0)
     /// Exige que o termo esteja delimitado por fronteiras de palavra.
     public static let wholeWord = SearchOptions(rawValue: 1 << 1)
+    /// Interpreta o termo como expressão regular (ICU).
+    public static let regex = SearchOptions(rawValue: 1 << 2)
 }
 
 /// Uma ocorrência de busca dentro de um documento.
@@ -79,7 +81,6 @@ public enum SearchEngine {
     public static func findMatches(in document: CoreDocument, query: String,
                                    options: SearchOptions = []) -> [SearchMatch] {
         guard !query.isEmpty else { return [] }
-        let nsQuery = query as NSString
         var results: [SearchMatch] = []
         var ordinal = 0
 
@@ -87,20 +88,7 @@ public enum SearchEngine {
             let text = searchableText(of: block)
             guard !text.isEmpty else { continue }
             let ns = text as NSString
-            let compare: NSString.CompareOptions = options.contains(.caseSensitive) ? [] : [.caseInsensitive]
-            var searchRange = NSRange(location: 0, length: ns.length)
-
-            while true {
-                let found = ns.range(of: nsQuery as String, options: compare, range: searchRange)
-                guard found.location != NSNotFound else { break }
-
-                if options.contains(.wholeWord), !isWordBoundary(ns: ns, found: found) {
-                    let next = found.location + 1
-                    guard next < ns.length else { break }
-                    searchRange = NSRange(location: next, length: ns.length - next)
-                    continue
-                }
-
+            for found in occurrences(in: ns, query: query, options: options) {
                 let window = 40
                 let snippetStart = max(0, found.location - window)
                 let snippetEnd = min(ns.length, found.location + found.length + window)
@@ -116,13 +104,45 @@ public enum SearchEngine {
                     snippetMatchStart: snippetMatchStart
                 ))
                 ordinal += 1
-
-                let next = found.location + found.length
-                guard next < ns.length else { break }
-                searchRange = NSRange(location: next, length: ns.length - next)
             }
         }
         return results
+    }
+
+    /// Todas as ocorrências não sobrepostas de `query` em `ns`, na ordem.
+    private static func occurrences(in ns: NSString, query: String,
+                                    options: SearchOptions) -> [NSRange] {
+        if options.contains(.regex) {
+            var opts = NSRegularExpression.Options()
+            if !options.contains(.caseSensitive) { opts.insert(.caseInsensitive) }
+            guard let re = try? NSRegularExpression(pattern: query, options: opts) else { return [] }
+            var found: [NSRange] = []
+            re.enumerateMatches(in: ns as String, range: NSRange(location: 0, length: ns.length)) { m, _, _ in
+                guard let m, m.range.location != NSNotFound else { return }
+                if options.contains(.wholeWord), !isWordBoundary(ns: ns, found: m.range) { return }
+                found.append(m.range)
+            }
+            return found
+        }
+
+        let compare: NSString.CompareOptions = options.contains(.caseSensitive) ? [] : [.caseInsensitive]
+        var found: [NSRange] = []
+        var searchRange = NSRange(location: 0, length: ns.length)
+        while true {
+            let r = ns.range(of: query, options: compare, range: searchRange)
+            guard r.location != NSNotFound else { break }
+            if options.contains(.wholeWord), !isWordBoundary(ns: ns, found: r) {
+                let next = r.location + 1
+                guard next < ns.length else { break }
+                searchRange = NSRange(location: next, length: ns.length - next)
+                continue
+            }
+            found.append(r)
+            let next = r.location + r.length
+            guard next < ns.length else { break }
+            searchRange = NSRange(location: next, length: ns.length - next)
+        }
+        return found
     }
 
     /// Busca global em vários arquivos; retorna apenas os que têm ocorrências (R5.2).

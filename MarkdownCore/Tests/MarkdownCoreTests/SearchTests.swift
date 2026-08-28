@@ -79,4 +79,43 @@ final class SearchTests: XCTestCase {
         XCTAssertEqual(results[0].url.path, "/a.md")
         XCTAssertEqual(results[0].count, 1)
     }
+
+    // MARK: Busca por regex (R5.2)
+
+    func testRegexPatternMatches() {
+        let d = doc([ParagraphNode(text: "foo123 bar456 foo789", rawMarkdown: "x")])
+        let matches = SearchEngine.findMatches(in: d, query: "foo\\d+", options: .regex)
+        XCTAssertEqual(matches.count, 2)
+        let text = SearchEngine.searchableText(of: d.blocks[0])
+        for (i, expected) in ["foo123", "foo789"].enumerated() {
+            let start = text.utf16.index(text.utf16.startIndex, offsetBy: matches[i].range.lowerBound)
+            let end = text.utf16.index(start, offsetBy: matches[i].range.count)
+            XCTAssertEqual(String(text[start..<end]), expected)
+        }
+    }
+
+    func testRegexCaseInsensitiveByDefault() {
+        let d = doc([ParagraphNode(text: "ABC abc", rawMarkdown: "x")])
+        XCTAssertEqual(SearchEngine.findMatches(in: d, query: "abc", options: .regex).count, 2)
+        XCTAssertEqual(SearchEngine.findMatches(in: d, query: "abc",
+                                                options: [.regex, .caseSensitive]).count, 1)
+    }
+
+    func testRegexLiteralsAreTreatedAsPatterns() {
+        let d = doc([ParagraphNode(text: "a.b axb", rawMarkdown: "x")])
+        // sem .regex, "a.b" é literal e casa só com "a.b"; com .regex, "." casa qualquer char
+        XCTAssertEqual(SearchEngine.findMatches(in: d, query: "a.b").count, 1)
+        XCTAssertEqual(SearchEngine.findMatches(in: d, query: "a.b", options: .regex).count, 2)
+    }
+
+    func testInvalidRegexReturnsNoMatches() {
+        let d = doc([ParagraphNode(text: "anything", rawMarkdown: "x")])
+        XCTAssertTrue(SearchEngine.findMatches(in: d, query: "[unclosed", options: .regex).isEmpty)
+    }
+
+    func testRegexCombinesWithWholeWord() {
+        let d = doc([ParagraphNode(text: "cat scatter catalog", rawMarkdown: "x")])
+        let matches = SearchEngine.findMatches(in: d, query: "cat", options: [.regex, .wholeWord])
+        XCTAssertEqual(matches.count, 1)
+    }
 }

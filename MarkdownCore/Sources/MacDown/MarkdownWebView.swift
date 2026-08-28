@@ -296,25 +296,31 @@ struct MarkdownWebView: NSViewRepresentable {
             return
         }
 
-        let escaped = searchQuery.replacingOccurrences(of: "\\", with: "\\\\")
-                                  .replacingOccurrences(of: "'", with: "\\'")
+        // Fonte do padrão regex construída no Swift (fonte única com o SearchEngine):
+        // modo normal escapa metacaracteres; modo regex usa o termo como está.
+        var pattern = searchOptions.contains(.regex)
+            ? searchQuery
+            : Self.regexEscaped(searchQuery)
+        if searchOptions.contains(.wholeWord) {
+            pattern = "\\b" + pattern + "\\b"
+        }
+        let flags = searchOptions.contains(.caseSensitive) ? "g" : "gi"
         let js = """
         (function(){
             document.querySelectorAll('.search-match,.search-current').forEach(function(el){
                 var t = document.createTextNode(el.textContent);
                 el.parentNode.replaceChild(t, el);
             });
-            var q = '\(escaped)';
             var body = document.body;
             if (!body) return;
+            var re;
+            try { re = new RegExp('\(Self.jsStringLiteral(pattern))', '\(flags)'); }
+            catch (e) { return; }
             var walk = document.createTreeWalker(body, NodeFilter.SHOW_TEXT, null, false);
             var nodes = [];
             while(walk.nextNode()) nodes.push(walk.currentNode);
             var idx = 0;
             var current = \(searchCurrent);
-            var escapedQ = q.replace(/[.*+?^${}()|[\\]\\\\]/g, '\\\\$&');
-            if (\(searchOptions.contains(.wholeWord))) { escapedQ = '\\b' + escapedQ + '\\b'; }
-            var re = new RegExp(escapedQ, '\(searchOptions.contains(.caseSensitive) ? "g" : "gi")');
             nodes.forEach(function(node){
                 var text = node.nodeValue;
                 re.lastIndex = 0;
@@ -322,6 +328,7 @@ struct MarkdownWebView: NSViewRepresentable {
                 var html = '';
                 var last = 0;
                 while((match = re.exec(text)) !== null){
+                    if (match[0].length === 0) { re.lastIndex++; continue; }
                     html += text.substring(last, match.index);
                     var cls = idx === current ? 'search-current' : 'search-match';
                     html += '<span class="' + cls + '">' + text.substring(match.index, match.index + match[0].length) + '</span>';
@@ -340,6 +347,32 @@ struct MarkdownWebView: NSViewRepresentable {
         })();
         """
         webView.evaluateJavaScript(js)
+    }
+
+    /// Escapa metacaracteres de RegExp para busca literal.
+    static func regexEscaped(_ s: String) -> String {
+        var out = ""
+        for ch in s {
+            if "\\^$.|?*+()[]{}".contains(ch) { out += "\\" }
+            out += String(ch)
+        }
+        return out
+    }
+
+    /// Escapa uma string para ser embutida como literal JS com aspas simples.
+    static func jsStringLiteral(_ s: String) -> String {
+        var out = ""
+        for ch in s {
+            switch ch {
+            case "\\": out += "\\\\"
+            case "'": out += "\\'"
+            case "\n": out += "\\n"
+            case "\r": out += "\\r"
+            case "\t": out += "\\t"
+            default: out += String(ch)
+            }
+        }
+        return out
     }
 
     // MARK: - Coordinator
