@@ -21,9 +21,6 @@ jobs:
   test:
     name: Build (zero warnings) + Testes
     runs-on: macos-latest
-    defaults:
-      run:
-        working-directory: MarkdownCore
     steps:
       - uses: actions/checkout@v4
 
