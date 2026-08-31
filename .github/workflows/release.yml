@@ -132,9 +132,9 @@ jobs:
           python3 "$GITHUB_WORKSPACE/.github/scripts/generate_release_notes.py"
 
           {
-            echo "notes<<EOF"
+            echo "notes<<RELEASE_NOTES_EOF"
             cat /tmp/release_notes.txt
-            echo "EOF"
+            echo "RELEASE_NOTES_EOF"
           } >> "$GITHUB_OUTPUT"
 
       - name: Criar tag e publicar release
