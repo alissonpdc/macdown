@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Generate release notes via OpenRouter API, trying ALL free models.
 
-The prompt lives in .github/prompt/prompt.md and the model output is
+The prompt lives in .github/templates/prompt.md and the model output is
 used verbatim as the release body — no post-processing.
 If every free model fails, the script exits non-zero and the pipeline fails.
 """
@@ -12,7 +12,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-PROMPT_FILE = Path(__file__).resolve().parent.parent / "prompt" / "prompt.md"
+PROMPT_FILE = Path(__file__).resolve().parent.parent / "templates" / "prompt.md"
 MODELS_URL = "https://openrouter.ai/api/v1/models"
 CHAT_URL = "https://openrouter.ai/api/v1/chat/completions"
 
