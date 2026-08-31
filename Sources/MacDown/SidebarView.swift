@@ -9,6 +9,7 @@ struct SidebarView: View {
     @Binding var expandedFolders: Set<String>
     let activeURL: URL?
     let onOpenFile: (URL) -> Void
+    @EnvironmentObject private var mdTheme: MDThemeManager
 
     @FocusState private var sidebarFocused: Bool
     @State private var focusedURL: URL?
@@ -40,7 +41,7 @@ struct SidebarView: View {
             }
         }
         .frame(minWidth: 200)
-        .background(MDTheme.sidebarBackground)
+        .background(mdTheme.sidebarBackground)
     }
 
     // MARK: - Visible items (flat list for keyboard navigation)

@@ -16,6 +16,7 @@ struct MacDownApp: App {
     @State private var initialURL: URL?
     @StateObject private var theme = ThemeStore()
     @StateObject private var readingPrefs = ReadingPrefs()
+    @StateObject private var mdTheme = MDThemeManager()
     /// R3.7 — estado persistido de visibilidade do TOC
     @StateObject private var uiPrefs = UIPrefs()
     @StateObject private var tabBus: TabCommandBus
@@ -36,6 +37,7 @@ struct MacDownApp: App {
         WindowGroup {
             ContentView(initialURL: initialURL)
                 .environmentObject(theme)
+                .environmentObject(mdTheme)
                 .environmentObject(readingPrefs)
                 .environmentObject(uiPrefs)
                 .onAppear { appDelegate.apply(theme) }

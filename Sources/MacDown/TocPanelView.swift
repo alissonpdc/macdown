@@ -45,6 +45,7 @@ struct TocPanelView: View {
     let initialWidth: CGFloat
     /// R3.7 sync inversa — seção ativa conforme o scroll do conteúdo.
     let activeSlug: String?
+    @EnvironmentObject private var mdTheme: MDThemeManager
 
     static let minWidth: CGFloat = 150
     static let maxWidth: CGFloat = 420
@@ -111,7 +112,7 @@ struct TocPanelView: View {
             .frame(width: Self.clamp(width))
             .transaction { $0.animation = nil }
         }
-        .background(MDTheme.tocBackground)
+        .background(mdTheme.tocBackground)
         .onAppear {
             growOnlyToFit()
         }

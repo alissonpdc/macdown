@@ -74,14 +74,15 @@ public final class FileWatcher {
         return url.pathIsDirectory()
     }
 
-    /// vnode em cada arquivo markdown atual da árvore (1 nível + abas abertas cobre R4.1).
+    /// vnode nos arquivos markdown imediatos do diretório (1 nível).
+    /// Não recursivo: diretórios são cobertos por `startDirectoryPolling`.
     private func watchTree(under dir: URL) {
         let fm = FileManager.default
         guard let children = try? fm.contentsOfDirectory(at: dir, includingPropertiesForKeys: [.isDirectoryKey], options: []) else { return }
         for child in children {
-            let isDir = (try? child.resourceValues(forKeys: [.isDirectoryKey]))?.isDirectory ?? false
-            if isDir {
-                watchTree(under: child)
+            var isDir: ObjCBool = false
+            if fm.fileExists(atPath: child.path, isDirectory: &isDir), isDir.boolValue {
+                startDirectoryPolling(for: child)
             } else if !markdownOnly || FolderScanner.isMarkdown(child) {
                 watchFile(child)
             }

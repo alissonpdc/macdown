@@ -17,10 +17,11 @@ public struct OpenDocument: Equatable {
     }
 
     public init(url: URL) throws {
-        guard let text = try? String(contentsOf: url, encoding: .utf8) else {
+        let resolved = url.resolvingSymlinksInPath()
+        guard let text = try? String(contentsOf: resolved, encoding: .utf8) else {
             throw OpenDocumentError.readFailed
         }
-        self.init(url: url, rawText: text)
+        self.init(url: resolved, rawText: text)
     }
 
     public init(url: URL, rawText: String) {

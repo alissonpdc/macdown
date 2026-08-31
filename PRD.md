@@ -7,6 +7,7 @@
 
 ---
 
+
 ## 1. Visão
 
 No mundo do desenvolvimento agênico, markdown virou o novo código-fonte: specs, PRDs, planos e documentação vivem em arquivos `.md`. O MacDown é um app nativo para macOS focado exclusivamente na **leitura facilitada de markdown** — rápido de abrir, bonito de ler, sempre atualizado.

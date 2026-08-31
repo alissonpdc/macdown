@@ -20,9 +20,15 @@ struct ContentView: View {
                 expandedFolders: $expandedFolders,
                 activeURL: tabStore.activeTab?.document.url,
                 onOpenFile: { url in
-                    try? tabStore.open(url: url)
-                    recordVisitIfNeeded(url)
-                    refreshWatchers()
+                    do {
+                        try tabStore.open(url: url)
+                        recordVisitIfNeeded(url)
+                        refreshWatchers()
+                    } catch OpenDocumentError.readFailed {
+                        loadError = "File not found or unreadable: \(url.path)"
+                    } catch {
+                        loadError = error.localizedDescription
+                    }
                 }
             )
         } detail: {
@@ -140,9 +146,10 @@ struct ContentView: View {
 
     /// R2.1 — carrega pasta raiz da sidebar.
     private func loadFolder(_ url: URL) {
-        folderTree = FolderScanner.scan(root: url)
+        let resolved = url.resolvingSymlinksInPath()
+        folderTree = FolderScanner.scan(root: resolved)
         // raiz e subpastas de primeiro nível expandidas por padrão
-        expandedFolders = [url.path]
+        expandedFolders = [resolved.path]
         if let tree = folderTree {
             for child in tree.children where !child.files.isEmpty {
                 expandedFolders.insert(child.url.path)
