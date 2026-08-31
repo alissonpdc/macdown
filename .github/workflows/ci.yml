@@ -60,6 +60,8 @@ jobs:
       contents: write
       pull-requests: write
     steps:
+      - uses: actions/checkout@v4
+
       - name: Criar Pull Request
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
