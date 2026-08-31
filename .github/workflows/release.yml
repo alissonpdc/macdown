@@ -110,30 +110,30 @@ jobs:
           COMMITS=$(git log --pretty=format:"- %s" "$RANGE" | grep -v "release:")
           DIFF=$(git diff --stat "$RANGE" 2>/dev/null || echo "N/A")
           PROMPT="Gere release notes para o app MacDown (um leitor Markdown nativo para macOS).
-Use EXATAMENTE este formato com estas secoes:
+          Use EXATAMENTE este formato com estas secoes:
 
-### Features
-(itens em bullet point com - )
+          ### Features
+          (itens em bullet point com - )
 
-### Fixes
-(itens em bullet point com - )
+          ### Fixes
+          (itens em bullet point com - )
 
-### Under the hood
-(itens em bullet point com - )
+          ### Under the hood
+          (itens em bullet point com - )
 
-### Instalacao
-1. Baixe MacDown.app.zip nos assets abaixo
-2. Descompacte e mova MacDown.app para /Applications
-3. Se o macOS bloquear a primeira inicializacao, rode: xattr -cr /Applications/MacDown.app
+          ### Instalacao
+          1. Baixe MacDown.app.zip nos assets abaixo
+          2. Descompacte e mova MacDown.app para /Applications
+          3. Se o macOS bloquear a primeira inicializacao, rode: xattr -cr /Applications/MacDown.app
 
-Requer macOS 14 (Sonoma) ou posterior.
+          Requer macOS 14 (Sonoma) ou posterior.
 
-Commits da versao:
-$COMMITS
+          Commits da versao:
+          $COMMITS
 
-Diff de arquivos alterados:
-$DIFF
-"
+          Diff de arquivos alterados:
+          $DIFF
+          "
           # Tenta gerar via OpenRouter
           RESPONSE=$(curl -s --max-time 30 \
             "https://openrouter.ai/api/v1/chat/completions" \
