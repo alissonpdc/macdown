@@ -116,6 +116,9 @@ struct ContentView: View {
         .onReceive(NotificationCenter.default.publisher(for: .macDownFindGlobal)) { _ in
             showGlobalSearch = true
         }
+        .onReceive(NotificationCenter.default.publisher(for: .macDownPointerGraph)) { _ in
+            openPointerGraph()
+        }
         .sheet(isPresented: $showGlobalSearch) {
             GlobalSearchView(store: tabStore, isPresented: $showGlobalSearch, allURLs: collectSearchURLs())
         }
@@ -257,6 +260,40 @@ struct ContentView: View {
             }
         }
         return urls
+    }
+
+    // MARK: R14 — Pointer Graph
+
+    /// Gera o grafo de apontamentos como um arquivo markdown temporário e abre em nova aba.
+    private func openPointerGraph() {
+        guard let root = folderTree?.url else { return }
+        let result = PointerGraphGenerator.generate(root: root)
+        // Gera markdown com bloco mermaid
+        var md = "# Pointer Graph\n\n"
+        md += "> \(result.nodeCount) files, \(result.edgeCount) links"
+        if !result.isolatedFiles.isEmpty {
+            md += ", \(result.isolatedFiles.count) isolated"
+        }
+        md += "\n\n"
+        md += "```mermaid\n\(result.mermaidCode)\n```\n"
+        // Arquivos isolados
+        if !result.isolatedFiles.isEmpty {
+            md += "\n## Isolated files\n\n"
+            for file in result.isolatedFiles {
+                md += "- \(file)\n"
+            }
+        }
+        // Salva em arquivo temporário
+        let dir = FileManager.default.temporaryDirectory
+            .appendingPathComponent("MacDownRender", isDirectory: true)
+        try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        let fileURL = dir.appendingPathComponent("pointer-graph-\(UUID().uuidString).md")
+        try? md.write(to: fileURL, atomically: true, encoding: .utf8)
+        do {
+            try tabStore.open(url: fileURL)
+        } catch {
+            loadError = "Failed to generate pointer graph: \(error.localizedDescription)"
+        }
     }
 }
 

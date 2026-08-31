@@ -122,6 +122,11 @@ struct MacDownApp: App {
                     Button("Reset Zoom") { readingPrefs.resetZoom() }
                         .keyboardShortcut("0", modifiers: .command)
                 }
+                Divider()
+                // R14.1 — Grafo de apontamentos
+                Button("Pointer Graph") {
+                    NotificationCenter.default.post(name: .macDownPointerGraph, object: nil)
+                }
             }
             // R5.1 / R5.2 — Busca
             CommandMenu("Find") {
@@ -162,6 +167,7 @@ extension Notification.Name {
     static let macDownFindNext = Notification.Name("macDownFindNext")
     static let macDownFindPrevious = Notification.Name("macDownFindPrevious")
     static let macDownFindGlobal = Notification.Name("macDownFindGlobal")
+    static let macDownPointerGraph = Notification.Name("macDownPointerGraph")
 }
 
 /// Buffer de URLs entregues ao app antes de a view instalar o handler.

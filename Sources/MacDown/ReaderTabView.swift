@@ -21,6 +21,8 @@ struct ReaderTabView: View {
     @State private var activeHeadingSlug: String?
     /// R10.1 — navegação até um link quebrado a partir do popover do rodapé.
     @State private var brokenLinkRequest: BrokenLinkNavigateRequest?
+    /// R10.1 — erros de mermaid reportados pelo WKWebView (JS → Swift).
+    @State private var mermaidErrorCount: Int = 0
     /// Fase 7 — busca no documento (R5.1), restrita à coluna de conteúdo.
     @State private var showSearch = false
     @FocusState private var searchFieldFocused: Bool
@@ -82,17 +84,22 @@ struct ReaderTabView: View {
                         onActiveHeadingChange: { slug in
                             activeHeadingSlug = slug
                         },
+                        onMermaidError: { count in
+                            mermaidErrorCount = count
+                        },
                         onOpenLink: onOpenLink
                     )
                 }
                 Divider()
                 if let footerInfo {
-                    FooterView(info: footerInfo) { link in
-                        brokenLinkRequest = BrokenLinkNavigateRequest(
-                            token: (brokenLinkRequest?.token ?? 0) + 1,
-                            href: link.href
-                        )
-                    }
+                    FooterView(info: footerInfo,
+                               onSelectBrokenLink: { link in
+                                   brokenLinkRequest = BrokenLinkNavigateRequest(
+                                       token: (brokenLinkRequest?.token ?? 0) + 1,
+                                       href: link.href
+                                   )
+                               },
+                               mermaidErrorCount: mermaidErrorCount)
                 }
             }
 
@@ -141,7 +148,8 @@ struct ReaderTabView: View {
                                  frontmatter: doc.frontmatter,
                                  frontmatterError: doc.frontmatterError,
                                  baseFileURL: doc.url,
-                                 readingPrefs: readingPrefs)
+                                 readingPrefs: readingPrefs,
+                                 mermaidScriptTag: MermaidLoader.scriptTag)
     }
 
     private func buildDiffHTML(doc: OpenDocument, statuses: [BlockDiffer.Status],
@@ -180,7 +188,7 @@ struct ReaderTabView: View {
             nextRemoval += 1
         }
 
-        return MarkdownHTMLConverter.htmlHeader(readingPrefs: readingPrefs) + fm + body + MarkdownHTMLConverter.htmlFooter
+        return MarkdownHTMLConverter.htmlHeader(readingPrefs: readingPrefs) + fm + body + MarkdownHTMLConverter.htmlFooter + MermaidLoader.scriptTag + MarkdownHTMLConverter.mermaidInitScript
     }
 
     private func buildFrontmatterHTML(doc: OpenDocument) -> String {

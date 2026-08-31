@@ -19,6 +19,8 @@ struct SearchNavigateRequest: Equatable {
 struct MarkdownWebView: NSViewRepresentable {
     /// Canal de mensagens JS→Swift para a seção ativa (R3.7 sync inversa).
     static let tocMessageName = "macDownTOC"
+    /// R10.1 — canal de mensagens JS→Swift para erros de mermaid.
+    static let mermaidMessageName = "macDownMermaidError"
 
     let html: String
     let scrollPosition: CGFloat
@@ -35,6 +37,8 @@ struct MarkdownWebView: NSViewRepresentable {
     var scrollToMatch: SearchNavigateRequest?
     /// R3.7 — seção ativa detectada pelo scroll do conteúdo (nil = antes do 1º heading).
     var onActiveHeadingChange: (_ activeSlug: String?) -> Void = { _ in }
+    /// R10.1 — callback chamado quando um diagrama mermaid falha na renderização.
+    var onMermaidError: (_ errorCount: Int) -> Void = { _ in }
     let onOpenLink: (URL) -> Void
 
     init(html: String,
@@ -48,6 +52,7 @@ struct MarkdownWebView: NSViewRepresentable {
          scrollToBrokenLink: BrokenLinkNavigateRequest? = nil,
          scrollToMatch: SearchNavigateRequest? = nil,
          onActiveHeadingChange: @escaping (_ activeSlug: String?) -> Void = { _ in },
+         onMermaidError: @escaping (_ errorCount: Int) -> Void = { _ in },
          onOpenLink: @escaping (URL) -> Void = { _ in })
     {
         self.html = html
@@ -61,6 +66,7 @@ struct MarkdownWebView: NSViewRepresentable {
         self.scrollToBrokenLink = scrollToBrokenLink
         self.scrollToMatch = scrollToMatch
         self.onActiveHeadingChange = onActiveHeadingChange
+        self.onMermaidError = onMermaidError
         self.onOpenLink = onOpenLink
     }
 
@@ -71,6 +77,7 @@ struct MarkdownWebView: NSViewRepresentable {
     func makeNSView(context: Context) -> WKWebView {
         let config = WKWebViewConfiguration()
         config.userContentController.add(context.coordinator, name: Self.tocMessageName)
+        config.userContentController.add(context.coordinator, name: Self.mermaidMessageName)
         let webView = WKWebView(frame: .zero, configuration: config)
         webView.navigationDelegate = context.coordinator
         webView.setValue(false, forKey: "drawsBackground")
@@ -458,13 +465,19 @@ struct MarkdownWebView: NSViewRepresentable {
         func userContentController(_: WKUserContentController,
                                    didReceive message: WKScriptMessage)
         {
-            guard message.name == MarkdownWebView.tocMessageName,
-                  let id = message.body as? String else { return }
-            if suppressTOCFeedback {
-                lastSuppressedActiveSlug = id
-                return
+            if message.name == MarkdownWebView.tocMessageName,
+               let id = message.body as? String
+            {
+                if suppressTOCFeedback {
+                    lastSuppressedActiveSlug = id
+                    return
+                }
+                parent.onActiveHeadingChange(id.isEmpty ? nil : id)
+            } else if message.name == MarkdownWebView.mermaidMessageName,
+                      let count = message.body as? Int
+            {
+                parent.onMermaidError(count)
             }
-            parent.onActiveHeadingChange(id.isEmpty ? nil : id)
         }
 
         func webView(_ webView: WKWebView, decidePolicyFor navigationAction: WKNavigationAction,

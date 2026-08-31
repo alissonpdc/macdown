@@ -12,9 +12,11 @@ public final class MarkdownHTMLConverter {
     /// class="broken-link" + data-broken, para o badge do rodapé rolar até eles.
     public var brokenHrefs: Set<String> = []
 
+    /// R3.3 — `mermaidScriptTag`: tag <script> para mermaid.js (injetado pela App layer).
     public func convert(_ document: CoreDocument, frontmatter: Frontmatter? = nil,
                         frontmatterError: String? = nil, baseFileURL: URL? = nil,
-                        readingPrefs: ReadingPrefs? = nil) -> String
+                        readingPrefs: ReadingPrefs? = nil,
+                        mermaidScriptTag: String = "") -> String
     {
         var html = Self.htmlHeader(readingPrefs: readingPrefs)
         if let base = baseFileURL {
@@ -30,6 +32,11 @@ public final class MarkdownHTMLConverter {
             html += convertBlock(block, baseFileURL: baseFileURL)
         }
         html += Self.htmlFooter
+        // R3.3 — mermaid.js + inicialização (injetado apenas quando disponível)
+        if !mermaidScriptTag.isEmpty {
+            html += mermaidScriptTag
+            html += Self.mermaidInitScript
+        }
         return html
     }
 
@@ -57,6 +64,14 @@ public final class MarkdownHTMLConverter {
             return "<p>\(Self.inlineMarkdown(p.rawMarkdown, baseURL: baseFileURL, brokenHrefs: brokenHrefs))</p>\n"
         case let c as CodeBlockNode:
             let lang = c.language ?? ""
+            // R3.3 — blocos ```mermaid renderizam como diagramas inline
+            if lang.lowercased() == "mermaid" {
+                let escapedCode = Self.escapeHTML(c.code)
+                    .replacingOccurrences(of: "'", with: "&#39;")
+                return """
+                <div class="mermaid-container"><div class="code-header"><span class="lang">MERMAID</span><button class="copy-btn" onclick="copyMermaidCode(this)" title="Copiar" aria-label="Copiar">\(Self.copyIcon)</button></div><pre class="mermaid-source" style="display:none">\(escapedCode)</pre><div class="mermaid">\n\(c.code)\n</div><div class="mermaid-error" style="display:none"></div></div>\n
+                """
+            }
             let highlighted = SyntaxHighlighter.highlight(c.code, language: lang)
             let lines = Self.lineCount(of: c.code)
             if lines > Self.foldLineThreshold {
@@ -579,6 +594,24 @@ public final class MarkdownHTMLConverter {
         .diff-added { background: rgba(46, 160, 67, 0.15); border-left: 3px solid #2ea043; padding-left: 12px; }
         .diff-added-strong { background: rgba(46, 160, 67, 0.28); border-left: 3px solid #2ea043; padding-left: 12px; }
         .diff-removed { background: rgba(248, 81, 73, 0.15); border-left: 3px solid #f85149; padding-left: 12px; text-decoration: line-through; color: var(--fg-secondary); padding: 8px 12px; margin: 4px 0; border-radius: 4px; }
+        /* R3.3 — Mermaid diagram containers */
+        .mermaid-container { margin: 0 0 16px; border: 1px solid var(--border); border-radius: 6px; overflow: hidden; }
+        .mermaid-container .mermaid { padding: 16px; text-align: center; overflow-x: auto; }
+        .mermaid-container .mermaid svg { max-width: 100%; height: auto; }
+        .mermaid-source { display: none; }
+        /* R10.1 — Mermaid error state */
+        .mermaid-error {
+            padding: 12px 16px;
+            background: #fff3cd;
+            color: #664d03;
+            border-top: 1px solid #ffecb5;
+            font-size: 0.9em;
+            white-space: pre-wrap;
+        }
+        @media (prefers-color-scheme: dark) {
+            .mermaid-error { background: #3b2e00; color: #f0c000; border-color: #5a4500; }
+        }
+        .mermaid-error::before { content: "⚠ "; }
         </style>
         </head>
         <body>
@@ -639,5 +672,65 @@ public final class MarkdownHTMLConverter {
     </script>
     </body>
     </html>
+    """
+
+    /// R3.3 — script de inicialização do mermaid (injetado quando mermaid.js disponível)
+    public static let mermaidInitScript = """
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        if (typeof mermaid === 'undefined') return;
+        mermaid.initialize({
+            startOnLoad: false,
+            theme: document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'default',
+            securityLevel: 'loose',
+            fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif'
+        });
+        var containers = document.querySelectorAll('.mermaid-container');
+        var errorCount = 0;
+        containers.forEach(function(container, idx) {
+            var div = container.querySelector('.mermaid');
+            var errorDiv = container.querySelector('.mermaid-error');
+            if (!div) return;
+            try {
+                var id = 'mermaid-' + idx;
+                mermaid.render(id, div.textContent.trim()).then(function(result) {
+                    div.innerHTML = result.svg;
+                }).catch(function(err) {
+                    div.style.display = 'none';
+                    errorCount++;
+                    if (errorDiv) {
+                        errorDiv.textContent = 'Mermaid syntax error: ' + (err.message || err.str || String(err));
+                        errorDiv.style.display = 'block';
+                    }
+                    try { window.webkit.messageHandlers.macDownMermaidError.postMessage(errorCount); } catch(e) {}
+                });
+            } catch(e) {
+                div.style.display = 'none';
+                errorCount++;
+                if (errorDiv) {
+                    errorDiv.textContent = 'Mermaid syntax error: ' + (e.message || String(e));
+                    errorDiv.style.display = 'block';
+                }
+                try { window.webkit.messageHandlers.macDownMermaidError.postMessage(errorCount); } catch(e2) {}
+            }
+        });
+    });
+    function copyMermaidCode(btn) {
+        var container = btn.closest('.mermaid-container');
+        var source = container.querySelector('.mermaid-source');
+        if (source) {
+            navigator.clipboard.writeText(source.textContent);
+        } else {
+            var div = container.querySelector('.mermaid');
+            if (div) navigator.clipboard.writeText(div.textContent);
+        }
+        btn.innerHTML = CHECK_ICON;
+        btn.setAttribute('aria-label', 'Copiado!');
+        setTimeout(function() {
+            btn.innerHTML = COPY_ICON;
+            btn.setAttribute('aria-label', 'Copiar');
+        }, 1500);
+    }
+    </script>
     """
 }
