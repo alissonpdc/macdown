@@ -131,11 +131,18 @@ jobs:
 
           python3 "$GITHUB_WORKSPACE/.github/scripts/generate_release_notes.py"
 
-          {
-            echo "notes<<RELEASE_NOTES_EOF"
-            cat /tmp/release_notes.txt
-            echo "RELEASE_NOTES_EOF"
-          } >> "$GITHUB_OUTPUT"
+      - name: Definir release notes como output
+        run: |
+          python3 -c "
+          import os, uuid
+          content = open('/tmp/release_notes.txt').read()
+          delim = 'X' + uuid.uuid4().hex
+          out_path = os.environ['GITHUB_OUTPUT']
+          with open(out_path, 'a') as f:
+              f.write(f'notes<<{delim}\n')
+              f.write(content)
+              f.write(f'\n{delim}\n')
+          "
 
       - name: Criar tag e publicar release
         uses: softprops/action-gh-release@v2
