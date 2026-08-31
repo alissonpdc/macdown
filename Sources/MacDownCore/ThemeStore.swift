@@ -1,14 +1,14 @@
-import SwiftUI
 import Foundation
+import SwiftUI
 
 public enum AppearanceMode: String, CaseIterable, Equatable {
     case system, light, dark
 
     public var colorScheme: ColorScheme? {
         switch self {
-        case .system: return nil
-        case .light: return .light
-        case .dark: return .dark
+        case .system: nil
+        case .light: .light
+        case .dark: .dark
         }
     }
 }
@@ -23,7 +23,7 @@ public final class ThemeStore: ObservableObject {
 
     public init(defaults: UserDefaults = .standard) {
         self.defaults = defaults
-        self.current = AppearanceMode(rawValue: defaults.string(forKey: Self.key) ?? "") ?? .system
+        current = AppearanceMode(rawValue: defaults.string(forKey: Self.key) ?? "") ?? .system
     }
 
     public func set(_ mode: AppearanceMode) {

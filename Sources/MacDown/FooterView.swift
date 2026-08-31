@@ -1,5 +1,5 @@
-import SwiftUI
 import MacDownCore
+import SwiftUI
 
 /// R8.1 — Rodapé fixo: breadcrumb + contagem palavras/caracteres + tasks agregadas.
 /// R10.1 — badge de links quebrados abre popover com a lista; clicar num item
@@ -94,15 +94,15 @@ struct FooterView: View {
 
     private func icon(for reason: BrokenLink.Reason) -> String {
         switch reason {
-        case .fileNotFound: return "doc.questionmark"
-        case .anchorNotFound: return "number"
+        case .fileNotFound: "doc.questionmark"
+        case .anchorNotFound: "number"
         }
     }
 
     private func reasonText(for reason: BrokenLink.Reason) -> String {
         switch reason {
-        case .fileNotFound: return "file not found"
-        case .anchorNotFound: return "anchor not found"
+        case .fileNotFound: "file not found"
+        case .anchorNotFound: "anchor not found"
         }
     }
 }

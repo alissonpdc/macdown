@@ -6,15 +6,20 @@ public struct History: Equatable {
     public init() {}
 
     public var current: String? {
-        (0..<entries.count).contains(index) ? entries[index] : nil
+        (0 ..< entries.count).contains(index) ? entries[index] : nil
     }
 
-    public var canGoBack: Bool { index > 0 }
-    public var canGoForward: Bool { index < entries.count - 1 }
+    public var canGoBack: Bool {
+        index > 0
+    }
+
+    public var canGoForward: Bool {
+        index < entries.count - 1
+    }
 
     /// Nova visita na posição atual: descarta o forward.
     public mutating func push(_ entry: String) {
-        if index >= 0 && index < entries.count - 1 {
+        if index >= 0, index < entries.count - 1 {
             entries = Array(entries[...index])
         }
         // evita duplicar a mesma entrada consecutiva

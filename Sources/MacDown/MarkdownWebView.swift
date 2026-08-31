@@ -1,6 +1,6 @@
+import MacDownCore
 import SwiftUI
 import WebKit
-import MacDownCore
 
 /// R10.1 — pedido de rolagem até um link quebrado (token crescente evita re-trigger).
 struct BrokenLinkNavigateRequest: Equatable {
@@ -48,7 +48,8 @@ struct MarkdownWebView: NSViewRepresentable {
          scrollToBrokenLink: BrokenLinkNavigateRequest? = nil,
          scrollToMatch: SearchNavigateRequest? = nil,
          onActiveHeadingChange: @escaping (_ activeSlug: String?) -> Void = { _ in },
-         onOpenLink: @escaping (URL) -> Void = { _ in }) {
+         onOpenLink: @escaping (URL) -> Void = { _ in })
+    {
         self.html = html
         self.scrollPosition = scrollPosition
         self.searchQuery = searchQuery
@@ -132,7 +133,8 @@ struct MarkdownWebView: NSViewRepresentable {
         }
 
         if let request = scrollToHeading,
-           context.coordinator.lastTOCToken != request.token {
+           context.coordinator.lastTOCToken != request.token
+        {
             context.coordinator.lastTOCToken = request.token
             // R3.7 — pausa o tracking do scroll durante a animação programática,
             // para não destacar seções intermediárias cruzadas no caminho.
@@ -147,7 +149,8 @@ struct MarkdownWebView: NSViewRepresentable {
         }
 
         if let request = scrollToBrokenLink,
-           context.coordinator.lastBrokenLinkToken != request.token {
+           context.coordinator.lastBrokenLinkToken != request.token
+        {
             context.coordinator.lastBrokenLinkToken = request.token
             if webView.isLoading {
                 context.coordinator.pendingBrokenHref = request.href
@@ -159,7 +162,8 @@ struct MarkdownWebView: NSViewRepresentable {
         // Fase 7 (R5.2) — salto até a ocorrência vinda da busca global. O token
         // força re-destaque/scroll mesmo sem mudança de query/current.
         if let request = scrollToMatch,
-           context.coordinator.lastSearchToken != request.token {
+           context.coordinator.lastSearchToken != request.token
+        {
             context.coordinator.lastSearchToken = request.token
             context.coordinator.lastSearchQuery = searchQuery
             context.coordinator.lastSearchCurrent = searchCurrent
@@ -171,7 +175,8 @@ struct MarkdownWebView: NSViewRepresentable {
         }
 
         if context.coordinator.lastSearchQuery != searchQuery ||
-            context.coordinator.lastSearchCurrent != searchCurrent {
+            context.coordinator.lastSearchCurrent != searchCurrent
+        {
             context.coordinator.lastSearchQuery = searchQuery
             context.coordinator.lastSearchCurrent = searchCurrent
             if webView.isLoading {
@@ -189,7 +194,7 @@ struct MarkdownWebView: NSViewRepresentable {
         let css = isDark ? "dark" : "light"
         let themeScript = "<script>document.documentElement.setAttribute('data-theme', '\(css)');</script>"
         return html.replacingOccurrences(of: "</head>",
-            with: themeScript + Self.activeHeadingTrackerJS + "</head>")
+                                         with: themeScript + Self.activeHeadingTrackerJS + "</head>")
     }
 
     /// R3.7 (sync inversa) — escuta o scroll e reporta o último h1..h6 com id cujo
@@ -240,7 +245,7 @@ struct MarkdownWebView: NSViewRepresentable {
     /// para que as posições dos headings estejam finais na 1ª tentativa.
     private func scroll(to slug: String, in webView: WKWebView) {
         let escaped = slug.replacingOccurrences(of: "\\", with: "\\\\")
-                          .replacingOccurrences(of: "'", with: "\\'")
+            .replacingOccurrences(of: "'", with: "\\'")
         webView.evaluateJavaScript("""
         (function(){
             var slug = '\(escaped)';
@@ -266,7 +271,7 @@ struct MarkdownWebView: NSViewRepresentable {
     /// com flash de destaque para identificação rápida.
     private func jumpToBrokenLink(href: String, in webView: WKWebView) {
         let escaped = href.replacingOccurrences(of: "\\", with: "\\\\")
-                          .replacingOccurrences(of: "'", with: "\\'")
+            .replacingOccurrences(of: "'", with: "\\'")
         webView.evaluateJavaScript("""
         (function(){
             var href = '\(escaped)';
@@ -382,7 +387,9 @@ struct MarkdownWebView: NSViewRepresentable {
     static func regexEscaped(_ s: String) -> String {
         var out = ""
         for ch in s {
-            if "\\^$.|?*+()[]{}".contains(ch) { out += "\\" }
+            if "\\^$.|?*+()[]{}".contains(ch) {
+                out += "\\"
+            }
             out += String(ch)
         }
         return out
@@ -438,18 +445,19 @@ struct MarkdownWebView: NSViewRepresentable {
             suppressTOCFeedback = true
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.65) { [weak self] in
                 guard let self else { return }
-                self.suppressTOCFeedback = false
-                if let id = self.lastSuppressedActiveSlug {
-                    self.lastSuppressedActiveSlug = nil
-                    self.parent.onActiveHeadingChange(id.isEmpty ? nil : id)
+                suppressTOCFeedback = false
+                if let id = lastSuppressedActiveSlug {
+                    lastSuppressedActiveSlug = nil
+                    parent.onActiveHeadingChange(id.isEmpty ? nil : id)
                 }
             }
         }
 
         // MARK: WKScriptMessageHandler (JS → Swift)
 
-        func userContentController(_ userContentController: WKUserContentController,
-                                   didReceive message: WKScriptMessage) {
+        func userContentController(_: WKUserContentController,
+                                   didReceive message: WKScriptMessage)
+        {
             guard message.name == MarkdownWebView.tocMessageName,
                   let id = message.body as? String else { return }
             if suppressTOCFeedback {
@@ -460,7 +468,8 @@ struct MarkdownWebView: NSViewRepresentable {
         }
 
         func webView(_ webView: WKWebView, decidePolicyFor navigationAction: WKNavigationAction,
-                     decisionHandler: @escaping (WKNavigationActionPolicy) -> Void) {
+                     decisionHandler: @escaping (WKNavigationActionPolicy) -> Void)
+        {
             if navigationAction.navigationType == .linkActivated, let url = navigationAction.request.url {
                 // Anchor links (#section) — WebKit handles in-page scroll.
                 // R3.12: com loadFileURL a âncora in-page carrega scheme file +
@@ -482,7 +491,7 @@ struct MarkdownWebView: NSViewRepresentable {
             }
         }
 
-        func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
+        func webView(_ webView: WKWebView, didFinish _: WKNavigation!) {
             if parent.scrollPosition > 0 {
                 let js = "window.scrollTo(0, \(parent.scrollPosition));"
                 webView.evaluateJavaScript(js)

@@ -1,14 +1,14 @@
-import SwiftUI
 import Foundation
+import SwiftUI
 
-// R4.4 — renomear/mover externamente atualiza abas sem órfãs; R4.1/R4.2 — mudança externa
-// re-renderiza (recarregando o documento) e marca o indicador discreto de atualizado.
-extension TabStore {
+/// R4.4 — renomear/mover externamente atualiza abas sem órfãs; R4.1/R4.2 — mudança externa
+/// re-renderiza (recarregando o documento) e marca o indicador discreto de atualizado.
+public extension TabStore {
     /// Aplica eventos do FileWatcher ao estado das abas.
-    public func apply(_ events: [WatchEvent]) {
+    func apply(_ events: [WatchEvent]) {
         for event in events {
             switch event.kind {
-            case .renamed(let previous):
+            case let .renamed(previous):
                 handleRename(from: previous, to: event.url)
             case .modified:
                 handleExternalModification(of: event.url)
@@ -19,7 +19,7 @@ extension TabStore {
     }
 
     /// R4.2 — usuário confirma que leu as mudanças externas (R13.2: baseline vira o atual).
-    public func confirmExternalUpdate(in tabID: UUID) {
+    func confirmExternalUpdate(in tabID: UUID) {
         guard let index = tabs.firstIndex(where: { $0.id == tabID }) else { return }
         tabs[index].hasExternalUpdate = false
         tabs[index].baseline = nil
@@ -28,7 +28,7 @@ extension TabStore {
     }
 
     /// R13.3 — alterna visão "Nova"/"Diff" da aba.
-    public func toggleDiffView(in tabID: UUID) {
+    func toggleDiffView(in tabID: UUID) {
         guard let index = tabs.firstIndex(where: { $0.id == tabID }) else { return }
         tabs[index].showsDiff.toggle()
     }
@@ -82,7 +82,9 @@ public struct SearchState: Equatable {
     /// R5.2 — incrementado a cada salto vindo da busca global; força o WebView
     /// a re-navegar mesmo com query/occorrência iguais.
     public var navigationToken: Int = 0
-    public var count: Int { matches.count }
+    public var count: Int {
+        matches.count
+    }
 
     public init() {}
 }
@@ -111,7 +113,8 @@ public struct ReaderTab: Identifiable, Equatable {
                 diffResult: BlockDiffer.Result? = nil,
                 knownChanges: Set<String> = [],
                 showsDiff: Bool = false,
-                search: SearchState = SearchState()) {
+                search: SearchState = SearchState())
+    {
         self.id = id
         self.document = document
         self.scrollOffset = scrollOffset
@@ -146,7 +149,7 @@ public final class TabStore: ObservableObject {
             select(existing.id)
             return
         }
-        let tab = ReaderTab(document: try OpenDocument(url: url))
+        let tab = try ReaderTab(document: OpenDocument(url: url))
         tabs.append(tab)
         histories[tab.id] = History()
         recordVisit(url.path, in: tab.id)
@@ -189,7 +192,7 @@ public final class TabStore: ObservableObject {
     private func cycle(_ step: Int) {
         guard tabs.count > 1 else { return }
         #if DEBUG
-        // print("cycle from", activeTabID as Any, "of", tabs.count)
+            // print("cycle from", activeTabID as Any, "of", tabs.count)
         #endif
         let current = activeTabID.flatMap { id in tabs.firstIndex { $0.id == id } } ?? 0
         let next = (current + step + tabs.count) % tabs.count
@@ -203,8 +206,13 @@ public final class TabStore: ObservableObject {
         histories[tabID]?.push(path)
     }
 
-    public func canGoBack(in tabID: UUID) -> Bool { histories[tabID]?.canGoBack ?? false }
-    public func canGoForward(in tabID: UUID) -> Bool { histories[tabID]?.canGoForward ?? false }
+    public func canGoBack(in tabID: UUID) -> Bool {
+        histories[tabID]?.canGoBack ?? false
+    }
+
+    public func canGoForward(in tabID: UUID) -> Bool {
+        histories[tabID]?.canGoForward ?? false
+    }
 
     public func currentHistoryEntry(in tabID: UUID) -> URL? {
         histories[tabID]?.current.map { URL(fileURLWithPath: $0) }
@@ -228,7 +236,7 @@ public final class TabStore: ObservableObject {
     private func navigateToCurrentEntry(in tabID: UUID) -> URL? {
         guard let path = histories[tabID]?.current,
               let index = tabs.firstIndex(where: { $0.id == tabID }),
-               let doc = try? OpenDocument(url: URL(fileURLWithPath: path)) else { return nil }
+              let doc = try? OpenDocument(url: URL(fileURLWithPath: path)) else { return nil }
         tabs[index] = ReaderTab(document: doc, id: tabID)
         activeTabID = tabID
         return tabs[index].document.url
@@ -237,15 +245,19 @@ public final class TabStore: ObservableObject {
 
 // MARK: Fase 7 — Busca (R5.1 / R5.2)
 
-extension TabStore {
+public extension TabStore {
     /// Atualiza a busca da aba a partir do termo digitado; recalcula as ocorrências.
-    public func updateSearch(query: String, in tabID: UUID, options: SearchOptions? = nil) {
+    func updateSearch(query: String, in tabID: UUID, options: SearchOptions? = nil) {
         guard let index = tabs.firstIndex(where: { $0.id == tabID }) else { return }
         var state = tabs[index].search
         // No-op quando nada mudou: re-focar o campo (Enter da busca cíclica)
         // re-dispara o binding e não deve resetar a ocorrência atual.
-        if state.query == query && (options == nil || options == state.options) { return }
-        if let options { state.options = options }
+        if state.query == query, options == nil || options == state.options {
+            return
+        }
+        if let options {
+            state.options = options
+        }
         state.query = query
         if query.isEmpty {
             state.matches = []
@@ -262,7 +274,7 @@ extension TabStore {
     }
 
     /// Liga/desliga a barra de busca sem perder o termo (usado por Cmd+F / Esc).
-    public func setSearchActive(_ active: Bool, in tabID: UUID) {
+    func setSearchActive(_ active: Bool, in tabID: UUID) {
         guard let index = tabs.firstIndex(where: { $0.id == tabID }) else { return }
         if !active {
             tabs[index].search.query = ""
@@ -274,7 +286,7 @@ extension TabStore {
     }
 
     /// Avança para a próxima ocorrência (Cmd+G).
-    public func nextMatch(in tabID: UUID) {
+    func nextMatch(in tabID: UUID) {
         guard let index = tabs.firstIndex(where: { $0.id == tabID }) else { return }
         guard !tabs[index].search.matches.isEmpty else { return }
         tabs[index].search.current = (tabs[index].search.current + 1) % tabs[index].search.matches.count
@@ -282,7 +294,7 @@ extension TabStore {
     }
 
     /// Volta para a ocorrência anterior (Shift+Cmd+G).
-    public func previousMatch(in tabID: UUID) {
+    func previousMatch(in tabID: UUID) {
         guard let index = tabs.firstIndex(where: { $0.id == tabID }) else { return }
         guard !tabs[index].search.matches.isEmpty else { return }
         let n = tabs[index].search.matches.count
@@ -292,8 +304,9 @@ extension TabStore {
 
     /// R5.2 — abre o arquivo (ou foca a aba existente) e salta a render até a
     /// ocorrência encontrada pela busca global, ativando o destaque do termo.
-    public func open(url: URL, revealingMatch match: SearchMatch,
-                     query: String, options: SearchOptions = []) throws {
+    func open(url: URL, revealingMatch match: SearchMatch,
+              query: String, options: SearchOptions = []) throws
+    {
         try open(url: url)
         guard let tabID = activeTabID,
               let index = tabs.firstIndex(where: { $0.id == tabID }) else { return }

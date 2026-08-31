@@ -37,8 +37,8 @@ public struct MarkdownParser {
             return HorizontalRuleNode()
         }
         if let table = node as? Markdown.Table {
-            let header: [String] = table.head.cells.map { $0.plainText }
-            let rows: [[String]] = table.body.rows.map { row in row.cells.map { $0.plainText } }
+            let header: [String] = table.head.cells.map(\.plainText)
+            let rows: [[String]] = table.body.rows.map { row in row.cells.map(\.plainText) }
             return TableNode(headerCells: header, rows: rows)
         }
         return GenericBlockNode(kindName: String(describing: type(of: node)))
@@ -56,10 +56,12 @@ public struct MarkdownParser {
                 if let para = child as? Paragraph {
                     rawMarkdown += para.format()
                 } else if let ul = child as? Markdown.UnorderedList,
-                          let nested = listNode(from: ul.children, ordered: false) as? ListNode {
+                          let nested = listNode(from: ul.children, ordered: false) as? ListNode
+                {
                     childLists.append(nested)
                 } else if let ol = child as? Markdown.OrderedList,
-                          let nested = listNode(from: ol.children, ordered: true) as? ListNode {
+                          let nested = listNode(from: ol.children, ordered: true) as? ListNode
+                {
                     childLists.append(nested)
                 }
             }
@@ -70,7 +72,9 @@ public struct MarkdownParser {
                 items.append(ListNode.Item(text: rawMarkdown, children: childLists))
             }
         }
-        if !tasks.isEmpty { return TaskListItemsNode(items: tasks) }
+        if !tasks.isEmpty {
+            return TaskListItemsNode(items: tasks)
+        }
         return ListNode(items: items, isOrdered: ordered, isTaskList: false)
     }
 }

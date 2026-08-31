@@ -1,5 +1,5 @@
-import SwiftUI
 import Combine
+import SwiftUI
 
 /// Paleta das três colunas (árvore, conteúdo, TOC) + cromo das abas.
 /// Tons explícitos por aparência: no modo claro as colunas precisam de
@@ -19,8 +19,8 @@ final class MDThemeManager: ObservableObject {
         cancellable = NSApp.publisher(for: \.effectiveAppearance).sink { [weak self] _ in
             guard let self else { return }
             let newDark = NSApp.effectiveAppearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
-            if self.isDark != newDark {
-                self.isDark = newDark
+            if isDark != newDark {
+                isDark = newDark
             }
         }
     }
@@ -41,8 +41,19 @@ final class MDThemeManager: ObservableObject {
     static let chromeLight = Color(red: 0.949, green: 0.953, blue: 0.961)
     static let chromeDark = Color(red: 0.078, green: 0.094, blue: 0.118)
 
-    var contentBackground: Color { isDark ? Self.contentDark : Self.contentLight }
-    var sidebarBackground: Color { isDark ? Self.sidebarDark : Self.sidebarLight }
-    var tocBackground: Color { isDark ? Self.tocDark : Self.tocLight }
-    var chromeBackground: Color { isDark ? Self.chromeDark : Self.chromeLight }
+    var contentBackground: Color {
+        isDark ? Self.contentDark : Self.contentLight
+    }
+
+    var sidebarBackground: Color {
+        isDark ? Self.sidebarDark : Self.sidebarLight
+    }
+
+    var tocBackground: Color {
+        isDark ? Self.tocDark : Self.tocLight
+    }
+
+    var chromeBackground: Color {
+        isDark ? Self.chromeDark : Self.chromeLight
+    }
 }

@@ -1,5 +1,5 @@
-import SwiftUI
 import MacDownCore
+import SwiftUI
 
 /// Conteúdo de uma aba com renderização via WKWebView.
 ///
@@ -46,6 +46,7 @@ struct ReaderTabView: View {
 
         HStack(spacing: 0) {
             // MARK: Coluna central — abas, busca, update, render, estatísticas
+
             VStack(spacing: 0) {
                 TabBarView(store: store, onOpenFile: onOpenFile)
                 if showSearch {
@@ -54,7 +55,7 @@ struct ReaderTabView: View {
                         store.setSearchActive(false, in: tabID)
                     }
                 }
-                if let tab, tab.diffResult != nil && tab.hasExternalUpdate {
+                if let tab, tab.diffResult != nil, tab.hasExternalUpdate {
                     ExternalUpdateBanner(
                         showsDiff: tabShowsDiff,
                         summary: tab.diffResult?.summary
@@ -89,12 +90,14 @@ struct ReaderTabView: View {
                     FooterView(info: footerInfo) { link in
                         brokenLinkRequest = BrokenLinkNavigateRequest(
                             token: (brokenLinkRequest?.token ?? 0) + 1,
-                            href: link.href)
+                            href: link.href
+                        )
                     }
                 }
             }
 
             // MARK: Coluna TOC — apenas TOC, altura total
+
             if uiPrefs.showTOC {
                 if let outline = tocOutline {
                     TocPanelView(
@@ -125,11 +128,12 @@ struct ReaderTabView: View {
     // MARK: - HTML generation
 
     private func buildHTML(doc: OpenDocument, statuses: [BlockDiffer.Status]?,
-                           brokenHrefs: Set<String>) -> String {
+                           brokenHrefs: Set<String>) -> String
+    {
         let converter = MarkdownHTMLConverter()
         converter.brokenHrefs = brokenHrefs
 
-        if let statuses = statuses {
+        if let statuses {
             return buildDiffHTML(doc: doc, statuses: statuses, converter: converter)
         }
 
@@ -141,7 +145,8 @@ struct ReaderTabView: View {
     }
 
     private func buildDiffHTML(doc: OpenDocument, statuses: [BlockDiffer.Status],
-                               converter: MarkdownHTMLConverter) -> String {
+                               converter: MarkdownHTMLConverter) -> String
+    {
         let fm = buildFrontmatterHTML(doc: doc)
         var body = ""
 
@@ -185,10 +190,9 @@ struct ReaderTabView: View {
         guard let fm = doc.frontmatter, !fm.isEmpty else { return "" }
         var html = "<div class=\"frontmatter\"><table>"
         for field in fm.orderedFields {
-            let value: String
-            switch field.value {
-            case .string(let s): value = s
-            case .list(let items): value = items.joined(separator: ", ")
+            let value: String = switch field.value {
+            case let .string(s): s
+            case let .list(items): items.joined(separator: ", ")
             }
             html += "<tr><td class=\"fm-key\">\(MarkdownHTMLConverter.escapeHTML(field.key))</td>"
             html += "<td class=\"fm-value\">\(MarkdownHTMLConverter.escapeHTML(value))</td></tr>"

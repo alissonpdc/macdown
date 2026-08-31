@@ -5,9 +5,13 @@ import Foundation
 public enum LinkResolver {
     public static func resolve(href: String, from sourceFile: URL) -> URL? {
         let trimmed = href.trimmingCharacters(in: .whitespaces)
-        if trimmed.isEmpty || trimmed.hasPrefix("#") { return nil }
+        if trimmed.isEmpty || trimmed.hasPrefix("#") {
+            return nil
+        }
         guard let url = URL(string: trimmed) ?? URL(fileURLWithPath: trimmed).absoluteURL as URL? else { return nil }
-        if url.scheme != nil && url.scheme != "file" { return nil }
+        if url.scheme != nil && url.scheme != "file" {
+            return nil
+        }
 
         let base = sourceFile.deletingLastPathComponent()
         var resolved = trimmed.hasPrefix("/") ? URL(fileURLWithPath: trimmed) : URL(fileURLWithPath: trimmed, relativeTo: base)

@@ -1,4 +1,5 @@
 import Foundation
+
 public struct ParagraphNode: BlockNode, Equatable {
     public let text: String
     /// markdown original do bloco — preserva links/negrito para renderização clicável
@@ -9,7 +10,9 @@ public struct ParagraphNode: BlockNode, Equatable {
         self.rawMarkdown = rawMarkdown
     }
 
-    public static func == (a: ParagraphNode, b: ParagraphNode) -> Bool { a.text == b.text }
+    public static func == (a: ParagraphNode, b: ParagraphNode) -> Bool {
+        a.text == b.text
+    }
 }
 
 public struct CodeBlockNode: BlockNode, Equatable {
@@ -117,7 +120,9 @@ public struct TaskSummary {
         for case let list as TaskListItemsNode in doc.blocks {
             for item in list.items {
                 t += 1
-                if item.isChecked { c += 1 }
+                if item.isChecked {
+                    c += 1
+                }
             }
         }
         checked = c
@@ -129,9 +134,9 @@ public enum PlainTextExtractor {
     public static func extract(from doc: CoreDocument) -> String {
         doc.blocks.map { block -> String in
             switch block {
-            case let h as HeadingNode: return h.inlineText
-            case let p as ParagraphNode: return p.text
-            default: return ""
+            case let h as HeadingNode: h.inlineText
+            case let p as ParagraphNode: p.text
+            default: ""
             }
         }.filter { !$0.isEmpty }.joined(separator: "\n")
     }

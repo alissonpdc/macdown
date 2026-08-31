@@ -1,5 +1,5 @@
-import SwiftUI
 import MacDownCore
+import SwiftUI
 
 /// R2.2/R2.3 — sidebar em árvore com linhas customizadas (sem DisclosureGroup:
 /// o chevron nativo fica preso à margem e os insets variam).
@@ -18,7 +18,7 @@ struct SidebarView: View {
 
     var body: some View {
         Group {
-            if let tree = tree {
+            if let tree {
                 ScrollView {
                     VStack(alignment: .leading, spacing: 0) {
                         folderRows(tree.children, depth: 0)
@@ -47,7 +47,7 @@ struct SidebarView: View {
     // MARK: - Visible items (flat list for keyboard navigation)
 
     private func visibleItems() -> [URL] {
-        guard let tree = tree else { return [] }
+        guard let tree else { return [] }
         var items: [URL] = []
         func walk(_ node: FolderNode) {
             for child in node.children {
@@ -65,11 +65,15 @@ struct SidebarView: View {
     // MARK: - Tree helpers
 
     private func findFolder(_ url: URL) -> FolderNode? {
-        guard let tree = tree else { return nil }
+        guard let tree else { return nil }
         func search(_ node: FolderNode) -> FolderNode? {
-            if node.url.path == url.path { return node }
+            if node.url.path == url.path {
+                return node
+            }
             for child in node.children {
-                if let found = search(child) { return found }
+                if let found = search(child) {
+                    return found
+                }
             }
             return nil
         }
@@ -81,12 +85,18 @@ struct SidebarView: View {
     }
 
     private func findParent(of targetURL: URL) -> FolderNode? {
-        guard let tree = tree else { return nil }
+        guard let tree else { return nil }
         func search(_ node: FolderNode) -> FolderNode? {
             for child in node.children {
-                if child.url.path == targetURL.path { return node }
-                if child.files.contains(where: { $0.path == targetURL.path }) { return child }
-                if let found = search(child) { return found }
+                if child.url.path == targetURL.path {
+                    return node
+                }
+                if child.files.contains(where: { $0.path == targetURL.path }) {
+                    return child
+                }
+                if let found = search(child) {
+                    return found
+                }
             }
             return nil
         }
@@ -99,7 +109,9 @@ struct SidebarView: View {
         let items = visibleItems()
         guard !items.isEmpty else { return .ignored }
         if let current = focusedURL, let idx = items.firstIndex(where: { $0.path == current.path }) {
-            if idx > 0 { focusedURL = items[idx - 1] }
+            if idx > 0 {
+                focusedURL = items[idx - 1]
+            }
         } else {
             focusedURL = items.last
         }
@@ -110,7 +122,9 @@ struct SidebarView: View {
         let items = visibleItems()
         guard !items.isEmpty else { return .ignored }
         if let current = focusedURL, let idx = items.firstIndex(where: { $0.path == current.path }) {
-            if idx < items.count - 1 { focusedURL = items[idx + 1] }
+            if idx < items.count - 1 {
+                focusedURL = items[idx + 1]
+            }
         } else {
             focusedURL = items.first
         }
@@ -141,7 +155,7 @@ struct SidebarView: View {
     /// Left arrow: collapse expanded folder, or collapse parent / move to parent.
     private func collapseOrMoveLeft() -> KeyPress.Result {
         guard let url = focusedURL else { return .ignored }
-        if isFolder(url) && expandedFolders.contains(url.path) {
+        if isFolder(url), expandedFolders.contains(url.path) {
             _ = withAnimation(.easeOut(duration: 0.15)) { expandedFolders.remove(url.path) }
             return .handled
         }
@@ -182,13 +196,19 @@ struct SidebarView: View {
                 indentStep: indentStep,
                 isExpanded: Binding(
                     get: { expandedFolders.contains(folder.url.path) },
-                    set: { if $0 { expandedFolders.insert(folder.url.path) } else { expandedFolders.remove(folder.url.path) } }
+                    set: {
+                        if $0 {
+                            expandedFolders.insert(folder.url.path)
+                        } else {
+                            expandedFolders.remove(folder.url.path)
+                        }
+                    }
                 ),
                 isFocused: focusedURL?.path == folder.url.path,
                 onFocus: { focusedURL = $0 },
                 content: {
-                    self.folderRows(folder.children, depth: depth + 1)
-                    self.fileRows(folder.files, depth: depth + 1)
+                    folderRows(folder.children, depth: depth + 1)
+                    fileRows(folder.files, depth: depth + 1)
                 }
             )
         }.eraseToAnyView()
@@ -196,7 +216,6 @@ struct SidebarView: View {
 
     // MARK: arquivos
 
-    @ViewBuilder
     private func fileRows(_ files: [URL], depth: Int) -> some View {
         ForEach(files, id: \.self) { file in
             fileRow(file, depth: depth)
@@ -245,7 +264,7 @@ private struct FolderRowView<Content: View>: View {
         self.folder = folder
         self.depth = depth
         self.indentStep = indentStep
-        self._isExpanded = isExpanded
+        _isExpanded = isExpanded
         self.isFocused = isFocused
         self.onFocus = onFocus
         self.content = content()
@@ -291,5 +310,7 @@ private struct FolderRowView<Content: View>: View {
 }
 
 private extension ForEach where Content: View {
-    func eraseToAnyView() -> AnyView { AnyView(self) }
+    func eraseToAnyView() -> AnyView {
+        AnyView(self)
+    }
 }

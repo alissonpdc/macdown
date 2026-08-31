@@ -5,7 +5,7 @@ CONTENTS := $(APP_DIR)/Contents
 INSTALL_DIR := /Applications
 PREFIX ?= /usr/local
 
-.PHONY: build plist test install clean
+.PHONY: build plist test install clean lint
 
 ## Empacota o .app em release (janela na frente, ícone próprio, handler de .md)
 build: plist
@@ -34,6 +34,9 @@ install: build
 
 test:
 	swift test
+
+lint:
+	swiftformat --lint Sources/
 
 clean:
 	swift package clean

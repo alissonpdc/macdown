@@ -23,18 +23,19 @@ public enum InlineLinkExtractor {
 
     private static func walk(node: Markup, visit: (Markdown.Link) -> Void) {
         for child in node.children {
-            if let link = child as? Markdown.Link { visit(link) }
+            if let link = child as? Markdown.Link {
+                visit(link)
+            }
             walk(node: child, visit: visit)
         }
     }
 
     /// Markdown → AttributedString com .link apontando para o arquivo local resolvido.
     public static func attributed(markdown: String, baseURL sourceFile: URL) -> AttributedString {
-        var attributed: AttributedString
-        if let parsed = try? AttributedString(markdown: markdown, including: \.appKit) {
-            attributed = parsed
+        var attributed: AttributedString = if let parsed = try? AttributedString(markdown: markdown, including: \.appKit) {
+            parsed
         } else {
-            attributed = AttributedString(markdown)
+            AttributedString(markdown)
         }
         // re-resolve cada link relativo contra o arquivo-fonte
         for run in attributed.runs {

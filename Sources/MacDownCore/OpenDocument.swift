@@ -28,14 +28,16 @@ public struct OpenDocument: Equatable {
         self.url = url
         self.rawText = rawText
         let result = FrontmatterExtractor.extract(from: rawText)
-        self.frontmatter = result.frontmatter
-        self.frontmatterError = result.error
-        self.document = MarkdownParser().parse(result.markdown)
+        frontmatter = result.frontmatter
+        frontmatterError = result.error
+        document = MarkdownParser().parse(result.markdown)
     }
 
     public var wordCount: Int {
         PlainTextExtractor.extract(from: document).split(whereSeparator: \.isWhitespace).count
     }
 
-    public var characterCount: Int { rawText.count }
+    public var characterCount: Int {
+        rawText.count
+    }
 }

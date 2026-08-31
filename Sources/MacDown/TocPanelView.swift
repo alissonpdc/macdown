@@ -1,6 +1,6 @@
-import SwiftUI
 import AppKit
 import MacDownCore
+import SwiftUI
 
 /// R3.7 — estado de UI persistido em UserDefaults (mesmo padrão de ReadingPrefs).
 final class UIPrefs: ObservableObject {
@@ -17,7 +17,9 @@ final class UIPrefs: ObservableObject {
         showTOC = defaults.object(forKey: Self.showTOCKey) as? Bool ?? true
     }
 
-    func toggleTOC() { showTOC.toggle() }
+    func toggleTOC() {
+        showTOC.toggle()
+    }
 }
 
 /// Requisição de navegação do TOC para o WebView. O token crescente garante que
@@ -64,7 +66,8 @@ struct TocPanelView: View {
          onSelect: @escaping (_ slug: String) -> Void,
          requiredWidth: CGFloat,
          initialWidth: CGFloat,
-         activeSlug: String?) {
+         activeSlug: String?)
+    {
         self.outline = outline
         self.onSelect = onSelect
         self.requiredWidth = requiredWidth
@@ -162,7 +165,9 @@ struct TocPanelView: View {
         .gesture(
             DragGesture(minimumDistance: 1)
                 .onChanged { value in
-                    if dragBaseWidth == nil { dragBaseWidth = width }
+                    if dragBaseWidth == nil {
+                        dragBaseWidth = width
+                    }
                     var tx = Transaction()
                     tx.disablesAnimations = true
                     withTransaction(tx) {

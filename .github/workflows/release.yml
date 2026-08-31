@@ -1,7 +1,8 @@
 name: Release
 
 on:
-  push:
+  pull_request:
+    types: [closed]
     branches:
       - main
 
@@ -15,6 +16,7 @@ concurrency:
 jobs:
   build-release:
     name: Build, empacotar e publicar release
+    if: github.event.pull_request.merged == true
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4

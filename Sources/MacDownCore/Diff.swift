@@ -36,9 +36,14 @@ public enum BlockDiffer {
         /// R13.1 — remoções com posição, para exibição na visão Diff.
         public let removals: [Removal]
         /// Blocos alterados/adicionados ("+N").
-        public var changedCount: Int { statuses.filter { $0 != .unchanged }.count }
+        public var changedCount: Int {
+            statuses.filter { $0 != .unchanged }.count
+        }
+
         /// R13.1 — resumo para o indicador: "Atualizado · +8 −2".
-        public var summary: String { "Atualizado · +\(changedCount) −\(removedCount)" }
+        public var summary: String {
+            "Atualizado · +\(changedCount) −\(removedCount)"
+        }
 
         public init(statuses: [Status], removedCount: Int, removals: [Removal] = []) {
             self.statuses = statuses
@@ -54,17 +59,17 @@ public enum BlockDiffer {
     /// Assinatura estável do conteúdo de um bloco (ignora decoração markdown).
     public static func signature(of block: any BlockNode) -> String {
         switch block {
-        case let h as HeadingNode: return "h:\(h.level):\(h.inlineText)"
-        case let p as ParagraphNode: return "p:\(p.text)"
-        case let c as CodeBlockNode: return "c:\(c.language ?? ""):\(c.code)"
-        case let q as QuoteNode: return "q:\(q.plainText)"
-        case let l as ListNode: return "l:\(l.items.map(\.text).joined(separator: "\n"))"
+        case let h as HeadingNode: "h:\(h.level):\(h.inlineText)"
+        case let p as ParagraphNode: "p:\(p.text)"
+        case let c as CodeBlockNode: "c:\(c.language ?? ""):\(c.code)"
+        case let q as QuoteNode: "q:\(q.plainText)"
+        case let l as ListNode: "l:\(l.items.map(\.text).joined(separator: "\n"))"
         case let t as TaskListItemsNode:
-            return "t:" + t.items.map { "\($0.isChecked ? "[x]" : "[ ]")\($0.text)" }.joined(separator: "\n")
+            "t:" + t.items.map { "\($0.isChecked ? "[x]" : "[ ]")\($0.text)" }.joined(separator: "\n")
         case let t as TableNode:
-            return "tbl:\((t.headerCells + t.rows.flatMap { $0 }).joined(separator: "|"))"
-        case let g as GenericBlockNode: return "g:\(g.kindName)"
-        default: return String(describing: block)
+            "tbl:\((t.headerCells + t.rows.flatMap { $0 }).joined(separator: "|"))"
+        case let g as GenericBlockNode: "g:\(g.kindName)"
+        default: String(describing: block)
         }
     }
 
@@ -73,18 +78,18 @@ public enum BlockDiffer {
     /// Texto plano do bloco, para exibir remoções na visão Diff.
     public static func plainText(of block: any BlockNode) -> String {
         switch block {
-        case let h as HeadingNode: return h.inlineText
-        case let p as ParagraphNode: return p.text
-        case let c as CodeBlockNode: return c.code
-        case let q as QuoteNode: return q.plainText
+        case let h as HeadingNode: h.inlineText
+        case let p as ParagraphNode: p.text
+        case let c as CodeBlockNode: c.code
+        case let q as QuoteNode: q.plainText
         case let l as ListNode:
-            return l.items.map { "- \($0.text)" }.joined(separator: "\n")
+            l.items.map { "- \($0.text)" }.joined(separator: "\n")
         case let t as TaskListItemsNode:
-            return t.items.map { "\($0.isChecked ? "[x]" : "[ ]") \($0.text)" }.joined(separator: "\n")
+            t.items.map { "\($0.isChecked ? "[x]" : "[ ]") \($0.text)" }.joined(separator: "\n")
         case let t as TableNode:
-            return ([t.headerCells] + t.rows).map { $0.joined(separator: " | ") }.joined(separator: "\n")
-        case let g as GenericBlockNode: return g.kindName
-        default: return ""
+            ([t.headerCells] + t.rows).map { $0.joined(separator: " | ") }.joined(separator: "\n")
+        case let g as GenericBlockNode: g.kindName
+        default: ""
         }
     }
 
@@ -92,7 +97,8 @@ public enum BlockDiffer {
 
     public static func diff(baseline: CoreDocument,
                             updated: CoreDocument,
-                            knownChanges: Set<String> = []) -> Result {
+                            knownChanges: Set<String> = []) -> Result
+    {
         let old = baseline.blocks.map(signature(of:))
         let new = updated.blocks.map(signature(of:))
         let table = lcsTable(old, new)
@@ -100,7 +106,7 @@ public enum BlockDiffer {
         var matchOfNew = [Int?](repeating: nil, count: new.count)
         var matchOfOld = [Int?](repeating: nil, count: old.count)
         var i = 0, j = 0
-        while i < old.count && j < new.count {
+        while i < old.count, j < new.count {
             if old[i] == new[j] {
                 matchOfNew[j] = i
                 matchOfOld[i] = j
@@ -114,7 +120,7 @@ public enum BlockDiffer {
         }
 
         var statuses = [Status](repeating: .unchanged, count: new.count)
-        for jj in 0..<new.count where matchOfNew[jj] == nil {
+        for jj in 0 ..< new.count where matchOfNew[jj] == nil {
             statuses[jj] = knownChanges.contains(new[jj]) ? .weak : .strong
         }
 
@@ -124,9 +130,11 @@ public enum BlockDiffer {
         while k < old.count {
             guard matchOfOld[k] == nil else { k += 1; continue }
             let start = k
-            while k < old.count && matchOfOld[k] == nil { k += 1 }
+            while k < old.count && matchOfOld[k] == nil {
+                k += 1
+            }
             let insertAt = k < old.count ? matchOfOld[k]! : new.count
-            let texts = (start..<k).map { plainText(of: baseline.blocks[$0]) }
+            let texts = (start ..< k).map { plainText(of: baseline.blocks[$0]) }
             if let last = removals.last, last.insertAt == insertAt {
                 removals[removals.count - 1] = Removal(insertAt: insertAt, texts: last.texts + texts)
             } else {
@@ -150,7 +158,8 @@ public enum BlockDiffer {
     }
 
     static func diff(oldSignatures: [String], newSignatures: [String],
-                     knownChanges: Set<String>) -> Result {
+                     knownChanges: Set<String>) -> Result
+    {
         let n = oldSignatures.count, m = newSignatures.count
         var lcs = [[Int]](repeating: [Int](repeating: 0, count: m + 1), count: n + 1)
         for i in stride(from: n - 1, through: 0, by: -1) {
@@ -163,7 +172,7 @@ public enum BlockDiffer {
 
         var matchOfNew = [Int?](repeating: nil, count: m)
         var i = 0, j = 0
-        while i < n && j < m {
+        while i < n, j < m {
             if oldSignatures[i] == newSignatures[j] {
                 matchOfNew[j] = i
                 i += 1
@@ -176,7 +185,7 @@ public enum BlockDiffer {
         }
 
         var statuses = [Status](repeating: .unchanged, count: m)
-        for jj in 0..<m where matchOfNew[jj] == nil {
+        for jj in 0 ..< m where matchOfNew[jj] == nil {
             statuses[jj] = knownChanges.contains(newSignatures[jj]) ? .weak : .strong
         }
         let matches = matchOfNew.compactMap { $0 }.count
