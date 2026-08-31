@@ -10,31 +10,12 @@ Follow EXACTLY this structure:
 ## ✨ Features
 - **Bold label**: description
 
+## 🔧 Improvements
+- **Bold label**: description
+
 ## 🐛 Fixes
 - **Bold label**: description
 
-## 🔧 Under the hood
-- **Bold label**: description
-
-Classification rules:
-- CI, build, tooling, formatting, docs, dependencies and refactor commits go under "Under the hood"
-- Every bullet MUST be: `- **Short label**: description`
-- Ignore merge commits and commits starting with "release:"
-- Do NOT include empty sections
-
-3. Finish the output with EXACTLY this block (after a blank line):
-
-## 📦 Install
-
-1. Download `MacDown.app.zip` from the assets below
-2. Unzip and move `MacDown.app` to `/Applications`
-3. If macOS blocks the first launch, run:
-
-   ```bash
-   xattr -cr /Applications/MacDown.app
-   ```
-
-Requires **macOS 14 (Sonoma)** or later.
 
 ---
 
