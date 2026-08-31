@@ -123,7 +123,7 @@ jobs:
           else
             RANGE="$LAST_TAG..HEAD"
           fi
-          git log --pretty=format:"- %s" "$RANGE" | grep -v "release:" > /tmp/commits.txt
+          git log --no-merges --pretty=format:"- %s" "$RANGE" | grep -v "release:" > /tmp/commits.txt
           git diff --stat "$RANGE" 2>/dev/null > /tmp/diff.txt || echo "N/A" > /tmp/diff.txt
           echo "$PRIMARY_MODEL" > /tmp/model.txt
           echo "${{ secrets.OPENROUTER_API_KEY }}" > /tmp/api_key.txt
