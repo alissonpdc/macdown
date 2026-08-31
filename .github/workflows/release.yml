@@ -130,6 +130,9 @@ jobs:
 
           python3 "$GITHUB_WORKSPACE/.github/scripts/generate_release_notes.py"
 
+          echo "----- Release notes geradas -----"
+          cat /tmp/release_notes.txt
+
       - name: Definir release notes como output
         id: notes
         run: |
