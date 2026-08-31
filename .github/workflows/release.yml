@@ -115,7 +115,6 @@ jobs:
           echo "model=$BEST_MODEL" >> "$GITHUB_OUTPUT"
 
       - name: Gerar release notes (OpenRouter + fallback)
-        id: notes
         run: |
           LAST_TAG="${{ steps.version.outputs.last_tag }}"
           PRIMARY_MODEL="${{ steps.model.outputs.model }}"
@@ -132,6 +131,7 @@ jobs:
           python3 "$GITHUB_WORKSPACE/.github/scripts/generate_release_notes.py"
 
       - name: Definir release notes como output
+        id: notes
         run: |
           python3 -c "
           import os, uuid
