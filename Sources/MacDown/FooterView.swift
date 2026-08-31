@@ -8,6 +8,8 @@ struct FooterView: View {
     let info: FooterInfo
     /// R10.1 — callback ao clicar num item do popover (nil = popover sem navegação).
     var onSelectBrokenLink: ((BrokenLink) -> Void)?
+    /// R10.1 — erros de mermaid reportados pelo WKWebView via JS→Swift.
+    var mermaidErrorCount: Int = 0
 
     @State private var showBrokenList = false
 
@@ -17,6 +19,14 @@ struct FooterView: View {
                 .lineLimit(1)
                 .truncationMode(.middle)
             Spacer()
+            // R10.1 — badge de erros mermaid
+            if mermaidErrorCount > 0 {
+                Label("\(mermaidErrorCount) mermaid error\(mermaidErrorCount == 1 ? "" : "s")",
+                      systemImage: "exclamationmark.triangle")
+                    .foregroundStyle(.orange)
+                    .help("Mermaid diagrams with syntax errors")
+                    .accessibilityLabel("\(mermaidErrorCount) mermaid errors")
+            }
             // R10.1 — badge discreto de links quebrados; clique abre a lista
             if !info.brokenLinks.isEmpty {
                 Button {
