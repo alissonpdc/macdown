@@ -2,13 +2,8 @@ name: CI
 
 on:
   push:
-    branches:
-      - 'feat/**'
-      - 'fix/**'
-      - 'refactor/**'
-      - 'docs/**'
-      - 'test/**'
-      - 'chore/**'
+    branches-ignore:
+      - main
 
 concurrency:
   group: ci-${{ github.ref }}

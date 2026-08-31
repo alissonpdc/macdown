@@ -88,7 +88,6 @@ def extract_notes(resp_text):
 
 def main():
     api_key = open("/tmp/api_key.txt").read().strip()
-    primary = open("/tmp/model.txt").read().strip()
     commits = open("/tmp/commits.txt").read().strip()
     diff = open("/tmp/diff.txt").read().strip()
 
@@ -101,12 +100,10 @@ def main():
         print(f"Erro ao listar modelos free do OpenRouter: {e}", file=sys.stderr)
         sys.exit(1)
 
-    # Primary (melhor modelo free do step de seleção) primeiro, depois todos
-    candidates = [primary] + [m for m in models if m != primary] if primary else models
-    print(f"{len(candidates)} modelos free disponíveis", file=sys.stderr)
+    print(f"{len(models)} modelos free disponíveis", file=sys.stderr)
 
     notes = None
-    for m in candidates:
+    for m in models:
         print(f"Trying model: {m}", file=sys.stderr)
         resp = generate_notes(api_key, m, prompt)
         notes = extract_notes(resp)
