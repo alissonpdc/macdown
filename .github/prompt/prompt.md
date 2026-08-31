@@ -7,6 +7,7 @@ Follow EXACTLY this structure:
 
 2. Then ONLY the non-empty sections below, in this order, with EXACTLY these headers:
 
+```
 ## ✨ Features
 - **Bold label**: description
 
@@ -15,13 +16,7 @@ Follow EXACTLY this structure:
 
 ## 🐛 Fixes
 - **Bold label**: description
-
-
----
-
-💬 Feature requests are welcome — [open an issue](https://github.com/alissonpdc/macdown/issues)!
-
-Licensed under the [Apache License 2.0](https://github.com/alissonpdc/macdown/blob/main/LICENSE).
+```
 
 Do NOT output anything else: no explanations, no code fences around the answer, no top-level title, no version numbers.
 
