@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
-"""Generate release notes via OpenRouter API with model fallback chain.
+"""Generate release notes via OpenRouter API, trying ALL free models.
 
 The prompt lives in .github/prompt/prompt.md and the model output is
 used verbatim as the release body — no post-processing.
+If every free model fails, the script exits non-zero and the pipeline fails.
 """
 
 import json
@@ -12,6 +13,8 @@ import sys
 from pathlib import Path
 
 PROMPT_FILE = Path(__file__).resolve().parent.parent / "prompt" / "prompt.md"
+MODELS_URL = "https://openrouter.ai/api/v1/models"
+CHAT_URL = "https://openrouter.ai/api/v1/chat/completions"
 
 
 def safe_json(text):
@@ -20,7 +23,35 @@ def safe_json(text):
     return json.loads(clean)
 
 
-def call_api(api_key, model, prompt):
+def curl_json(url, api_key):
+    result = subprocess.run(
+        ["curl", "-s", "--max-time", "45", url,
+         "-H", f"Authorization: Bearer {api_key}"],
+        capture_output=True, text=True,
+    )
+    return safe_json(result.stdout)
+
+
+def free_models(api_key):
+    """Return all free text->text model ids, best context first."""
+    data = curl_json(MODELS_URL, api_key)
+    free = []
+    for m in data.get("data", []):
+        p = m.get("pricing", {})
+        if str(p.get("prompt", "1")) != "0" or str(p.get("completion", "1")) != "0":
+            continue
+        modality = m.get("architecture", {}).get("modality", "")
+        if not (modality.endswith("->text") or modality == "text->text"):
+            continue
+        # Skip models restricted to agentic harnesses only
+        if "inkling" in m["id"].lower():
+            continue
+        free.append(m)
+    free.sort(key=lambda m: m.get("context_length") or 0, reverse=True)
+    return [m["id"] for m in free]
+
+
+def generate_notes(api_key, model, prompt):
     """Call OpenRouter chat completions endpoint."""
     body = json.dumps({
         "model": model,
@@ -29,8 +60,7 @@ def call_api(api_key, model, prompt):
         "temperature": 0.3,
     })
     result = subprocess.run(
-        ["curl", "-s", "--max-time", "45",
-         "https://openrouter.ai/api/v1/chat/completions",
+        ["curl", "-s", "--max-time", "45", CHAT_URL,
          "-H", f"Authorization: Bearer {api_key}",
          "-H", "Content-Type: application/json",
          "-d", body],
@@ -58,25 +88,27 @@ def extract_notes(resp_text):
 
 def main():
     api_key = open("/tmp/api_key.txt").read().strip()
-    model = open("/tmp/model.txt").read().strip()
+    primary = open("/tmp/model.txt").read().strip()
     commits = open("/tmp/commits.txt").read().strip()
     diff = open("/tmp/diff.txt").read().strip()
 
     prompt = PROMPT_FILE.read_text()
     prompt = prompt.replace("{COMMITS}", commits).replace("{DIFF}", diff)
 
-    # Models to try in order: primary + fallbacks
-    fallbacks = [
-        "minimax/minimax-m3:free",
-        "google/gemma-4-26b-a4b-it:free",
-        "nvidia/nemotron-3-super-120b-a12b:free",
-    ]
-    candidates = [model] + [m for m in fallbacks if m != model]
+    try:
+        models = free_models(api_key)
+    except Exception as e:
+        print(f"Erro ao listar modelos free do OpenRouter: {e}", file=sys.stderr)
+        sys.exit(1)
+
+    # Primary (melhor modelo free do step de seleção) primeiro, depois todos
+    candidates = [primary] + [m for m in models if m != primary] if primary else models
+    print(f"{len(candidates)} modelos free disponíveis", file=sys.stderr)
 
     notes = None
     for m in candidates:
         print(f"Trying model: {m}", file=sys.stderr)
-        resp = call_api(api_key, m, prompt)
+        resp = generate_notes(api_key, m, prompt)
         notes = extract_notes(resp)
         if notes:
             print(f"OK com {m} ({len(notes)} chars)", file=sys.stderr)
@@ -85,9 +117,8 @@ def main():
         print(f"Falhou: {m}", file=sys.stderr)
 
     if not notes:
-        # Last resort: raw commit list, used verbatim
-        print("Todos os modelos falharam, usando lista de commits", file=sys.stderr)
-        notes = commits
+        print("::error::Todos os modelos free do OpenRouter falharam — release abortada", file=sys.stderr)
+        sys.exit(1)
 
     with open("/tmp/release_notes.txt", "w") as f:
         f.write(notes)
