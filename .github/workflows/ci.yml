@@ -66,7 +66,12 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh pr create \
-            --base main \
-            --title "${{ github.ref_name }}" \
-            --body "PR auto-gerado pelo CI após lint + build + testes passarem."
+          EXISTING=$(gh pr list --head "${{ github.ref_name }}" --base main --json number --jq '.[0].number')
+          if [ -n "$EXISTING" ]; then
+            echo "PR #$EXISTING já existe, nada a fazer."
+          else
+            gh pr create \
+              --base main \
+              --title "${{ github.ref_name }}" \
+              --body "PR auto-gerado pelo CI após lint + build + testes passarem."
+          fi
