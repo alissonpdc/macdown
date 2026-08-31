@@ -27,9 +27,18 @@ jobs:
       - name: Lint (swiftformat --lint)
         run: swiftformat --swiftversion 5.9 --lint Sources/
 
-  build-and-test:
-    name: Build (zero warnings) + Testes
-    needs: lint
+  test:
+    name: Testes
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Testes
+        run: swift test
+
+  build:
+    name: Build (zero warnings)
+    needs: [lint, test]
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
@@ -43,26 +52,19 @@ jobs:
             exit 1
           fi
 
-      - name: Testes
-        run: swift test
-
   create-pr:
     name: Criar PR para main
-    needs: build-and-test
+    needs: build
     runs-on: ubuntu-latest
     permissions:
       contents: write
       pull-requests: write
     steps:
-      - uses: actions/checkout@v4
-
       - name: Criar Pull Request
-        uses: peter-evans/create-pull-request@v6
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          branch: ${{ github.ref_name }}
-          base: main
-          title: "${{ github.ref_name }}"
-          body: |
-            PR auto-gerado pelo CI após lint + build + testes passarem.
-          commit-message: "ci: auto-PR after passing CI"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh pr create \
+            --base main \
+            --title "${{ github.ref_name }}" \
+            --body "PR auto-gerado pelo CI após lint + build + testes passarem."
