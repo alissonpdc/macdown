@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Generate release notes via OpenRouter API with model fallback chain.
 
-The prompt lives in prompt/prompt.md (repo root) and the model output is
+The prompt lives in .github/prompt/prompt.md and the model output is
 used verbatim as the release body — no post-processing.
 """
 
@@ -11,7 +11,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-PROMPT_FILE = Path(__file__).resolve().parent.parent.parent / "prompt" / "prompt.md"
+PROMPT_FILE = Path(__file__).resolve().parent.parent / "prompt" / "prompt.md"
 
 
 def safe_json(text):
