@@ -67,57 +67,9 @@ jobs:
           echo "new_tag=$NEW_TAG" >> "$GITHUB_OUTPUT"
           echo "Versão: $LAST_TAG -> $NEW_TAG"
 
-      - name: Selecionar melhor modelo free (OpenRouter)
-        id: model
-        run: |
-          curl -s "https://openrouter.ai/api/v1/models" \
-            -H "Authorization: Bearer ${{ secrets.OPENROUTER_API_KEY }}" \
-            -o /tmp/models_raw.json
-
-          python3 << 'PYEOF'
-          import json, re
-
-          with open("/tmp/models_raw.json") as f:
-              raw = f.read()
-
-          clean = re.sub(r'[\x00-\x1f\x7f]', ' ', raw)
-          data = json.loads(clean)
-          models = data.get("data", [])
-
-          free = []
-          for m in models:
-              p = m.get("pricing", {})
-              if str(p.get("prompt", "1")) == "0" and str(p.get("completion", "1")) == "0":
-                  arch = m.get("architecture", {})
-                  modality = arch.get("modality", "")
-                  # Prefer text->text models, skip restricted harness-only models
-                  if modality.endswith("->text") or modality == "text->text":
-                      mid = m["id"]
-                      # Skip models restricted to agentic harnesses only
-                      if "inkling" in mid.lower():
-                          continue
-                      free.append(m)
-
-          free.sort(key=lambda m: m.get("context_length") or 0, reverse=True)
-
-          if free:
-              best = free[0]["id"]
-              print(f"Melhor modelo free: {best} (ctx={free[0].get('context_length', 0)})")
-              with open("/tmp/model_output.txt", "w") as f:
-                  f.write(best)
-          else:
-              print("Nenhum modelo free encontrado, usando fallback")
-              with open("/tmp/model_output.txt", "w") as f:
-                  f.write("google/gemma-4-26b-a4b-it:free")
-          PYEOF
-
-          BEST_MODEL=$(cat /tmp/model_output.txt)
-          echo "model=$BEST_MODEL" >> "$GITHUB_OUTPUT"
-
       - name: Gerar release notes (OpenRouter + fallback)
         run: |
           LAST_TAG="${{ steps.version.outputs.last_tag }}"
-          PRIMARY_MODEL="${{ steps.model.outputs.model }}"
           if [ "$LAST_TAG" = "v0.0.0" ]; then
             RANGE="HEAD"
           else
@@ -125,7 +77,6 @@ jobs:
           fi
           git log --no-merges --pretty=format:"- %s" "$RANGE" | grep -v "release:" > /tmp/commits.txt
           git diff --stat "$RANGE" 2>/dev/null > /tmp/diff.txt || echo "N/A" > /tmp/diff.txt
-          echo "$PRIMARY_MODEL" > /tmp/model.txt
           echo "${{ secrets.OPENROUTER_API_KEY }}" > /tmp/api_key.txt
 
           python3 "$GITHUB_WORKSPACE/.github/scripts/generate_release_notes.py"
