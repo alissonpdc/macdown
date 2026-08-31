@@ -1,5 +1,5 @@
-import SwiftUI
 import MacDownCore
+import SwiftUI
 
 /// R6.1 — barra de abas estilo VSCode com integração visual ao conteúdo.
 /// Vive na coluna central (ao lado do TOC em altura total): com uma aba só,
@@ -8,6 +8,7 @@ import MacDownCore
 struct TabBarView: View {
     @ObservedObject var store: TabStore
     var onOpenFile: () -> Void
+    @EnvironmentObject private var mdTheme: MDThemeManager
 
     var body: some View {
         GeometryReader { geo in
@@ -42,9 +43,8 @@ struct TabBarView: View {
             }
         }
         .frame(height: 32)
-        .background(MDTheme.chromeBackground)
+        .background(mdTheme.chromeBackground)
     }
-
 }
 
 struct TabItemView: View {
@@ -55,6 +55,7 @@ struct TabItemView: View {
     let onClose: () -> Void
     @State private var hovering = false
     @State private var hoveringClose = false
+    @EnvironmentObject private var mdTheme: MDThemeManager
 
     var body: some View {
         HStack(spacing: 6) {
@@ -89,7 +90,7 @@ struct TabItemView: View {
                 Rectangle()
                     .fill(isActive ? Color.accentColor : .clear)
                     .frame(height: isActive ? 2 : 0)
-                isActive ? MDTheme.contentBackground
+                isActive ? mdTheme.contentBackground
                     : hovering ? Color.primary.opacity(0.06)
                     : Color.clear
             }

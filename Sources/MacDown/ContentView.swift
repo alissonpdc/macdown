@@ -1,5 +1,5 @@
-import SwiftUI
 import MacDownCore
+import SwiftUI
 
 struct ContentView: View {
     let initialURL: URL?
@@ -20,9 +20,15 @@ struct ContentView: View {
                 expandedFolders: $expandedFolders,
                 activeURL: tabStore.activeTab?.document.url,
                 onOpenFile: { url in
-                    try? tabStore.open(url: url)
-                    recordVisitIfNeeded(url)
-                    refreshWatchers()
+                    do {
+                        try tabStore.open(url: url)
+                        recordVisitIfNeeded(url)
+                        refreshWatchers()
+                    } catch OpenDocumentError.readFailed {
+                        loadError = "File not found or unreadable: \(url.path)"
+                    } catch {
+                        loadError = error.localizedDescription
+                    }
                 }
             )
         } detail: {
@@ -58,7 +64,9 @@ struct ContentView: View {
             drainPendingOpenURLs()
         }
         .onReceive(NotificationCenter.default.publisher(for: .macDownCloseActiveTab)) { _ in
-            if let id = tabStore.activeTabID { tabStore.close(id: id) }
+            if let id = tabStore.activeTabID {
+                tabStore.close(id: id)
+            }
         }
         .onReceive(NotificationCenter.default.publisher(for: .macDownGoBack)) { _ in
             guard let id = tabStore.activeTabID else { return }
@@ -69,7 +77,9 @@ struct ContentView: View {
             _ = tabStore.goForward(in: id)
         }
         .onReceive(NotificationCenter.default.publisher(for: .macDownOpenFolder)) { note in
-            if let url = note.object as? URL { loadFolder(url) }
+            if let url = note.object as? URL {
+                loadFolder(url)
+            }
         }
         .onReceive(NotificationCenter.default.publisher(for: .macDownOpenFile)) { _ in
             openViaPanel()
@@ -89,13 +99,19 @@ struct ContentView: View {
         }
         .onReceive(NotificationCenter.default.publisher(for: .macDownToggleDiff)) { _ in
             // R13.3 — Cmd+D alterna a visão da aba ativa
-            if let id = tabStore.activeTabID { tabStore.toggleDiffView(in: id) }
+            if let id = tabStore.activeTabID {
+                tabStore.toggleDiffView(in: id)
+            }
         }
         .onReceive(NotificationCenter.default.publisher(for: .macDownFindNext)) { _ in
-            if let id = tabStore.activeTabID { tabStore.nextMatch(in: id) }
+            if let id = tabStore.activeTabID {
+                tabStore.nextMatch(in: id)
+            }
         }
         .onReceive(NotificationCenter.default.publisher(for: .macDownFindPrevious)) { _ in
-            if let id = tabStore.activeTabID { tabStore.previousMatch(in: id) }
+            if let id = tabStore.activeTabID {
+                tabStore.previousMatch(in: id)
+            }
         }
         .onReceive(NotificationCenter.default.publisher(for: .macDownFindGlobal)) { _ in
             showGlobalSearch = true
@@ -140,9 +156,10 @@ struct ContentView: View {
 
     /// R2.1 — carrega pasta raiz da sidebar.
     private func loadFolder(_ url: URL) {
-        folderTree = FolderScanner.scan(root: url)
+        let resolved = url.resolvingSymlinksInPath()
+        folderTree = FolderScanner.scan(root: resolved)
         // raiz e subpastas de primeiro nível expandidas por padrão
-        expandedFolders = [url.path]
+        expandedFolders = [resolved.path]
         if let tree = folderTree {
             for child in tree.children where !child.files.isEmpty {
                 expandedFolders.insert(child.url.path)
@@ -157,11 +174,15 @@ struct ContentView: View {
     private func refreshWatchers() {
         watcher?.stop()
         var paths: [URL] = []
-        if let root = folderTree?.url { paths.append(root) }
+        if let root = folderTree?.url {
+            paths.append(root)
+        }
         let rootPath = folderTree?.url.standardizedFileURL.path
         for tab in tabStore.tabs {
             let path = tab.document.url.standardizedFileURL.path
-            if let rootPath, path.hasPrefix(rootPath + "/") { continue }
+            if let rootPath, path.hasPrefix(rootPath + "/") {
+                continue
+            }
             if !paths.contains(where: { $0.standardizedFileURL == tab.document.url.standardizedFileURL }) {
                 paths.append(tab.document.url)
             }
@@ -179,9 +200,9 @@ struct ContentView: View {
         // R4.3 — mudanças estruturais recarregam a árvore da sidebar
         let structural = events.contains { event in
             switch event.kind {
-            case .created, .deleted: return true
-            case .renamed: return true
-            case .modified: return false
+            case .created, .deleted: true
+            case .renamed: true
+            case .modified: false
             }
         }
         guard structural, let root = folderTree?.url else { return }
@@ -191,9 +212,9 @@ struct ContentView: View {
     private func openViaPanel() {
         let panel = NSOpenPanel()
         panel.allowedContentTypes = [.init(filenameExtension: "md") ?? .text,
-                                      .init(filenameExtension: "markdown") ?? .text,
-                                      .init(filenameExtension: "mdown") ?? .text,
-                                      .init(filenameExtension: "mkd") ?? .text]
+                                     .init(filenameExtension: "markdown") ?? .text,
+                                     .init(filenameExtension: "mdown") ?? .text,
+                                     .init(filenameExtension: "mkd") ?? .text]
         panel.allowsMultipleSelection = true
         panel.canChooseDirectories = false
         guard panel.runModal() == .OK else { return }
@@ -228,10 +249,12 @@ struct ContentView: View {
             }
             walk(tree)
         }
-        let known = urls.map { $0.standardizedFileURL.path }
+        let known = urls.map(\.standardizedFileURL.path)
         for tab in tabStore.tabs {
             let path = tab.document.url.standardizedFileURL.path
-            if !known.contains(path) { urls.append(tab.document.url) }
+            if !known.contains(path) {
+                urls.append(tab.document.url)
+            }
         }
         return urls
     }
@@ -245,11 +268,17 @@ struct SearchBarView: View {
     var isFocused: FocusState<Bool>.Binding
     var onClose: () -> Void
 
-    private var tab: ReaderTab? { store.activeTab }
+    private var tab: ReaderTab? {
+        store.activeTab
+    }
 
     private var binding: Binding<String> {
         Binding(get: { store.activeTab?.search.query ?? "" },
-                set: { if let id = store.activeTabID { store.updateSearch(query: $0, in: id) } })
+                set: {
+                    if let id = store.activeTabID {
+                        store.updateSearch(query: $0, in: id)
+                    }
+                })
     }
 
     var body: some View {
@@ -259,7 +288,9 @@ struct SearchBarView: View {
                 .focused(isFocused)
                 .textFieldStyle(.plain)
                 .onSubmit {
-                    if let id = store.activeTabID { store.nextMatch(in: id) }
+                    if let id = store.activeTabID {
+                        store.nextMatch(in: id)
+                    }
                     // Enter não pode derrubar o foco: o re-render da busca órfã
                     // ignora os Enter seguintes. Re-afirma o foco no campo para
                     // permitir a busca cíclica (Chrome-like).
@@ -274,10 +305,18 @@ struct SearchBarView: View {
                     .frame(minWidth: 44, alignment: .trailing)
                     .monospacedDigit()
             }
-            Button { if let id = store.activeTabID { store.previousMatch(in: id) } } label: {
+            Button {
+                if let id = store.activeTabID {
+                    store.previousMatch(in: id)
+                }
+            } label: {
                 Image(systemName: "chevron.up")
             }.help("Previous (Shift+⌘G)")
-            Button { if let id = store.activeTabID { store.nextMatch(in: id) } } label: {
+            Button {
+                if let id = store.activeTabID {
+                    store.nextMatch(in: id)
+                }
+            } label: {
                 Image(systemName: "chevron.down")
             }.help("Next (⌘G)")
             Button { onClose() } label: { Image(systemName: "xmark") }.help("Close (Esc)")
@@ -308,9 +347,15 @@ struct GlobalSearchView: View {
 
     private var options: SearchOptions {
         var opts: SearchOptions = []
-        if caseSensitive { opts.insert(.caseSensitive) }
-        if wholeWord { opts.insert(.wholeWord) }
-        if useRegex { opts.insert(.regex) }
+        if caseSensitive {
+            opts.insert(.caseSensitive)
+        }
+        if wholeWord {
+            opts.insert(.wholeWord)
+        }
+        if useRegex {
+            opts.insert(.regex)
+        }
         return opts
     }
 
@@ -335,8 +380,8 @@ struct GlobalSearchView: View {
                         ForEach(file.matches) { m in
                             Button { open(file.url, match: m) } label: {
                                 Text(Self.highlightedSnippet(m.snippet,
-                                                            start: m.snippetMatchStart,
-                                                            length: m.range.count))
+                                                             start: m.snippetMatchStart,
+                                                             length: m.range.count))
                                     .lineLimit(2)
                                     .frame(maxWidth: .infinity, alignment: .leading)
                             }

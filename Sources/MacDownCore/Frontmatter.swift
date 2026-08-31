@@ -19,18 +19,22 @@ public struct Frontmatter: Equatable {
         orderedFields.first(where: { $0.key == key })?.value
     }
 
-    public var isEmpty: Bool { orderedFields.isEmpty }
+    public var isEmpty: Bool {
+        orderedFields.isEmpty
+    }
 
-    public var count: Int { orderedFields.count }
+    public var count: Int {
+        orderedFields.count
+    }
 
     public init(_ fields: [(key: String, value: YAMLValue)]) {
-        self.orderedFields = fields
+        orderedFields = fields
     }
 }
 
 public struct FrontmatterResult {
     public let frontmatter: Frontmatter?
-    public let markdown: String   // conteúdo sem o bloco frontmatter
+    public let markdown: String // conteúdo sem o bloco frontmatter
     public let error: String?
 }
 
@@ -60,7 +64,7 @@ public enum FrontmatterExtractor {
             currentKey = nil
         }
 
-        for rawLine in lines[1..<close] {
+        for rawLine in lines[1 ..< close] {
             let line = rawLine.trimmingCharacters(in: .whitespaces)
             if line.hasPrefix("- ") || line == "-" {
                 guard currentKey != nil else { failed = true; break }
@@ -78,7 +82,7 @@ public enum FrontmatterExtractor {
             if !value.isEmpty {
                 // R10.2 — estruturas YAML fora do subconjunto suportado são sinalizadas, não engolidas
                 if value.hasPrefix("[") || value.hasPrefix("{") {
-                    if !value.hasSuffix("]") && !value.hasSuffix("}") {
+                    if !value.hasSuffix("]"), !value.hasSuffix("}") {
                         failed = true; break
                     }
                     failed = true; break

@@ -1,5 +1,5 @@
-import SwiftUI
 import Foundation
+import SwiftUI
 
 /// R3.11/R11.1 — preferências de leitura (largura + zoom) persistidas em UserDefaults.
 public final class ReadingPrefs: ObservableObject {
@@ -29,10 +29,10 @@ public final class ReadingPrefs: ObservableObject {
         self.defaults = defaults
         let w = defaults.object(forKey: Self.widthKey) != nil
             ? defaults.double(forKey: Self.widthKey) : Self.defaultWidth
-        self.widthCh = max(Self.minWidth, min(Self.maxWidth, w))
+        widthCh = max(Self.minWidth, min(Self.maxWidth, w))
         let f = defaults.object(forKey: Self.fontSizeKey) != nil
             ? defaults.double(forKey: Self.fontSizeKey) : Self.defaultFontSize
-        self.fontSize = max(Self.minFontSize, min(Self.maxFontSize, f))
+        fontSize = max(Self.minFontSize, min(Self.maxFontSize, f))
     }
 
     // MARK: - Width

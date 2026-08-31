@@ -9,17 +9,36 @@ on:
       - 'docs/**'
       - 'test/**'
       - 'chore/**'
-  pull_request:
-    branches:
-      - main
 
 concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
+  lint:
+    name: Lint
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Instalar SwiftFormat
+        run: brew install swiftformat
+
+      - name: Lint (swiftformat --lint)
+        run: swiftformat --swiftversion 5.9 --lint Sources/
+
   test:
-    name: Build (zero warnings) + Testes
+    name: Testes
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Testes
+        run: swift test
+
+  build:
+    name: Build (zero warnings)
+    needs: [lint, test]
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
@@ -33,5 +52,21 @@ jobs:
             exit 1
           fi
 
-      - name: Testes
-        run: swift test
+  create-pr:
+    name: Criar PR para main
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Criar Pull Request
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh pr create \
+            --base main \
+            --title "${{ github.ref_name }}" \
+            --body "PR auto-gerado pelo CI após lint + build + testes passarem."

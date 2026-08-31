@@ -1,7 +1,8 @@
 name: Release
 
 on:
-  push:
+  pull_request:
+    types: [closed]
     branches:
       - main
 
@@ -15,6 +16,7 @@ concurrency:
 jobs:
   build-release:
     name: Build, empacotar e publicar release
+    if: github.event.pull_request.merged == true
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
@@ -65,28 +67,111 @@ jobs:
           echo "new_tag=$NEW_TAG" >> "$GITHUB_OUTPUT"
           echo "Versão: $LAST_TAG -> $NEW_TAG"
 
-      - name: Gerar release notes (conventional commits)
+      - name: Selecionar melhor modelo free (OpenRouter)
+        id: model
+        run: |
+          MODELS_JSON=$(curl -s "https://openrouter.ai/api/v1/models" \
+            -H "Authorization: Bearer ${{ secrets.OPENROUTER_API_KEY }}")
+          BEST_MODEL=$(echo "$MODELS_JSON" | python3 -c "
+          import sys, json
+          data = json.load(sys.stdin)
+          models = data.get('data', [])
+          free = []
+          for m in models:
+              p = m.get('pricing', {})
+              if p.get('prompt') == '0' and p.get('completion') == '0':
+                  free.append(m)
+          # Ordena por intelligence (campo benchmark ou top_provider)
+          # usa context_length como proxy de capacidade
+          free.sort(key=lambda m: m.get('context_length') or 0, reverse=True)
+          if free:
+              print(free[0]['id'])
+          else:
+              print('')
+          ")
+          if [ -z "$BEST_MODEL" ]; then
+            echo "Nenhum modelo free encontrado, usando fallback"
+            echo "model=google/gemini-2.0-flash-001:free" >> "$GITHUB_OUTPUT"
+          else
+            echo "Melhor modelo free: $BEST_MODEL"
+            echo "model=$BEST_MODEL" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Gerar release notes (OpenRouter + fallback)
         id: notes
         run: |
           LAST_TAG="${{ steps.version.outputs.last_tag }}"
+          MODEL="${{ steps.model.outputs.model }}"
           if [ "$LAST_TAG" = "v0.0.0" ]; then
             RANGE="HEAD"
           else
             RANGE="$LAST_TAG..HEAD"
           fi
-          {
-            echo "notes<<EOF"
-            git log --pretty=format:"%s" "$RANGE" | grep -v "release:" | awk -F': ' '
-              /^feat/ {feat = feat "- " $0 "\n"; next}
-              /^fix/  {fix  = fix  "- " $0 "\n"; next}
-              {other  = other  "- " $0 "\n"}
-              END {
-                if (feat != "") print "### Features\n" feat
-                if (fix  != "") print "### Fixes\n" fix
-                if (other != "") print "### Outros\n" other
-              }'
-            echo "EOF"
-          } >> "$GITHUB_OUTPUT"
+          COMMITS=$(git log --pretty=format:"- %s" "$RANGE" | grep -v "release:")
+          DIFF=$(git diff --stat "$RANGE" 2>/dev/null || echo "N/A")
+          PROMPT="Gere release notes para o app MacDown (um leitor Markdown nativo para macOS).
+Use EXATAMENTE este formato com estas secoes:
+
+### Features
+(itens em bullet point com - )
+
+### Fixes
+(itens em bullet point com - )
+
+### Under the hood
+(itens em bullet point com - )
+
+### Instalacao
+1. Baixe MacDown.app.zip nos assets abaixo
+2. Descompacte e mova MacDown.app para /Applications
+3. Se o macOS bloquear a primeira inicializacao, rode: xattr -cr /Applications/MacDown.app
+
+Requer macOS 14 (Sonoma) ou posterior.
+
+Commits da versao:
+$COMMITS
+
+Diff de arquivos alterados:
+$DIFF
+"
+          # Tenta gerar via OpenRouter
+          RESPONSE=$(curl -s --max-time 30 \
+            "https://openrouter.ai/api/v1/chat/completions" \
+            -H "Authorization: Bearer ${{ secrets.OPENROUTER_API_KEY }}" \
+            -H "Content-Type: application/json" \
+            -d "$(jq -n \
+              --arg model "$MODEL" \
+              --arg prompt "$PROMPT" \
+              '{
+                model: $model,
+                messages: [{ role: "user", content: $prompt }],
+                max_tokens: 1500,
+                temperature: 0.3
+              }')")
+          AI_NOTES=$(echo "$RESPONSE" | jq -r '.choices[0].message.content // empty')
+          if [ -n "$AI_NOTES" ]; then
+            echo "Release notes geradas via IA ($MODEL)"
+            {
+              echo "notes<<EOF"
+              echo "$AI_NOTES"
+              echo "EOF"
+            } >> "$GITHUB_OUTPUT"
+          else
+            echo "Falha na API, usando fallback awk"
+            {
+              echo "notes<<EOF"
+              echo "$COMMITS" | awk -F': ' '
+                /^feat/ {feat = feat "- " $0 "\n"; next}
+                /^fix/  {fix  = fix  "- " $0 "\n"; next}
+                {other  = other  "- " $0 "\n"}
+                END {
+                  if (feat != "") print "### Features\n" feat
+                  if (fix  != "") print "### Fixes\n" fix
+                  if (other != "") print "### Outros\n" other
+                }'
+              echo "EOF"
+            } >> "$GITHUB_OUTPUT"
+          fi
 
       - name: Criar tag e publicar release
         uses: softprops/action-gh-release@v2

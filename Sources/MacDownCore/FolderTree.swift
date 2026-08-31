@@ -29,22 +29,46 @@ public enum FolderScanner {
 
     private static func scanFolder(_ folder: URL) -> FolderNode {
         let fm = FileManager.default
-        let items = (try? fm.contentsOfDirectory(at: folder, includingPropertiesForKeys: [.isDirectoryKey], options: [])) ?? []
+        let resolved = folder.resolvingSymlinksInPath()
+
+        var mdFiles: [URL] = []
+        var childNodes: [FolderNode] = []
+
+        let items: [URL]
+        do {
+            items = try fm.contentsOfDirectory(
+                at: resolved,
+                includingPropertiesForKeys: [.isDirectoryKey],
+                options: []
+            )
+        } catch {
+            return FolderNode(name: resolved.lastPathComponent, url: resolved, files: [], children: [])
+        }
 
         var subfolders: [URL] = []
-        var mdFiles: [URL] = []
-        for item in items.sorted(by: { $0.lastPathComponent < $1.lastPathComponent }) {
-            if (try? item.resourceValues(forKeys: [.isDirectoryKey]))?.isDirectory == true {
-                subfolders.append(item)
-            } else if isMarkdown(item) {
-                mdFiles.append(item)
+        for item in items {
+            let itemResolved = item.resolvingSymlinksInPath()
+            var isDir: ObjCBool = false
+            if fm.fileExists(atPath: itemResolved.path, isDirectory: &isDir) {
+                if isDir.boolValue {
+                    subfolders.append(itemResolved)
+                } else if isMarkdown(itemResolved) {
+                    mdFiles.append(itemResolved)
+                }
             }
         }
+
+        for sub in subfolders.sorted(by: { $0.lastPathComponent < $1.lastPathComponent }) {
+            childNodes.append(scanFolder(sub))
+        }
+
+        mdFiles.sort { $0.lastPathComponent < $1.lastPathComponent }
+
         return FolderNode(
-            name: folder.lastPathComponent,
-            url: folder,
+            name: resolved.lastPathComponent,
+            url: resolved,
             files: mdFiles,
-            children: subfolders.map(scanFolder)
+            children: childNodes
         )
     }
 

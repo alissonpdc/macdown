@@ -37,10 +37,11 @@ public final class FileWatcher {
     public init(paths: [URL],
                 markdownOnly: Bool = true,
                 debounce: TimeInterval = 0.2,
-                handler: @escaping ([WatchEvent]) -> Void) {
+                handler: @escaping ([WatchEvent]) -> Void)
+    {
         self.paths = paths
         self.markdownOnly = markdownOnly
-        self.debounceInterval = debounce
+        debounceInterval = debounce
         self.handler = handler
     }
 
@@ -59,9 +60,13 @@ public final class FileWatcher {
         stopped = true
         pollTimer?.cancel()
         pollTimer = nil
-        for source in sources { source.cancel() }
+        for source in sources {
+            source.cancel()
+        }
         sources.removeAll()
-        for fd in fds { close(fd) }
+        for fd in fds {
+            close(fd)
+        }
         fds.removeAll()
     }
 
@@ -70,18 +75,21 @@ public final class FileWatcher {
     // MARK: diretórios
 
     static func isDirectory(_ url: URL) -> Bool {
-        if let isDir = (try? url.resourceValues(forKeys: [.isDirectoryKey]))?.isDirectory { return isDir }
+        if let isDir = (try? url.resourceValues(forKeys: [.isDirectoryKey]))?.isDirectory {
+            return isDir
+        }
         return url.pathIsDirectory()
     }
 
-    /// vnode em cada arquivo markdown atual da árvore (1 nível + abas abertas cobre R4.1).
+    /// vnode nos arquivos markdown imediatos do diretório (1 nível).
+    /// Não recursivo: diretórios são cobertos por `startDirectoryPolling`.
     private func watchTree(under dir: URL) {
         let fm = FileManager.default
         guard let children = try? fm.contentsOfDirectory(at: dir, includingPropertiesForKeys: [.isDirectoryKey], options: []) else { return }
         for child in children {
-            let isDir = (try? child.resourceValues(forKeys: [.isDirectoryKey]))?.isDirectory ?? false
-            if isDir {
-                watchTree(under: child)
+            var isDir: ObjCBool = false
+            if fm.fileExists(atPath: child.path, isDirectory: &isDir), isDir.boolValue {
+                startDirectoryPolling(for: child)
             } else if !markdownOnly || FolderScanner.isMarkdown(child) {
                 watchFile(child)
             }
@@ -103,9 +111,9 @@ public final class FileWatcher {
             queue: queue
         )
         source.setEventHandler { [weak self] in
-            guard let self = self, !self.stopped else { return }
+            guard let self, !self.stopped else { return }
             // escritas atômicas geram rename/delete; qualquer evento = conteúdo pode ter mudado
-            self.scheduleDebounce(WatchEvent(url: url, kind: .modified))
+            scheduleDebounce(WatchEvent(url: url, kind: .modified))
         }
         source.resume()
         sources.append(source)
@@ -120,9 +128,9 @@ public final class FileWatcher {
         pending[event.url.path] = event.kind
         debounceWorkItem?.cancel()
         let work = DispatchWorkItem { [weak self] in
-            guard let self = self, !self.stopped else { return }
-            let events = self.pending.map { WatchEvent(url: URL(fileURLWithPath: $0.key), kind: $0.value) }
-            self.pending.removeAll()
+            guard let self, !self.stopped else { return }
+            let events = pending.map { WatchEvent(url: URL(fileURLWithPath: $0.key), kind: $0.value) }
+            pending.removeAll()
             guard !events.isEmpty else { return }
             DispatchQueue.main.async { self.handler(events) }
         }
@@ -140,10 +148,10 @@ public final class FileWatcher {
         let timer = DispatchSource.makeTimerSource(queue: queue)
         timer.schedule(deadline: .now() + 0.5, repeating: 0.5)
         timer.setEventHandler { [weak self] in
-            guard let self = self, !self.stopped else { return }
+            guard let self, !self.stopped else { return }
             let now = Self.markdownChildren(of: dir)
             let events = Self.diff(previous: lastSnapshot, current: now)
-            self.lastSnapshot = now
+            lastSnapshot = now
             guard !events.isEmpty else { return }
             DispatchQueue.main.async { self.handler(events) }
         }

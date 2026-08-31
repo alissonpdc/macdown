@@ -1,5 +1,5 @@
-import SwiftUI
 import MacDownCore
+import SwiftUI
 
 /// Canal de comandos de aba do menu para a view (o menu não enxerga o TabStore).
 final class TabCommandBus: ObservableObject {
@@ -16,6 +16,7 @@ struct MacDownApp: App {
     @State private var initialURL: URL?
     @StateObject private var theme = ThemeStore()
     @StateObject private var readingPrefs = ReadingPrefs()
+    @StateObject private var mdTheme = MDThemeManager()
     /// R3.7 — estado persistido de visibilidade do TOC
     @StateObject private var uiPrefs = UIPrefs()
     @StateObject private var tabBus: TabCommandBus
@@ -36,6 +37,7 @@ struct MacDownApp: App {
         WindowGroup {
             ContentView(initialURL: initialURL)
                 .environmentObject(theme)
+                .environmentObject(mdTheme)
                 .environmentObject(readingPrefs)
                 .environmentObject(uiPrefs)
                 .onAppear { appDelegate.apply(theme) }
@@ -73,13 +75,13 @@ struct MacDownApp: App {
                 Button("Forward") {
                     NotificationCenter.default.post(name: .macDownGoForward, object: nil)
                 }
-                    .keyboardShortcut("]", modifiers: .command)
+                .keyboardShortcut("]", modifiers: .command)
                 Divider()
                 // R13.3 — alterna visão Nova/Diff
                 Button("Toggle Diff View") {
                     NotificationCenter.default.post(name: .macDownToggleDiff, object: nil)
                 }
-                    .keyboardShortcut("d", modifiers: .command)
+                .keyboardShortcut("d", modifiers: .command)
             }
             // R9.1 — View menu
             CommandGroup(after: .toolbar) {
@@ -98,8 +100,8 @@ struct MacDownApp: App {
                     get: { uiPrefs.showTOC },
                     set: { uiPrefs.showTOC = $0 }
                 ))
-                    .keyboardShortcut("t", modifiers: [.command, .shift])
-                    .help("Toggle the table of contents panel")
+                .keyboardShortcut("t", modifiers: [.command, .shift])
+                .help("Toggle the table of contents panel")
                 Divider()
                 // R3.11 — Largura de leitura
                 Menu("Reading Width") {
@@ -169,7 +171,7 @@ enum PendingOpenURLs {
 
 /// Ativa o app como .regular e aplica a aparência no nível AppKit.
 final class AppearanceAppDelegate: NSObject, NSApplicationDelegate {
-    func applicationDidFinishLaunching(_ notification: Notification) {
+    func applicationDidFinishLaunching(_: Notification) {
         NSApp.setActivationPolicy(.regular)
         NSApp.activate(ignoringOtherApps: true)
         TabShortcutMonitor.install()
@@ -178,7 +180,7 @@ final class AppearanceAppDelegate: NSObject, NSApplicationDelegate {
     /// Arquivos/pastas abertos pelo Finder ("Abrir com") ou via `open`.
     /// O evento pode chegar antes da view instalar o handler, então as URLs
     /// ficam em buffer e a view drena em onAppear.
-    func application(_ application: NSApplication, open urls: [URL]) {
+    func application(_: NSApplication, open urls: [URL]) {
         guard !urls.isEmpty else { return }
         PendingOpenURLs.buffer.append(contentsOf: urls)
         NotificationCenter.default.post(name: .macDownOpenURLs, object: urls)

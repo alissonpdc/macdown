@@ -3,7 +3,10 @@ import Foundation
 /// Opções de busca (R5.1 / R5.2).
 public struct SearchOptions: OptionSet, Equatable {
     public let rawValue: Int
-    public init(rawValue: Int) { self.rawValue = rawValue }
+    public init(rawValue: Int) {
+        self.rawValue = rawValue
+    }
+
     /// Diferencia maiúsculas/minúsculas.
     public static let caseSensitive = SearchOptions(rawValue: 1 << 0)
     /// Exige que o termo esteja delimitado por fronteiras de palavra.
@@ -27,7 +30,7 @@ public struct SearchMatch: Identifiable, Equatable {
     public let snippetMatchStart: Int
 
     public init(blockIndex: Int, ordinal: Int, range: Range<Int>, snippet: String, snippetMatchStart: Int) {
-        self.id = UUID()
+        id = UUID()
         self.blockIndex = blockIndex
         self.ordinal = ordinal
         self.range = range
@@ -41,10 +44,12 @@ public struct FileSearchResult: Identifiable, Equatable {
     public let id: UUID
     public let url: URL
     public let matches: [SearchMatch]
-    public var count: Int { matches.count }
+    public var count: Int {
+        matches.count
+    }
 
     public init(url: URL, matches: [SearchMatch]) {
-        self.id = UUID()
+        id = UUID()
         self.url = url
         self.matches = matches
     }
@@ -79,7 +84,8 @@ public enum SearchEngine {
 
     /// Encontra todas as ocorrências de `query` em um documento (R5.1).
     public static func findMatches(in document: CoreDocument, query: String,
-                                   options: SearchOptions = []) -> [SearchMatch] {
+                                   options: SearchOptions = []) -> [SearchMatch]
+    {
         guard !query.isEmpty else { return [] }
         var results: [SearchMatch] = []
         var ordinal = 0
@@ -111,15 +117,20 @@ public enum SearchEngine {
 
     /// Todas as ocorrências não sobrepostas de `query` em `ns`, na ordem.
     private static func occurrences(in ns: NSString, query: String,
-                                    options: SearchOptions) -> [NSRange] {
+                                    options: SearchOptions) -> [NSRange]
+    {
         if options.contains(.regex) {
             var opts = NSRegularExpression.Options()
-            if !options.contains(.caseSensitive) { opts.insert(.caseInsensitive) }
+            if !options.contains(.caseSensitive) {
+                opts.insert(.caseInsensitive)
+            }
             guard let re = try? NSRegularExpression(pattern: query, options: opts) else { return [] }
             var found: [NSRange] = []
             re.enumerateMatches(in: ns as String, range: NSRange(location: 0, length: ns.length)) { m, _, _ in
                 guard let m, m.range.location != NSNotFound else { return }
-                if options.contains(.wholeWord), !isWordBoundary(ns: ns, found: m.range) { return }
+                if options.contains(.wholeWord), !isWordBoundary(ns: ns, found: m.range) {
+                    return
+                }
                 found.append(m.range)
             }
             return found
@@ -147,7 +158,8 @@ public enum SearchEngine {
 
     /// Busca global em vários arquivos; retorna apenas os que têm ocorrências (R5.2).
     public static func findInFiles(_ inputs: [(url: URL, document: CoreDocument)],
-                                   query: String, options: SearchOptions = []) -> [FileSearchResult] {
+                                   query: String, options: SearchOptions = []) -> [FileSearchResult]
+    {
         inputs.compactMap { input in
             let matches = findMatches(in: input.document, query: query, options: options)
             guard !matches.isEmpty else { return nil }
