@@ -61,7 +61,7 @@ public final class MarkdownHTMLConverter {
             let lines = Self.lineCount(of: c.code)
             if lines > Self.foldLineThreshold {
                 return """
-                <div class="code-block folded"><div class="code-header"><span class="lang">\(Self.escapeHTML(lang))</span><span class="header-actions"><button class="fold-btn" onclick="toggleFold(this)" title="Mostrar tudo (\(lines) linhas)" aria-label="Mostrar tudo (\(lines) linhas)">\(Self.chevronDownIcon)</button><button class="copy-btn" onclick="copyCode(this)" title="Copiar" aria-label="Copiar">\(Self.copyIcon)</button></span></div><pre><code class="language-\(lang)">\(highlighted)</code></pre></div>\n
+                <div class="code-block folded"><div class="code-header"><span class="lang">\(Self.escapeHTML(lang))</span><span class="header-actions"><button class="fold-btn" onclick="toggleFold(this)" title="Mostrar tudo (\(lines) linhas)" aria-label="Mostrar tudo (\(lines) linhas)">\(Self.chevronDownIcon)</button><button class="copy-btn" onclick="copyCode(this)" title="Copiar" aria-label="Copiar">\(Self.copyIcon)</button></span></div><div class="code-scroll"><pre><code class="language-\(lang)">\(highlighted)</code></pre><div class="code-fade"></div></div></div>\n
                 """
             }
             return """
@@ -452,19 +452,23 @@ public final class MarkdownHTMLConverter {
         }
         .code-header + pre { margin-top: 0; border-radius: 0 0 6px 6px; }
         .header-actions { display: flex; gap: 8px; }
+        .code-scroll { position: relative; border-radius: 0 0 6px 6px; }
+        .code-header + .code-scroll { margin-top: 0; border-radius: 0 0 6px 6px; }
         .code-block.folded pre {
             max-height: 500px;
             overflow-y: auto;
             overflow-x: auto;
-            position: relative;
         }
-        .code-block.folded pre::after {
-            content: "";
+        .code-header + .code-scroll pre { margin-top: 0; margin-bottom: 0; border-radius: 0 0 6px 6px; }
+        .code-block.folded .code-fade {
             position: absolute;
             left: 0; right: 0; bottom: 0;
             height: 60px;
             background: linear-gradient(to bottom, transparent, var(--code-bg));
             pointer-events: none;
+            opacity: var(--fold-gradient, 1);
+            transition: opacity 0.15s;
+            border-radius: 0 0 6px 6px;
         }
         .fold-btn {
             background: none;
@@ -611,7 +615,27 @@ public final class MarkdownHTMLConverter {
         btn.innerHTML = folded ? CHEVRON_DOWN : CHEVRON_UP;
         btn.setAttribute('aria-label', folded ? 'Mostrar tudo' : 'Recolher');
         btn.setAttribute('title', folded ? 'Mostrar tudo' : 'Recolher');
+        if (folded) {
+            checkCodeBlockScroll(block.querySelector('pre'));
+        }
     }
+    function checkCodeBlockScroll(pre) {
+        var atBottom = pre.scrollTop + pre.clientHeight >= pre.scrollHeight - 2;
+        var block = pre.closest('.code-block');
+        if (block) block.style.setProperty('--fold-gradient', atBottom ? '0' : '1');
+    }
+    function initCodeBlockScroll() {
+        document.querySelectorAll('.code-block.folded pre').forEach(function(pre) {
+            pre.addEventListener('scroll', function() {
+                checkCodeBlockScroll(pre);
+            });
+            pre.addEventListener('wheel', function() {
+                requestAnimationFrame(function() { checkCodeBlockScroll(pre); });
+            });
+            requestAnimationFrame(function() { checkCodeBlockScroll(pre); });
+        });
+    }
+    initCodeBlockScroll();
     </script>
     </body>
     </html>
