@@ -20,7 +20,9 @@ public final class MarkdownHTMLConverter {
     {
         var html = Self.htmlHeader(readingPrefs: readingPrefs)
         if let base = baseFileURL {
-            let escaped = Self.escapeHTML(base.absoluteString)
+            let dirURL = base.deletingLastPathComponent()
+            let escaped = Self.escapeHTML(dirURL.absoluteString)
+            html += "<base href=\"\(escaped)\">\n"
             html += "<script>var BASE_URL = \"\(escaped)\";</script>\n"
         }
         if let fm = frontmatter, !fm.isEmpty {
@@ -649,7 +651,8 @@ public final class MarkdownHTMLConverter {
         .op { color: var(--code-operator); }
         .fn { color: var(--code-function); }
         .ty { color: var(--code-type); }
-        img { max-width: 100%; height: auto; border-radius: 6px; margin: 0 0 16px; }
+        img { max-width: 100%; height: auto; border-radius: 6px; }
+        img + h1 { margin-top: 0; }
         blockquote {
             margin: 0 0 16px;
             padding: 0 1em;
