@@ -49,6 +49,22 @@ public struct HorizontalRuleNode: BlockNode, Equatable {
     public init() {}
 }
 
+public struct HTMLBlockNode: BlockNode, Equatable {
+    public let rawHTML: String
+    public init(rawHTML: String) {
+        self.rawHTML = rawHTML
+    }
+}
+
+public struct AdmonitionNode: BlockNode, Equatable {
+    public let type: String
+    public let body: String
+    public init(type: String, body: String) {
+        self.type = type
+        self.body = body
+    }
+}
+
 public struct GenericBlockNode: BlockNode, Equatable {
     public let kindName: String
 }

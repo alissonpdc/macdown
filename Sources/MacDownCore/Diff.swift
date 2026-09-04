@@ -68,6 +68,10 @@ public enum BlockDiffer {
             "t:" + t.items.map { "\($0.isChecked ? "[x]" : "[ ]")\($0.text)" }.joined(separator: "\n")
         case let t as TableNode:
             "tbl:\((t.headerCells + t.rows.flatMap { $0 }).joined(separator: "|"))"
+        case let h as HTMLBlockNode:
+            "html:\(h.rawHTML)"
+        case let a as AdmonitionNode:
+            "adm:\(a.type):\(a.body)"
         case let g as GenericBlockNode: "g:\(g.kindName)"
         default: String(describing: block)
         }
@@ -88,6 +92,10 @@ public enum BlockDiffer {
             t.items.map { "\($0.isChecked ? "[x]" : "[ ]") \($0.text)" }.joined(separator: "\n")
         case let t as TableNode:
             ([t.headerCells] + t.rows).map { $0.joined(separator: " | ") }.joined(separator: "\n")
+        case let h as HTMLBlockNode:
+            h.rawHTML
+        case let a as AdmonitionNode:
+            "[!\(a.type.uppercased())] \(a.body)"
         case let g as GenericBlockNode: g.kindName
         default: ""
         }

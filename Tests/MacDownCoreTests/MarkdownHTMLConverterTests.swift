@@ -193,4 +193,109 @@ final class MarkdownHTMLConverterTests: XCTestCase {
     func testHTMLFooterContainsScript() {
         XCTAssertTrue(MarkdownHTMLConverter.htmlFooter.contains("copyCode"))
     }
+
+    // MARK: - HTML block/inline tests
+
+    func testHTMLBlockRendersRawHTML() {
+        let doc = CoreDocument(blocks: [
+            HTMLBlockNode(rawHTML: "<div class=\"custom\">Hello</div>"),
+        ])
+        let html = converter.convert(doc)
+        XCTAssertTrue(html.contains("<div class=\"custom\">Hello</div>"))
+        XCTAssertFalse(html.contains("class=\"generic-block\""))
+    }
+
+    func testInlineHTMLInParagraphRendersRaw() {
+        let doc = CoreDocument(blocks: [
+            ParagraphNode(text: "hello world", rawMarkdown: "hello <em>world</em> end"),
+        ])
+        let html = converter.convert(doc)
+        XCTAssertTrue(html.contains("<em>world</em>"))
+        XCTAssertFalse(html.contains("&lt;em&gt;"))
+    }
+
+    func testInlineHTMLWithBoldRendersBoth() {
+        let doc = CoreDocument(blocks: [
+            ParagraphNode(text: "bold text end", rawMarkdown: "**bold <em>text</em>** end"),
+        ])
+        let html = converter.convert(doc)
+        XCTAssertTrue(html.contains("<strong>"))
+        XCTAssertTrue(html.contains("<em>text</em>"))
+    }
+
+    func testRegularParagraphStillWorks() {
+        let doc = CoreDocument(blocks: [
+            ParagraphNode(text: "Hello world", rawMarkdown: "Hello **world**"),
+        ])
+        let html = converter.convert(doc)
+        XCTAssertTrue(html.contains("<strong>world</strong>"))
+    }
+
+    // MARK: - Admonition tests
+
+    func testAdmonitionNoteRenders() {
+        let doc = CoreDocument(blocks: [
+            AdmonitionNode(type: "note", body: "Informational note"),
+        ])
+        let html = converter.convert(doc)
+        XCTAssertTrue(html.contains("admonition-note"))
+        XCTAssertTrue(html.contains("admonition"))
+        XCTAssertTrue(html.contains("Note"))
+        XCTAssertTrue(html.contains("Informational note"))
+    }
+
+    func testAdmonitionWarningRenders() {
+        let doc = CoreDocument(blocks: [
+            AdmonitionNode(type: "warning", body: "Be careful!"),
+        ])
+        let html = converter.convert(doc)
+        XCTAssertTrue(html.contains("admonition-warning"))
+        XCTAssertTrue(html.contains("Warning"))
+        XCTAssertTrue(html.contains("Be careful!"))
+    }
+
+    func testAdmonitionCautionRenders() {
+        let doc = CoreDocument(blocks: [
+            AdmonitionNode(type: "caution", body: "Danger!"),
+        ])
+        let html = converter.convert(doc)
+        XCTAssertTrue(html.contains("admonition-caution"))
+        XCTAssertTrue(html.contains("Caution"))
+    }
+
+    func testAdmonitionCSSPresent() {
+        let html = converter.convert(CoreDocument(blocks: []))
+        XCTAssertTrue(html.contains(".admonition"))
+        XCTAssertTrue(html.contains(".admonition-note"))
+        XCTAssertTrue(html.contains(".admonition-warning"))
+    }
+
+    func testAdmonitionWithMarkdownBody() {
+        let doc = CoreDocument(blocks: [
+            AdmonitionNode(type: "tip", body: "Use **bold** and `code`"),
+        ])
+        let html = converter.convert(doc)
+        XCTAssertTrue(html.contains("<strong>bold</strong>"))
+        XCTAssertTrue(html.contains("<code>code</code>"))
+    }
+
+    func testEndToEndAdmonitionParsing() {
+        let doc = MarkdownParser().parse("> [!NOTE]\n> This is a note")
+        let html = converter.convert(doc)
+        XCTAssertTrue(html.contains("admonition-note"))
+        XCTAssertTrue(html.contains("This is a note"))
+    }
+
+    func testEndToEndHTMLBlockParsing() {
+        let doc = MarkdownParser().parse("<hr>\n<p>After HTML</p>")
+        let html = converter.convert(doc)
+        XCTAssertTrue(html.contains("<hr>"))
+        XCTAssertTrue(html.contains("After HTML"))
+    }
+
+    func testEndToEndInlineHTMLParsing() {
+        let doc = MarkdownParser().parse("Text with <strong>bold HTML</strong> inside")
+        let html = converter.convert(doc)
+        XCTAssertTrue(html.contains("<strong>bold HTML</strong>"))
+    }
 }

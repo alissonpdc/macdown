@@ -14,6 +14,9 @@ public struct MarkdownParser {
     }
 
     private func blockNode(from node: any Markup) -> any BlockNode {
+        if let html = node as? HTMLBlock {
+            return HTMLBlockNode(rawHTML: html.rawHTML)
+        }
         if let heading = node as? Markdown.Heading {
             return HeadingNode(level: heading.level, inlineText: heading.plainText)
         }
@@ -24,6 +27,9 @@ public struct MarkdownParser {
             return CodeBlockNode(language: code.language, code: code.code)
         }
         if let quote = node as? BlockQuote {
+            if let admonition = Self.parseAdmonition(quote) {
+                return admonition
+            }
             let paragraphs = quote.children.compactMap { $0 as? (any PlainTextConvertibleMarkup) }.map(\.plainText)
             return QuoteNode(paragraphs: paragraphs)
         }
@@ -42,6 +48,41 @@ public struct MarkdownParser {
             return TableNode(headerCells: header, rows: rows)
         }
         return GenericBlockNode(kindName: String(describing: type(of: node)))
+    }
+
+    private static let admonitionPattern: NSRegularExpression? =
+        try? NSRegularExpression(pattern: "^\\[!(NOTE|TIP|IMPORTANT|WARNING|CAUTION)\\]\\s*\\n?")
+
+    private static func parseAdmonition(_ quote: BlockQuote) -> AdmonitionNode? {
+        let allChildren = Array(quote.children)
+        guard let firstChild = allChildren.first else { return nil }
+        let childText = firstChild.format()
+        let stripped = childText.components(separatedBy: "\n")
+            .map { $0.hasPrefix("> ") ? String($0.dropFirst(2)) : $0 }
+            .joined(separator: "\n")
+        guard let regex = admonitionPattern else { return nil }
+        let nsStripped = stripped as NSString
+        let range = NSRange(location: 0, length: nsStripped.length)
+        guard let match = regex.firstMatch(in: stripped, options: [], range: range),
+              match.range.location != NSNotFound
+        else { return nil }
+        let type = nsStripped.substring(with: match.range(at: 1)).lowercased()
+        let bodyRange = NSRange(location: match.range.upperBound, length: nsStripped.length - match.range.upperBound)
+        let firstLineBody = nsStripped.substring(with: bodyRange)
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+        var bodyLines = [firstLineBody]
+        for child in allChildren.dropFirst() {
+            let line = child.format()
+                .components(separatedBy: "\n")
+                .map { $0.hasPrefix("> ") ? String($0.dropFirst(2)) : $0 }
+                .joined(separator: "\n")
+                .trimmingCharacters(in: .whitespacesAndNewlines)
+            if !line.isEmpty {
+                bodyLines.append(line)
+            }
+        }
+        let body = bodyLines.joined(separator: "\n").trimmingCharacters(in: .whitespacesAndNewlines)
+        return AdmonitionNode(type: type, body: body)
     }
 
     private func listNode(from children: MarkupChildren, ordered: Bool) -> any BlockNode {
