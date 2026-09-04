@@ -61,7 +61,7 @@ public final class MarkdownHTMLConverter {
             let anchor = "<a class=\"anchor\" href=\"#\(id)\" onclick=\"copyAnchor(event, this)\" title=\"Copiar link para esta seção\" aria-label=\"Copiar link para esta seção\">#</a>"
             return "<\(tag) id=\"\(id)\">\(Self.escapeHTML(h.inlineText))\(anchor)</\(tag)>\n"
         case let p as ParagraphNode:
-            return "<p>\(Self.inlineMarkdown(p.rawMarkdown, baseURL: baseFileURL, brokenHrefs: brokenHrefs))</p>\n"
+            return convertParagraph(p, baseFileURL: baseFileURL)
         case let c as CodeBlockNode:
             let lang = c.language ?? ""
             // R3.3 — blocos ```mermaid renderizam como diagramas inline
@@ -93,6 +93,10 @@ public final class MarkdownHTMLConverter {
             return convertTableHTML(t, baseURL: baseFileURL)
         case is HorizontalRuleNode:
             return "<hr>\n"
+        case let h as HTMLBlockNode:
+            return h.rawHTML + "\n"
+        case let a as AdmonitionNode:
+            return convertAdmonition(a, baseFileURL: baseFileURL)
         case let g as GenericBlockNode:
             return "<p class=\"generic-block\">\(Self.escapeHTML(g.kindName))</p>\n"
         default:
@@ -143,6 +147,132 @@ public final class MarkdownHTMLConverter {
         }
         html += "</tbody>\n</table></div>\n"
         return html
+    }
+
+    // MARK: - Paragraph with inline HTML
+
+    private func convertParagraph(_ p: ParagraphNode, baseFileURL: URL?) -> String {
+        let doc = Markdown.Document(parsing: p.rawMarkdown, options: [.disableSmartOpts])
+        for child in doc.children {
+            if let para = child as? Paragraph {
+                if containsInlineHTML(para.inlineChildren) {
+                    return "<p>\(renderInlineNodes(para.inlineChildren, baseURL: baseFileURL))</p>\n"
+                }
+                break
+            }
+        }
+        return "<p>\(Self.inlineMarkdown(p.rawMarkdown, baseURL: baseFileURL, brokenHrefs: brokenHrefs))</p>\n"
+    }
+
+    private func containsInlineHTML(_ children: some Sequence<InlineMarkup>) -> Bool {
+        for child in children {
+            if child is InlineHTML {
+                return true
+            }
+            if containsInlineHTMLInNode(child) {
+                return true
+            }
+        }
+        return false
+    }
+
+    private func containsInlineHTMLInNode(_ node: (any Markup)?) -> Bool {
+        guard let node else { return false }
+        for child in node.children {
+            if child is InlineHTML {
+                return true
+            }
+            if containsInlineHTMLInNode(child) {
+                return true
+            }
+        }
+        return false
+    }
+
+    private func escapeInlineText(_ children: some Sequence<InlineMarkup>) -> String {
+        var text = ""
+        for child in children {
+            if let t = child as? Markdown.Text {
+                text += t.string
+            } else if let code = child as? Markdown.InlineCode {
+                text += code.code
+            } else {
+                text += child.plainText
+            }
+        }
+        return Self.escapeHTML(text)
+    }
+
+    private func renderInlineNodes(_ children: some Sequence<InlineMarkup>, baseURL: URL?) -> String {
+        var html = ""
+        for child in children {
+            switch child {
+            case let text as Markdown.Text:
+                html += Self.inlineMarkdown(text.format(), baseURL: baseURL, brokenHrefs: brokenHrefs)
+            case let inlineHTML as InlineHTML:
+                html += inlineHTML.format()
+            case let strong as Markdown.Strong:
+                html += "<strong>\(renderInlineNodes(strong.inlineChildren, baseURL: baseURL))</strong>"
+            case let emphasis as Markdown.Emphasis:
+                html += "<em>\(renderInlineNodes(emphasis.inlineChildren, baseURL: baseURL))</em>"
+            case let link as Markdown.Link:
+                let href = link.destination ?? ""
+                let broken = brokenHrefs.contains(href) ? Self.brokenAttr(href) : ""
+                html += "<a href=\"\(href)\"\(broken)>\(renderInlineNodes(link.inlineChildren, baseURL: baseURL))</a>"
+            case let code as Markdown.InlineCode:
+                html += "<code>\(Self.escapeHTML(code.code))</code>"
+            case let strikethrough as Markdown.Strikethrough:
+                html += "<del>\(renderInlineNodes(strikethrough.inlineChildren, baseURL: baseURL))</del>"
+            case let image as Markdown.Image:
+                let href = image.source ?? ""
+                let alt = escapeInlineText(image.inlineChildren)
+                let src = Self.imageURLSource(href, baseURL: baseURL)
+                let broken = brokenHrefs.contains(href) ? Self.brokenAttr(href) : ""
+                html += "<img src=\"\(src)\" alt=\"\(alt)\"\(broken)>"
+            default:
+                html += Self.escapeHTML(child.format())
+            }
+        }
+        return html
+    }
+
+    // MARK: - Admonition
+
+    private static let admonitionIcons: [String: String] = [
+        "note": """
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.5"/><path d="M8 5v3.5M8 10.5v.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+        """,
+        "tip": """
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M8 1.5a5 5 0 0 0-2 9.58V12a1 1 0 0 0 1 1h2a1 1 0 0 0 1-1v-.92A5 5 0 0 0 8 1.5Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M6 14.5h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+        """,
+        "important": """
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M8 1.5l6.5 13H1.5L8 1.5Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M8 6v3.5M8 11.5v.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+        """,
+        "warning": """
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M8 1.5l6.5 13H1.5L8 1.5Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M8 6v3.5M8 11.5v.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+        """,
+        "caution": """
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.5"/><path d="M8 4.5v4M8 10.5v.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+        """,
+    ]
+
+    private func convertAdmonition(_ a: AdmonitionNode, baseFileURL: URL?) -> String {
+        let icon = Self.admonitionIcons[a.type] ?? Self.admonitionIcons["note"]!
+        let title = a.type.prefix(1).uppercased() + a.type.dropFirst()
+        let bodyDoc = MarkdownParser().parse(a.body)
+        var bodyHTML = ""
+        for block in bodyDoc.blocks {
+            bodyHTML += convertBlock(block, baseFileURL: baseFileURL)
+        }
+        if bodyHTML.isEmpty {
+            bodyHTML = "<p>\(Self.escapeHTML(a.body))</p>\n"
+        }
+        return """
+        <div class="admonition admonition-\(a.type)">\n\
+        <div class="admonition-header">\(icon)<span class="admonition-title">\(Self.escapeHTML(title))</span></div>\n\
+        <div class="admonition-body">\(bodyHTML)</div>\n\
+        </div>\n
+        """
     }
 
     // MARK: - Image src (R3.12)
@@ -588,6 +718,37 @@ public final class MarkdownHTMLConverter {
             border-radius: 4px;
             color: var(--fg-secondary);
             font-size: 0.9em;
+        }
+        .admonition {
+            margin: 0 0 16px;
+            padding: 12px 16px;
+            border-radius: 6px;
+            border-left: 4px solid var(--border);
+            background: var(--code-bg);
+        }
+        .admonition-header {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-bottom: 8px;
+            color: var(--fg);
+        }
+        .admonition-title {
+            font-weight: 600;
+            font-size: 0.95em;
+        }
+        .admonition-body p:last-child { margin-bottom: 0; }
+        .admonition-note { border-left-color: #0969da; }
+        .admonition-tip { border-left-color: #1a7f37; }
+        .admonition-important { border-left-color: #8250df; }
+        .admonition-warning { border-left-color: #bf8700; }
+        .admonition-caution { border-left-color: #cf222e; }
+        @media (prefers-color-scheme: dark) {
+            .admonition-note { border-left-color: #58a6ff; }
+            .admonition-tip { border-left-color: #3fb950; }
+            .admonition-important { border-left-color: #d2a8ff; }
+            .admonition-warning { border-left-color: #d29922; }
+            .admonition-caution { border-left-color: #f85149; }
         }
         .search-match { background: rgba(255, 213, 0, 0.4); border-radius: 2px; }
         .search-current { background: rgba(255, 145, 0, 0.5); border-radius: 2px; }

@@ -43,4 +43,18 @@ final class GFMFixturesTests: XCTestCase {
         let doc = Markdown.Document(parsing: "texto[^1]\n\n[^1]: nota")
         XCTAssertTrue(String(doc.format()).contains("footnote") || !doc.children.map { $0 }.isEmpty)
     }
+
+    func testInlineHTMLIsRecognizedInParagraph() {
+        let doc = Markdown.Document(parsing: "hello <em>world</em> end")
+        let para = doc.children.compactMap { $0 as? Paragraph }.first
+        XCTAssertNotNil(para)
+        let hasInlineHTML = para?.inlineChildren.contains { $0 is InlineHTML } ?? false
+        XCTAssertTrue(hasInlineHTML, "should detect InlineHTML node")
+    }
+
+    func testBlockHTMLIsRecognized() {
+        let doc = Markdown.Document(parsing: "<div>block html</div>")
+        let hasHTMLBlock = doc.blockChildren.contains { $0 is HTMLBlock }
+        XCTAssertTrue(hasHTMLBlock, "should detect HTMLBlock node")
+    }
 }

@@ -77,6 +77,10 @@ public enum SearchEngine {
             let header = t.headerCells.joined(separator: " ")
             let rows = t.rows.map { $0.joined(separator: " ") }.joined(separator: "\n")
             return ([header] + (rows.isEmpty ? [] : [rows])).joined(separator: "\n")
+        case let h as HTMLBlockNode:
+            return h.rawHTML
+        case let a as AdmonitionNode:
+            return "\(a.type) \(a.body)"
         default:
             return ""
         }
