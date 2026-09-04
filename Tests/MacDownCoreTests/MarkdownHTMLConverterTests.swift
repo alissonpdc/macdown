@@ -298,4 +298,75 @@ final class MarkdownHTMLConverterTests: XCTestCase {
         let html = converter.convert(doc)
         XCTAssertTrue(html.contains("<strong>bold HTML</strong>"))
     }
+
+    func testInlineHTMLImgTagRenders() {
+        let input = "<img src=\"./public/favicon.svg\" alt=\"ArchiDraw\" height=\"72\" />"
+        let doc = MarkdownParser().parse(input)
+        let html = converter.convert(doc)
+        XCTAssertTrue(html.contains("<img src="), "Should contain img tag")
+        XCTAssertTrue(html.contains("favicon.svg"), "Should contain the image source")
+        XCTAssertTrue(html.contains("ArchiDraw"), "Should contain the alt text")
+        XCTAssertFalse(html.contains("&lt;img"), "Should NOT be HTML-escaped")
+    }
+
+    func testInlineHTMLImgTagInParagraphWithText() {
+        let input = "Some text before <img src=\"./public/favicon.svg\" alt=\"ArchiDraw\" height=\"72\" /> and after"
+        let doc = MarkdownParser().parse(input)
+        let html = converter.convert(doc)
+        XCTAssertTrue(html.contains("<img src="), "Should contain img tag")
+        XCTAssertTrue(html.contains("favicon.svg"), "Should contain the image source")
+        XCTAssertFalse(html.contains("&lt;img"), "Should NOT be HTML-escaped")
+    }
+
+    func testInlineHTMLImgTagWithBaseURL() {
+        let input = "<img src=\"./public/favicon.svg\" alt=\"ArchiDraw\" height=\"72\" />"
+        let doc = MarkdownParser().parse(input)
+        let base = URL(fileURLWithPath: "/Users/test/Documents/README.md")
+        let html = converter.convert(doc, baseFileURL: base)
+        XCTAssertTrue(html.contains("<img src="), "Should contain img tag")
+        XCTAssertTrue(html.contains("favicon.svg"), "Should contain the image source")
+        XCTAssertFalse(html.contains("&lt;img"), "Should NOT be HTML-escaped")
+        XCTAssertTrue(html.contains("<base href="), "Should contain <base> tag for relative path resolution")
+        XCTAssertTrue(html.contains("Documents/"), "<base> href should point to document's directory")
+    }
+
+    func testBaseTagNotAddedWithoutBaseURL() {
+        let doc = CoreDocument(blocks: [ParagraphNode(text: "hello", rawMarkdown: "hello")])
+        let html = converter.convert(doc)
+        XCTAssertFalse(html.contains("<base href="), "Should NOT contain <base> tag without baseFileURL")
+    }
+
+    // MARK: - Imagem: layout entre img e heading (Guias: badges inline + logo colado ao título)
+
+    func testImgCSSKeepsImagesInline() {
+        let html = converter.convert(CoreDocument(blocks: []))
+        guard let range = html.range(of: "img {"),
+              let end = html.range(of: "}", range: range.upperBound..<html.endIndex) else {
+            return XCTFail("img CSS rule not found")
+        }
+        let rule = html[range.lowerBound..<end.upperBound]
+        XCTAssertFalse(rule.contains("display: block"), "img deve permanecer inline para badges ficarem lado a lado")
+        XCTAssertFalse(rule.contains("margin"), "img nao deve ter margin propria para nao somar com a margem do <p>")
+    }
+
+    func testImgFollowedByHeadingIsSnug() {
+        let html = converter.convert(CoreDocument(blocks: []))
+        XCTAssertTrue(html.contains("img + h1 { margin-top: 0; }"),
+                      "img seguida diretamente de h1 (ex.: logo do header) deve ficar colada no titulo")
+    }
+
+    func testImgFollowedByHeadingRenders() {
+        let input = """
+        <img src="./public/favicon.svg" alt="ArchiDraw" height="72" />
+
+        # ArchiDraw
+        """
+        let doc = MarkdownParser().parse(input)
+        let html = converter.convert(doc)
+        guard let imgRange = html.range(of: "<img") else {
+            return XCTFail("Should contain img")
+        }
+        XCTAssertTrue(String(html[imgRange.lowerBound..<html.endIndex]).contains("<h1"),
+                      "h1 deve vir depois do img no mesmo fluxo")
+    }
 }
